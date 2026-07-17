@@ -1,79 +1,79 @@
-// This UI branch deliberately keeps a client-side adapter. The API branch
-// swaps its implementation without changing the board's calling contract.
-export const ENV_MODE = 'Local demo';
+// The client only talks to these Next.js routes. The route selects Math.js for
+// the MVP or the future private Python adapter through VERIFIER_PROVIDER.
+export const ENV_MODE = 'API-backed demo';
 
-const MOCK_STATE = {
-  problem: {
-    prompt: '(x + 2)^2 = 25',
-    goal: 'Find all values of x',
-    progress: '2 of 4 steps checked',
-  },
-  steps: [
-    { id: 's1', type: 'GIVEN', math: '(x + 2)^2 = 25', status: 'root', timestamp: 'Given' },
-    { id: 's2', type: 'STEP 2', math: 'x^2 + 4 = 25', status: 'invalid', timestamp: 'First check' },
-  ],
-  edges: [
-    {
-      id: 'e1',
-      from: 's1',
-      to: 's2',
-      status: 'invalid',
-      label: 'missing term',
-      inspectorData: {
-        title: 'This transition changes the equation',
-        finding: 'The expanded expression is missing a term.',
-        realityCheck: {
-          testValue: 'x = 3',
-          originalMath: '(3 + 2)^2',
-          originalResult: '25',
-          stepMath: '3^2 + 4',
-          stepResult: '13',
-        },
-      },
+const INITIAL_STEPS = [
+  { id: 's1', type: 'GIVEN', math: '(x + 2)^2 = 25', status: 'root', timestamp: 'Given' },
+  { id: 's2', type: 'STEP 2', math: 'x^2 + 4 = 25', status: 'invalid', timestamp: 'First check' },
+];
+
+const leftSide = (equation) => equation.split('=')[0]?.trim() || equation;
+const atValue = (equation, value) => leftSide(equation).replaceAll('x', `(${value})`);
+
+const edgeFromResult = (result, previousStep, nextStep) => {
+  const title = result.status === 'valid'
+    ? 'This step preserves the equation'
+    : result.status === 'invalid'
+      ? 'This transition changes the equation'
+      : 'This step needs rechecking';
+  const counterexample = result.counterexample;
+
+  return {
+    status: result.status,
+    label: result.rule === 'expand-square'
+      ? 'expanded square'
+      : result.rule === 'balance-operation'
+        ? 'balanced both sides'
+        : result.status === 'invalid'
+          ? result.likelyMissingTerm ? 'missing term' : 'not equivalent'
+          : result.status === 'valid' ? 'equivalent' : 'needs rechecking',
+    verification: result,
+    inspectorData: {
+      title,
+      finding: result.summary,
+      realityCheck: counterexample ? {
+        testValue: `x = ${counterexample.value}`,
+        originalMath: atValue(previousStep.latex, counterexample.value),
+        originalResult: String(counterexample.previousLeft),
+        stepMath: atValue(nextStep.latex, counterexample.value),
+        stepResult: String(counterexample.nextLeft),
+      } : undefined,
     },
-  ],
+  };
 };
 
-const clone = (value) => JSON.parse(JSON.stringify(value));
-const compact = (value) => value.replaceAll(' ', '').replaceAll('\\left', '').replaceAll('\\right', '');
+async function requestJson(url, payload) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json();
+  if (!response.ok) throw new Error(body.error || 'The ProofLab service is unavailable.');
+  return body;
+}
 
 export const ProofService = {
   async fetchInitialState() {
-    return clone(MOCK_STATE);
+    const [previousStep, nextStep] = INITIAL_STEPS;
+    const initialEdge = await this.verifyStep(previousStep, nextStep);
+    return { problem: { prompt: previousStep.math, goal: 'Find all values of x', progress: '2 of 4 steps checked' }, steps: INITIAL_STEPS, edges: [{ ...initialEdge, id: 'e1', from: previousStep.id, to: nextStep.id }] };
   },
 
-  async verifyStep(previousStepMath, newStepMath) {
-    await new Promise((resolve) => window.setTimeout(resolve, 460));
-    const previous = compact(previousStepMath);
-    const next = compact(newStepMath);
+  async verifyStep(previousStep, nextStep) {
+    const result = await requestJson('/api/verify', {
+      previousStep: { id: previousStep.id, latex: previousStep.math },
+      nextStep: { id: nextStep.id, latex: nextStep.math },
+    });
+    return edgeFromResult(result, { latex: previousStep.math }, { latex: nextStep.math });
+  },
 
-    if (previous === '(x+2)^2=25' && next === 'x^2+4=25') {
-      return clone(MOCK_STATE.edges[0]);
-    }
-
-    if (
-      (previous === '(x+2)^2=25' && next === 'x^2+4x+4=25') ||
-      (previous === 'x^2+4x+4=25' && next === 'x^2+4x-21=0')
-    ) {
-      return {
-        status: 'valid',
-        label: previous.includes('(x+2)') ? 'expanded square' : 'subtracted 25 from both sides',
-        inspectorData: {
-          title: 'This step preserves the equation',
-          finding: previous.includes('(x+2)')
-            ? 'Nice—every term from the square is present.'
-            : 'Nice—both sides were reduced by 25.',
-        },
-      };
-    }
-
-    return {
-      status: 'inconclusive',
-      label: 'needs rechecking',
-      inspectorData: {
-        title: 'This step needs rechecking',
-        finding: 'The local demo can only check the seeded quadratic transformations. The API verifier will cover the full MVP scope.',
-      },
-    };
+  async explain(previousStep, nextStep, verification, mode) {
+    return requestJson('/api/explain', {
+      previousStep: previousStep.math,
+      nextStep: nextStep.math,
+      verification,
+      mode,
+    });
   },
 };
