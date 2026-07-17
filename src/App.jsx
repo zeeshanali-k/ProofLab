@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ProofService, ENV_MODE } from './api/ProofService';
 import EquationField from './components/EquationField';
 import MathDisplay from './components/MathDisplay';
+import TeachingContent from './components/TeachingContent';
 import { CheckIcon, BrokenIcon, PlusIcon } from './components/Icons';
 
 const STATUS_COPY = {
@@ -315,7 +316,7 @@ export default function App() {
               </div>
               {inspectorMode === 'evidence' && (
                 <>
-                  <p className="finding-text">{selectedEdge.inspectorData.finding}</p>
+                  <TeachingContent className="finding-text" content={selectedEdge.inspectorData.finding} />
                   {selectedEdge.inspectorData.realityCheck && <Counterexample edge={selectedEdge} />}
                   {isInvalid && <div className="inspector-actions"><button className="btn-outline" onClick={() => requestHelp('hint')} disabled={isHelping}>Give me a hint</button><button className="btn-secondary" onClick={() => requestHelp('explain')} disabled={isHelping}>Explain why</button><button className="btn-primary" onClick={() => requestHelp('repair')} disabled={isHelping}>{isHelping ? 'Preparing…' : 'Show repair'}</button></div>}
                   {isValid && <p className="valid-note">The rule detected: <strong>{selectedEdge.label}</strong></p>}
@@ -353,7 +354,7 @@ function HelpPanel({ kind, content, back }) {
   const hint = kind === 'hint';
   return (
     <section className={hint ? 'hint-panel' : 'explain-panel'}>
-      {hint ? <><span className="panel-eyebrow">A SMALL NUDGE</span><p>{content?.question || content?.body}</p></> : <><span className="panel-eyebrow">WHY THIS CHANGES</span><p>{content?.body}</p></>}
+      {hint ? <><span className="panel-eyebrow">{content?.title || 'A SMALL NUDGE'}</span><TeachingContent content={content?.question || content?.body} /></> : <><span className="panel-eyebrow">{content?.title || 'WHY THIS CHANGES'}</span><TeachingContent content={content?.body} /></>}
       <button className="btn-primary" onClick={back}>{hint ? 'I’ll try again' : 'Back to evidence'}</button>
     </section>
   );
@@ -365,7 +366,7 @@ function RepairPanel({ content, nextStep, missingTerm, onApply, onKeep }) {
       <span className="panel-eyebrow">SUGGESTED REPAIR</span>
       <div className="diff-row"><span>Your step</span><MathDisplay math={nextStep?.math || ''} /></div>
       <div className="diff-row suggested"><span>Suggested</span><MathDisplay math={content?.repairLatex || ''} />{missingTerm && <em>{missingTerm}</em>}</div>
-      <p>{content?.body || 'This is a draft. ProofLab will check it before updating your work.'}</p>
+      <TeachingContent content={content?.body || 'This is a draft. ProofLab will check it before updating your work.'} />
       <div className="repair-actions"><button className="btn-secondary" onClick={onKeep}>Keep mine</button><button className="btn-primary" onClick={onApply}>Apply and check</button></div>
     </section>
   );

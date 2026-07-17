@@ -16,6 +16,7 @@ const buildSystemPrompt = () => [
   'Correctness is already decided by the supplied verification evidence. Never override, reinterpret, or add to it.',
   'Use only the equations and evidence supplied. Be concise, encouraging, and specific.',
   'Return exactly one JSON object: {"title":"...","body":"...","question":"... optional","repairLatex":"... optional"}.',
+  'Body may use short Markdown paragraphs, bullets, bold text, and KaTeX wrapped in $...$, but never repeat the title or a UI heading.',
   'For hint mode, ask one guiding question and do not reveal the corrected equation or missing term.',
   'For explain mode, explain the verified counterexample or rule in fewer than 100 words.',
   'For repair mode, describe the verifier-approved repair. Do not invent a different repair.',
