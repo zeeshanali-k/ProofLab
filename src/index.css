@@ -63,6 +63,7 @@ button:disabled { cursor: wait; opacity: .7; }
 .problem-rail { padding: 31px 24px 24px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 0; background: rgba(255,255,255,.35); }
 .rail-eyebrow, .path-intro, .panel-eyebrow { color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .1em; }
 .rail-eyebrow { margin-bottom: 16px; }
+.problem-title { font-size: 15px; line-height: 1.3; letter-spacing: -.01em; margin: -7px 0 16px; }
 .prompt-card { padding-bottom: 25px; border-bottom: 1px solid var(--border); }
 .prompt-label, .goal-label { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
 .prompt-card .math-display { padding: 0; text-align: left; font-size: 25px; }
@@ -72,8 +73,11 @@ button:disabled { cursor: wait; opacity: .7; }
 .progress-dot { width: 8px; height: 8px; background: #d7dde7; border-radius: 50%; }
 .progress-dot.checked { background: var(--valid); }
 .progress-dot.error { background: var(--invalid); }
+.progress-dot.warning { background: var(--warning); }
 .progress-text { color: var(--muted); font-size: 12px; margin-left: 3px; }
-.reset-example { margin-top: auto; padding: 8px 0; border: 0; background: transparent; color: var(--muted); text-align: left; font-size: 13px; }
+.problem-actions { margin-top: auto; display: grid; gap: 6px; }
+.choose-problem, .reset-example { padding: 8px 0; border: 0; background: transparent; color: var(--muted); text-align: left; font-size: 13px; }
+.choose-problem { color: var(--accent); font-weight: 700; }
 .reset-example:hover { color: var(--accent); }
 
 .reasoning-path { min-width: 0; overflow-y: auto; padding: 25px 32px 56px; position: relative; }
@@ -138,6 +142,12 @@ button.edge-container.selected .edge-line { box-shadow: 0 0 0 7px rgba(91, 92, 2
 @keyframes spin { to { transform: rotate(360deg); } }
 .sr-only { clip: rect(0, 0, 0, 0); clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
 
+.problem-picker-backdrop { align-items: center; background: rgba(23, 32, 51, .45); display: flex; inset: 0; justify-content: center; padding: 24px; position: fixed; z-index: 20; }
+.problem-picker { background: var(--card); border-radius: 18px; box-shadow: 0 24px 70px rgba(18, 29, 48, .3); max-height: calc(100vh - 48px); overflow-y: auto; padding: 24px; width: min(760px, 100%); }
+.picker-header { align-items: flex-start; display: flex; justify-content: space-between; margin-bottom: 20px; }.picker-header h2 { font-size: 21px; letter-spacing: -.03em; margin: 5px 0 0; }
+.example-grid { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }.example-card { background: #fbfcff; border: 1px solid var(--border); border-radius: 11px; color: var(--ink); display: flex; flex-direction: column; min-height: 152px; padding: 14px; text-align: left; transition: border-color .15s, box-shadow .15s, transform .15s; }.example-card:hover { border-color: var(--accent); box-shadow: var(--shadow-sm); transform: translateY(-1px); }.example-card > span { color: var(--accent); font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }.example-card strong { font-size: 14px; margin: 5px 0 0; }.example-card .math-display { font-size: 19px; padding: 12px 0; text-align: left; }.example-card small { color: var(--muted); font-size: 11px; line-height: 1.4; margin-top: auto; }
+.custom-problem-form { border-top: 1px solid var(--border); display: grid; gap: 12px; margin-top: 23px; padding-top: 20px; }.custom-problem-form label { color: var(--muted); display: grid; font-size: 11px; font-weight: 700; gap: 6px; }.custom-problem-form input { background: #fff; border: 1px solid var(--border); border-radius: 8px; color: var(--ink); min-height: 37px; padding: 8px 10px; }.custom-problem-form input:focus { border-color: var(--accent); outline: none; box-shadow: var(--focus); }.custom-problem-form .equation-field { min-height: 49px; font-size: 21px; }.form-error { color: #bd3d42; font-size: 12px; margin: 0; }.picker-actions { align-items: center; display: flex; gap: 9px; justify-content: flex-end; }
+
 @media (max-width: 1099px) {
   .workspace { grid-template-columns: minmax(0, 1fr) 344px; }
   .problem-toggle { display: block; }
@@ -150,6 +160,7 @@ button.edge-container.selected .edge-line { box-shadow: 0 0 0 7px rgba(91, 92, 2
   .workspace { display: block; overflow: visible; }.reasoning-path { overflow: visible; padding: 22px 16px 160px; }.path-intro { margin-bottom: 14px; }.math-display { font-size: 24px; }
   .transition-inspector { border: 1px solid var(--border); border-radius: 18px 18px 0 0; box-shadow: 0 -10px 28px rgba(23,32,51,.13); display: none; max-height: min(73vh, 590px); position: fixed; bottom: 0; left: 0; right: 0; z-index: 7; padding: 23px 20px 20px; }.transition-inspector.is-open { display: flex; }.transition-inspector::before { content: ''; width: 35px; height: 4px; border-radius: 4px; background: #ccd3df; position: absolute; left: calc(50% - 17px); top: 8px; }.inspector-actions { margin-top: 4px; }.counterexample-card { margin-bottom: 8px; }
   .problem-rail.is-open { top: 64px; right: 0; width: auto; }.card-tools { opacity: 1; }.edge-label { opacity: 1; transform: translateX(62px); }.pending-edge { height: 26px; }
+  .problem-picker-backdrop { align-items: flex-end; padding: 0; }.problem-picker { border-radius: 18px 18px 0 0; max-height: 88vh; padding: 20px 16px; }.example-grid { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } }

@@ -25,10 +25,38 @@ describe('MathJsVerifier', () => {
     });
   });
 
+  it('generates a repair that matches the active square, not a fixed example', async () => {
+    const result = await verifier.verifyTransition(
+      step('s1', '(x - 3)^2 = 16'),
+      step('s2', 'x^2 + 9 = 16'),
+    );
+    expect(result).toMatchObject({
+      status: 'invalid',
+      likelyMissingTerm: '-6x',
+      verifiedRepairLatex: 'x^2 - 6x + 9 = 16',
+    });
+  });
+
   it('recognizes balanced rearrangement after the repair', async () => {
     const result = await verifier.verifyTransition(
       step('s2', 'x^2 + 4x + 4 = 25'),
       step('s3', 'x^2 + 4x - 21 = 0'),
+    );
+    expect(result).toMatchObject({ status: 'valid', rule: 'balance-operation' });
+  });
+
+  it('supports a linear balance operation', async () => {
+    const result = await verifier.verifyTransition(
+      step('s1', '3x + 5 = 20'),
+      step('s2', '3x = 15'),
+    );
+    expect(result).toMatchObject({ status: 'valid', rule: 'balance-operation' });
+  });
+
+  it('supports dividing both sides by a non-zero numeric constant', async () => {
+    const result = await verifier.verifyTransition(
+      step('s1', '2x + 2 = 6'),
+      step('s2', 'x + 1 = 3'),
     );
     expect(result).toMatchObject({ status: 'valid', rule: 'balance-operation' });
   });

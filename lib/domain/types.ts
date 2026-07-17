@@ -40,3 +40,14 @@ export interface ExplanationResult {
   question?: string;
   repairLatex?: string;
 }
+
+export interface TeachingRequest {
+  previousStep: string;
+  nextStep: string;
+  verification: VerificationResult;
+  mode: ExplainMode;
+}
+
+export interface TeachingProvider {
+  generate(request: TeachingRequest): Promise<ExplanationResult>;
+}

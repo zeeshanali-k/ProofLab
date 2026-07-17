@@ -24,7 +24,10 @@ const equationsAreEquivalent = (previous: DecodedEquation, next: DecodedEquation
   const comparisons = SAMPLE_VALUES.map((value) => ({ previous: residual(previous, value), next: residual(next, value) }));
   const sameResidual = comparisons.every(({ previous: first, next: second }) => closeEnough(first, second));
   const reversedResidual = comparisons.every(({ previous: first, next: second }) => closeEnough(first, -second));
-  return sameResidual || reversedResidual;
+  const scaleSample = comparisons.find(({ next }) => !closeEnough(next, 0));
+  const numericScale = scaleSample ? scaleSample.previous / scaleSample.next : 1;
+  const scaledResidual = Boolean(scaleSample) && !closeEnough(numericScale, 0) && comparisons.every(({ previous: first, next: second }) => closeEnough(first, numericScale * second));
+  return sameResidual || reversedResidual || scaledResidual;
 };
 
 const counterexampleFor = (previous: DecodedEquation, next: DecodedEquation): Counterexample | undefined => {
@@ -69,6 +72,39 @@ const hasMissingSquareTerm = (previous: DecodedEquation, next: DecodedEquation) 
   return coefficient === 1 ? 'x' : coefficient === -1 ? '-x' : `${coefficient}x`;
 };
 
+const expandedSquareLatex = (previous: DecodedEquation) => {
+  const parameter = squareParameter(previous);
+  if (parameter === undefined) return undefined;
+  const coefficient = 2 * parameter;
+  const middle = coefficient > 0 ? ` + ${coefficient}x` : ` - ${Math.abs(coefficient)}x`;
+  return `x^2${middle} + ${parameter * parameter} = ${previous.right}`;
+};
+
+const isBalanceOperation = (previous: DecodedEquation, next: DecodedEquation) => {
+  const differences = SAMPLE_VALUES.map((value) => {
+    const before = sideValues(previous, value);
+    const after = sideValues(next, value);
+    return { left: before.left - after.left, right: before.right - after.right };
+  });
+  if (differences.every(({ left, right }) => closeEnough(left, right)) && differences.some(({ left }) => !closeEnough(left, 0))) return true;
+
+  const sampleWithScale = SAMPLE_VALUES.find((value) => {
+    const before = sideValues(previous, value);
+    const after = sideValues(next, value);
+    return !closeEnough(after.left, 0) && !closeEnough(after.right, 0) && closeEnough(before.left / after.left, before.right / after.right);
+  });
+  if (sampleWithScale === undefined) return false;
+  const before = sideValues(previous, sampleWithScale);
+  const after = sideValues(next, sampleWithScale);
+  const scale = before.left / after.left;
+  if (closeEnough(scale, 0) || closeEnough(scale, 1)) return false;
+  return SAMPLE_VALUES.every((value) => {
+    const currentBefore = sideValues(previous, value);
+    const currentAfter = sideValues(next, value);
+    return closeEnough(currentBefore.left, scale * currentAfter.left) && closeEnough(currentBefore.right, scale * currentAfter.right);
+  });
+};
+
 const resultForEquivalentTransition = (previous: DecodedEquation, next: DecodedEquation): VerificationResult => {
   const parameter = squareParameter(previous);
   if (parameter !== undefined) {
@@ -78,7 +114,7 @@ const resultForEquivalentTransition = (previous: DecodedEquation, next: DecodedE
       summary: 'Nice—every term from the square is present.',
     };
   }
-  if (next.right === '0' && previous.right !== '0') {
+  if (isBalanceOperation(previous, next)) {
     return {
       status: 'valid',
       rule: 'balance-operation',
@@ -141,7 +177,7 @@ export class MathJsVerifier implements VerificationProvider {
           summary: likelyMissingTerm ? 'The expanded expression is missing a term.' : 'These equations are not equivalent.',
           counterexample,
           likelyMissingTerm,
-          verifiedRepairLatex: likelyMissingTerm ? 'x^2 + 4x + 4 = 25' : undefined,
+          verifiedRepairLatex: likelyMissingTerm ? expandedSquareLatex(previous) : undefined,
         };
       }
 

@@ -34,10 +34,13 @@ export default function App() {
   const [inspectorMode, setInspectorMode] = useState('evidence');
   const [helpContent, setHelpContent] = useState(null);
   const [isProblemOpen, setIsProblemOpen] = useState(false);
+  const [isProblemPickerOpen, setIsProblemPickerOpen] = useState(false);
+  const [isLoadingProblem, setIsLoadingProblem] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [announcement, setAnnouncement] = useState('');
 
   useEffect(() => {
-    ProofService.fetchInitialState().then(setData);
+    ProofService.fetchInitialState().then(setData).catch((error) => setLoadError(error instanceof Error ? error.message : 'ProofLab could not load a problem.'));
   }, []);
 
   const selectedEdge = useMemo(
@@ -51,6 +54,31 @@ export default function App() {
     setHelpContent(null);
   };
 
+  function setBoardState(next) {
+    setData(next);
+    const selected = next.edges.find((edge) => edge.status === 'invalid') ?? next.edges.at(-1);
+    setSelectedEdgeId(selected?.id ?? null);
+    setComposer(null);
+    setHelpContent(null);
+    setInspectorMode('evidence');
+  }
+
+  const loadProblem = async (definition, custom = false) => {
+    setIsLoadingProblem(true);
+    setLoadError('');
+    try {
+      const next = custom ? await ProofService.createCustomProblem(definition) : await ProofService.loadProblem(definition);
+      setBoardState(next);
+      setAnnouncement(`${next.problem.title} is ready to explore.`);
+      setIsProblemPickerOpen(false);
+      setIsProblemOpen(false);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'ProofLab could not load this problem.');
+    } finally {
+      setIsLoadingProblem(false);
+    }
+  };
+
   const openComposer = (mode, step = null) => {
     setComposer({ mode, stepId: step?.id, value: step?.math ?? '' });
     setInspectorMode('evidence');
@@ -58,30 +86,34 @@ export default function App() {
 
   const applyVerification = async ({ previous, next, stepId, edgeId, addStep }) => {
     setIsChecking(true);
-    const result = await ProofService.verifyStep(previous, next);
-    const edge = { ...result, id: edgeId, from: previous.id, to: next.id };
-
-    setData((current) => ({
-      ...current,
-      steps: addStep
-        ? [...current.steps, { ...next, status: result.status, timestamp: 'Just checked' }]
-        : current.steps.map((step) => (step.id === stepId ? { ...step, status: result.status, math: next.math } : step)),
-      edges: current.edges.some((candidate) => candidate.id === edgeId)
-        ? current.edges.map((candidate) => (candidate.id === edgeId ? edge : candidate))
-        : [...current.edges, edge],
-    }));
-    setSelectedEdgeId(edgeId);
-    setInspectorMode('evidence');
-    setHelpContent(null);
-    setAnnouncement(
-      result.status === 'invalid'
-        ? `${next.type} is invalid. Counterexample available.`
-        : result.status === 'valid'
-          ? `${next.type} is checked and valid.`
-          : `${next.type} needs rechecking.`,
-    );
-    setIsChecking(false);
-    setComposer(null);
+    try {
+      const result = await ProofService.verifyStep(previous, next);
+      const edge = { ...result, id: edgeId, from: previous.id, to: next.id };
+      setData((current) => ({
+        ...current,
+        steps: addStep
+          ? [...current.steps, { ...next, status: result.status, timestamp: 'Just checked' }]
+          : current.steps.map((step) => (step.id === stepId ? { ...step, status: result.status, math: next.math } : step)),
+        edges: current.edges.some((candidate) => candidate.id === edgeId)
+          ? current.edges.map((candidate) => (candidate.id === edgeId ? edge : candidate))
+          : [...current.edges, edge],
+      }));
+      setSelectedEdgeId(edgeId);
+      setInspectorMode('evidence');
+      setHelpContent(null);
+      setAnnouncement(
+        result.status === 'invalid'
+          ? `${next.type} is invalid. Counterexample available.`
+          : result.status === 'valid'
+            ? `${next.type} is checked and valid.`
+            : `${next.type} needs rechecking.`,
+      );
+      setComposer(null);
+    } catch (error) {
+      setAnnouncement(error instanceof Error ? error.message : 'ProofLab could not check this step.');
+    } finally {
+      setIsChecking(false);
+    }
   };
 
   const submitComposer = async () => {
@@ -118,7 +150,11 @@ export default function App() {
     const previous = data.steps[stepIndex - 1];
     if (!faultyStep || !previous || isChecking) return;
 
-    const math = helpContent?.repairLatex || selectedEdge.verification?.verifiedRepairLatex || 'x^2 + 4x + 4 = 25';
+    const math = helpContent?.repairLatex || selectedEdge.verification?.verifiedRepairLatex;
+    if (!math) {
+      setAnnouncement('ProofLab does not have a verified repair for this step yet.');
+      return;
+    }
     const next = { ...faultyStep, math, status: 'checking' };
     setData((current) => ({
       ...current,
@@ -159,19 +195,20 @@ export default function App() {
   };
 
   const resetExample = async () => {
-    const next = await ProofService.fetchInitialState();
-    setData(next);
-    setSelectedEdgeId('e1');
-    setComposer(null);
-    setInspectorMode('evidence');
-    setHelpContent(null);
-    setAnnouncement('The missing middle term example has been reset.');
+    if (!data.problem) return;
+    await loadProblem(data.problem);
+    setAnnouncement(`${data.problem.title} has been reset.`);
   };
 
-  if (!data.problem) return <div className="loading-lab">Opening your algebra lab…</div>;
+  if (!data.problem) return <div className="loading-lab">{loadError || 'Opening your algebra lab…'}</div>;
 
   const isInvalid = selectedEdge?.status === 'invalid';
   const isValid = selectedEdge?.status === 'valid';
+  const selectedNextStep = data.steps.find((step) => step.id === selectedEdge?.to);
+  const checkedCount = data.steps.filter((step) => step.status !== 'root' && step.status !== 'checking').length;
+  const expectedCount = Math.max(data.problem.seedSteps?.length ?? 0, checkedCount);
+  const progress = expectedCount ? `${checkedCount} of ${expectedCount} steps checked` : checkedCount ? `${checkedCount} step${checkedCount === 1 ? '' : 's'} checked` : 'Add a step to begin';
+  const progressDots = data.edges.length ? data.edges.slice(0, 4).map((edge) => edge.status) : ['pending'];
 
   return (
     <div className="app-container">
@@ -183,7 +220,7 @@ export default function App() {
             </svg>
             ProofLab
           </div>
-          <span className="breadcrumb">Algebra Lab <span>/</span> Quadratics</span>
+          <span className="breadcrumb">Algebra Lab <span>/</span> {data.problem.category}</span>
         </div>
         <div className="header-right">
           <span className="save-status"><span className="save-dot" /> Saved locally</span>
@@ -195,17 +232,21 @@ export default function App() {
 
       <main className="workspace">
         <aside className={`problem-rail ${isProblemOpen ? 'is-open' : ''}`}>
-          <div className="rail-eyebrow">TODAY&apos;S PROBLEM</div>
+          <div className="rail-eyebrow">CURRENT PROBLEM</div>
+          <h1 className="problem-title">{data.problem.title}</h1>
           <div className="prompt-card">
             <div className="prompt-label">Solve</div>
             <MathDisplay math={data.problem.prompt} />
           </div>
           <div className="goal-section"><div className="goal-label">Goal</div><div className="goal-text">{data.problem.goal}</div></div>
-          <div className="progress-indicator" aria-label={data.problem.progress}>
-            <span className="progress-dot checked" /><span className="progress-dot error" /><span className="progress-dot" />
-            <span className="progress-text">{data.problem.progress}</span>
+          <div className="progress-indicator" aria-label={progress}>
+            {progressDots.map((status, index) => <span key={`${status}-${index}`} className={`progress-dot ${status === 'valid' ? 'checked' : status === 'invalid' ? 'error' : status === 'unsupported' || status === 'inconclusive' ? 'warning' : ''}`} />)}
+            <span className="progress-text">{progress}</span>
           </div>
-          <button className="reset-example" onClick={resetExample}>Reset example</button>
+          <div className="problem-actions">
+            <button className="choose-problem" onClick={() => setIsProblemPickerOpen(true)} disabled={isLoadingProblem}>Choose a problem</button>
+            <button className="reset-example" onClick={resetExample} disabled={isLoadingProblem}>Reset {data.problem.isCustom ? 'my problem' : 'example'}</button>
+          </div>
         </aside>
 
         <section className="reasoning-path" aria-label="Reasoning path">
@@ -283,11 +324,12 @@ export default function App() {
               )}
               {inspectorMode === 'hint' && <HelpPanel kind="hint" content={helpContent} back={() => setInspectorMode('evidence')} />}
               {inspectorMode === 'explain' && <HelpPanel kind="explain" content={helpContent} back={() => setInspectorMode('evidence')} />}
-              {inspectorMode === 'repair' && <RepairPanel content={helpContent} onApply={applyRepair} onKeep={() => setInspectorMode('evidence')} />}
+              {inspectorMode === 'repair' && <RepairPanel content={helpContent} nextStep={selectedNextStep} missingTerm={selectedEdge.verification?.likelyMissingTerm} onApply={applyRepair} onKeep={() => setInspectorMode('evidence')} />}
             </>
           ) : <div className="inspector-empty"><p>Select a transition to inspect its evidence.</p></div>}
         </aside>
       </main>
+      {isProblemPickerOpen && <ProblemPicker problems={ProofService.getProblemLibrary()} isLoading={isLoadingProblem} onClose={() => setIsProblemPickerOpen(false)} onSelect={(problem) => loadProblem(problem)} onCustom={(problem) => loadProblem(problem, true)} />}
       <div className="sr-only" aria-live="polite">{announcement}</div>
     </div>
   );
@@ -311,20 +353,53 @@ function HelpPanel({ kind, content, back }) {
   const hint = kind === 'hint';
   return (
     <section className={hint ? 'hint-panel' : 'explain-panel'}>
-      {hint ? <><span className="panel-eyebrow">A SMALL NUDGE</span><p>{content?.question || content?.body}</p></> : <><span className="panel-eyebrow">WHY THIS CHANGES</span><MathDisplay math={'(x + 2)^2 = (x + 2)(x + 2)'} /><MathDisplay math={'= x^2 + 2x + 2x + 4'} /><MathDisplay math={'= x^2 + 4x + 4'} /><p>{content?.body}</p></>}
+      {hint ? <><span className="panel-eyebrow">A SMALL NUDGE</span><p>{content?.question || content?.body}</p></> : <><span className="panel-eyebrow">WHY THIS CHANGES</span><p>{content?.body}</p></>}
       <button className="btn-primary" onClick={back}>{hint ? 'I’ll try again' : 'Back to evidence'}</button>
     </section>
   );
 }
 
-function RepairPanel({ content, onApply, onKeep }) {
+function RepairPanel({ content, nextStep, missingTerm, onApply, onKeep }) {
   return (
     <section className="repair-panel">
       <span className="panel-eyebrow">SUGGESTED REPAIR</span>
-      <div className="diff-row"><span>Your step</span><MathDisplay math={'x^2 + 4 = 25'} /></div>
-      <div className="diff-row suggested"><span>Suggested</span><MathDisplay math={content?.repairLatex || 'x^2 + 4x + 4 = 25'} /><em>+4x</em></div>
+      <div className="diff-row"><span>Your step</span><MathDisplay math={nextStep?.math || ''} /></div>
+      <div className="diff-row suggested"><span>Suggested</span><MathDisplay math={content?.repairLatex || ''} />{missingTerm && <em>{missingTerm}</em>}</div>
       <p>{content?.body || 'This is a draft. ProofLab will check it before updating your work.'}</p>
       <div className="repair-actions"><button className="btn-secondary" onClick={onKeep}>Keep mine</button><button className="btn-primary" onClick={onApply}>Apply and check</button></div>
     </section>
+  );
+}
+
+function ProblemPicker({ problems, isLoading, onClose, onSelect, onCustom }) {
+  const [custom, setCustom] = useState({ title: '', prompt: '', goal: '' });
+  const [error, setError] = useState('');
+
+  const submitCustom = (event) => {
+    event.preventDefault();
+    if (!custom.prompt.trim()) {
+      setError('Start with an equation using x, such as 3x + 5 = 20.');
+      return;
+    }
+    onCustom(custom);
+  };
+
+  return (
+    <div className="problem-picker-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="problem-picker" role="dialog" aria-modal="true" aria-labelledby="problem-picker-title" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="picker-header"><div><span className="panel-eyebrow">PROBLEM LIBRARY</span><h2 id="problem-picker-title">Choose a starting point</h2></div><button className="icon-btn" onClick={onClose} aria-label="Close problem picker">×</button></div>
+        <div className="example-grid">
+          {problems.map((problem) => <button className="example-card" key={problem.id} onClick={() => onSelect(problem)} disabled={isLoading}><span>{problem.category}</span><strong>{problem.title}</strong><MathDisplay math={problem.prompt} /><small>{problem.goal}</small></button>)}
+        </div>
+        <form className="custom-problem-form" onSubmit={submitCustom}>
+          <span className="panel-eyebrow">START YOUR OWN</span>
+          <label>Problem name<input value={custom.title} onChange={(event) => setCustom((current) => ({ ...current, title: event.target.value }))} placeholder="e.g. My homework question" /></label>
+          <label>Starting equation<EquationField value={custom.prompt} onChange={(value) => setCustom((current) => ({ ...current, prompt: value }))} ariaLabel="Starting equation" /></label>
+          <label>What are you trying to do?<input value={custom.goal} onChange={(event) => setCustom((current) => ({ ...current, goal: event.target.value }))} placeholder="e.g. Find every value of x" /></label>
+          {error && <p className="form-error">{error}</p>}
+          <div className="picker-actions"><button type="button" className="btn-text" onClick={onClose}>Cancel</button><button className="btn-primary" disabled={isLoading}>{isLoading ? 'Loading…' : 'Start problem'}</button></div>
+        </form>
+      </section>
+    </div>
   );
 }
