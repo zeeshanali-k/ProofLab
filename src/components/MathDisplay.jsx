@@ -19,5 +19,5 @@ export default function MathDisplay({ math, className = "math-display" }) {
     }
   }, [math]);
 
-  return <div ref={containerRef} className={className} />;
+  return <div ref={containerRef} className={className} role="math" aria-label={`Equation: ${math}`} />;
 }
