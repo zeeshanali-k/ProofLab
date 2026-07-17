@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ProofService, ENV_MODE } from './api/ProofService';
 import EquationField from './components/EquationField';
 import MathDisplay from './components/MathDisplay';
@@ -34,11 +34,14 @@ export default function App() {
   const [isHelping, setIsHelping] = useState(false);
   const [inspectorMode, setInspectorMode] = useState('evidence');
   const [helpContent, setHelpContent] = useState(null);
+  const [helpEdgeId, setHelpEdgeId] = useState(null);
   const [isProblemOpen, setIsProblemOpen] = useState(false);
   const [isProblemPickerOpen, setIsProblemPickerOpen] = useState(false);
   const [isLoadingProblem, setIsLoadingProblem] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [announcement, setAnnouncement] = useState('');
+  const helpRequestId = useRef(0);
+  const clientIdSequence = useRef(0);
 
   useEffect(() => {
     ProofService.fetchInitialState().then(setData).catch((error) => setLoadError(error instanceof Error ? error.message : 'ProofLab could not load a problem.'));
@@ -52,15 +55,27 @@ export default function App() {
   const chooseEdge = (id) => {
     setSelectedEdgeId(id);
     setInspectorMode('evidence');
-    setHelpContent(null);
+    clearTeachingContent();
   };
+
+  function clearTeachingContent() {
+    helpRequestId.current += 1;
+    setHelpContent(null);
+    setHelpEdgeId(null);
+    setIsHelping(false);
+  }
+
+  function nextClientId(prefix) {
+    clientIdSequence.current += 1;
+    return `${prefix}-local-${clientIdSequence.current}`;
+  }
 
   function setBoardState(next) {
     setData(next);
     const selected = next.edges.find((edge) => edge.status === 'invalid') ?? next.edges.at(-1);
     setSelectedEdgeId(selected?.id ?? null);
     setComposer(null);
-    setHelpContent(null);
+    clearTeachingContent();
     setInspectorMode('evidence');
   }
 
@@ -83,6 +98,7 @@ export default function App() {
   const openComposer = (mode, step = null) => {
     setComposer({ mode, stepId: step?.id, value: step?.math ?? '' });
     setInspectorMode('evidence');
+    clearTeachingContent();
   };
 
   const applyVerification = async ({ previous, next, stepId, edgeId, addStep }) => {
@@ -101,7 +117,7 @@ export default function App() {
       }));
       setSelectedEdgeId(edgeId);
       setInspectorMode('evidence');
-      setHelpContent(null);
+      clearTeachingContent();
       setAnnouncement(
         result.status === 'invalid'
           ? `${next.type} is invalid. Counterexample available.`
@@ -110,8 +126,10 @@ export default function App() {
             : `${next.type} needs rechecking.`,
       );
       setComposer(null);
+      return true;
     } catch (error) {
       setAnnouncement(error instanceof Error ? error.message : 'ProofLab could not check this step.');
+      return false;
     } finally {
       setIsChecking(false);
     }
@@ -128,20 +146,22 @@ export default function App() {
 
       const edge = data.edges.find((candidate) => candidate.to === existing.id);
       const next = { ...existing, math: composer.value, status: 'checking' };
+      const boardBeforeEdit = data;
       setData((current) => ({
         ...current,
         steps: current.steps.map((step, index) => (index >= stepIndex ? { ...step, status: 'checking' } : step)),
         edges: current.edges.map((candidate) => (candidate.from === previous.id ? { ...candidate, status: 'checking' } : candidate)),
       }));
-      await applyVerification({ previous, next, stepId: existing.id, edgeId: edge?.id ?? `e${Date.now()}`, addStep: false });
+      const verified = await applyVerification({ previous, next, stepId: existing.id, edgeId: edge?.id ?? nextClientId('e'), addStep: false });
+      if (!verified) setData(boardBeforeEdit);
       return;
     }
 
     const previous = data.steps.at(-1);
     if (!previous) return;
     const order = data.steps.length + 1;
-    const next = { id: `s${Date.now()}`, type: `STEP ${order}`, math: composer.value, status: 'checking' };
-    await applyVerification({ previous, next, stepId: next.id, edgeId: `e${Date.now()}`, addStep: true });
+    const next = { id: nextClientId('s'), type: `STEP ${order}`, math: composer.value, status: 'checking' };
+    await applyVerification({ previous, next, stepId: next.id, edgeId: nextClientId('e'), addStep: true });
   };
 
   const applyRepair = async () => {
@@ -151,18 +171,20 @@ export default function App() {
     const previous = data.steps[stepIndex - 1];
     if (!faultyStep || !previous || isChecking) return;
 
-    const math = helpContent?.repairLatex || selectedEdge.verification?.verifiedRepairLatex;
+    const math = (helpEdgeId === selectedEdge.id ? helpContent?.repairLatex : undefined) || selectedEdge.verification?.verifiedRepairLatex;
     if (!math) {
       setAnnouncement('ProofLab does not have a verified repair for this step yet.');
       return;
     }
     const next = { ...faultyStep, math, status: 'checking' };
+    const boardBeforeRepair = data;
     setData((current) => ({
       ...current,
       steps: current.steps.map((step, index) => (index >= stepIndex ? { ...step, status: 'checking' } : step)),
       edges: current.edges.map((edge) => (edge.id === selectedEdge.id ? { ...edge, status: 'checking' } : edge)),
     }));
-    await applyVerification({ previous, next, stepId: faultyStep.id, edgeId: selectedEdge.id, addStep: false });
+    const verified = await applyVerification({ previous, next, stepId: faultyStep.id, edgeId: selectedEdge.id, addStep: false });
+    if (!verified) setData(boardBeforeRepair);
   };
 
   const requestHelp = async (mode) => {
@@ -170,15 +192,19 @@ export default function App() {
     const previousStep = data.steps.find((step) => step.id === selectedEdge.from);
     const nextStep = data.steps.find((step) => step.id === selectedEdge.to);
     if (!previousStep || !nextStep || !selectedEdge.verification) return;
+    const requestId = helpRequestId.current + 1;
+    helpRequestId.current = requestId;
     setIsHelping(true);
     try {
       const content = await ProofService.explain(previousStep, nextStep, selectedEdge.verification, mode);
+      if (helpRequestId.current !== requestId) return;
       setHelpContent(content);
+      setHelpEdgeId(selectedEdge.id);
       setInspectorMode(mode);
     } catch (error) {
-      setAnnouncement(error instanceof Error ? error.message : 'Teaching help is unavailable right now.');
+      if (helpRequestId.current === requestId) setAnnouncement(error instanceof Error ? error.message : 'Teaching help is unavailable right now.');
     } finally {
-      setIsHelping(false);
+      if (helpRequestId.current === requestId) setIsHelping(false);
     }
   };
 
@@ -206,6 +232,7 @@ export default function App() {
   const isInvalid = selectedEdge?.status === 'invalid';
   const isValid = selectedEdge?.status === 'valid';
   const selectedNextStep = data.steps.find((step) => step.id === selectedEdge?.to);
+  const repairLatex = helpEdgeId === selectedEdge?.id ? helpContent?.repairLatex : selectedEdge?.verification?.verifiedRepairLatex;
   const checkedCount = data.steps.filter((step) => step.status !== 'root' && step.status !== 'checking').length;
   const expectedCount = Math.max(data.problem.seedSteps?.length ?? 0, checkedCount);
   const progress = expectedCount ? `${checkedCount} of ${expectedCount} steps checked` : checkedCount ? `${checkedCount} step${checkedCount === 1 ? '' : 's'} checked` : 'Add a step to begin';
@@ -325,7 +352,7 @@ export default function App() {
               )}
               {inspectorMode === 'hint' && <HelpPanel kind="hint" content={helpContent} back={() => setInspectorMode('evidence')} />}
               {inspectorMode === 'explain' && <HelpPanel kind="explain" content={helpContent} back={() => setInspectorMode('evidence')} />}
-              {inspectorMode === 'repair' && <RepairPanel content={helpContent} nextStep={selectedNextStep} missingTerm={selectedEdge.verification?.likelyMissingTerm} onApply={applyRepair} onKeep={() => setInspectorMode('evidence')} />}
+              {inspectorMode === 'repair' && <RepairPanel content={helpContent} nextStep={selectedNextStep} missingTerm={selectedEdge.verification?.likelyMissingTerm} repairLatex={repairLatex} isChecking={isChecking} onApply={applyRepair} onKeep={() => setInspectorMode('evidence')} />}
             </>
           ) : <div className="inspector-empty"><p>Select a transition to inspect its evidence.</p></div>}
         </aside>
@@ -360,14 +387,14 @@ function HelpPanel({ kind, content, back }) {
   );
 }
 
-function RepairPanel({ content, nextStep, missingTerm, onApply, onKeep }) {
+function RepairPanel({ content, nextStep, missingTerm, repairLatex, isChecking, onApply, onKeep }) {
   return (
     <section className="repair-panel">
       <span className="panel-eyebrow">SUGGESTED REPAIR</span>
       <div className="diff-row"><span>Your step</span><MathDisplay math={nextStep?.math || ''} /></div>
-      <div className="diff-row suggested"><span>Suggested</span><MathDisplay math={content?.repairLatex || ''} />{missingTerm && <em>{missingTerm}</em>}</div>
+      <div className="diff-row suggested"><span>Suggested</span>{repairLatex ? <MathDisplay math={repairLatex} /> : <span className="repair-unavailable">No repair candidate was returned.</span>}{missingTerm && <em>{missingTerm}</em>}</div>
       <TeachingContent content={content?.body || 'This is a draft. ProofLab will check it before updating your work.'} />
-      <div className="repair-actions"><button className="btn-secondary" onClick={onKeep}>Keep mine</button><button className="btn-primary" onClick={onApply}>Apply and check</button></div>
+      <div className="repair-actions"><button className="btn-secondary" onClick={onKeep} disabled={isChecking}>Keep mine</button><button className="btn-primary" onClick={onApply} disabled={!repairLatex || isChecking}>{isChecking ? 'Checking…' : 'Apply and check'}</button></div>
     </section>
   );
 }

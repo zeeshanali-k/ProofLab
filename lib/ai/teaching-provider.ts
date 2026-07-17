@@ -19,7 +19,7 @@ const buildSystemPrompt = () => [
   'Body may use short Markdown paragraphs, bullets, bold text, and KaTeX wrapped in $...$, but never repeat the title or a UI heading.',
   'For hint mode, ask one guiding question and do not reveal the corrected equation or missing term.',
   'For explain mode, explain the verified counterexample or rule in fewer than 100 words.',
-  'For repair mode, describe the verifier-approved repair. Do not invent a different repair.',
+  'For repair mode, include one proposed repairLatex equation. It is a draft and will be verified before ProofLab applies it.',
 ].join(' ');
 
 const buildUserPrompt = ({ previousStep, nextStep, verification, mode }: TeachingRequest) => JSON.stringify({
@@ -45,9 +45,12 @@ const parseModelJson = (content: string, request: TeachingRequest): ExplanationR
 
   const response: ExplanationResult = { title: candidate.title.slice(0, 90), body: candidate.body.slice(0, 700) };
   if (request.mode === 'hint' && typeof candidate.question === 'string') response.question = candidate.question.slice(0, 400);
-  // The verifier is the authority. Do not let a model alter the proposed repair.
-  if (request.mode === 'repair' && request.verification.verifiedRepairLatex) {
-    response.repairLatex = request.verification.verifiedRepairLatex;
+  if (request.mode === 'repair') {
+    if (typeof candidate.repairLatex === 'string' && candidate.repairLatex.trim()) {
+      response.repairLatex = candidate.repairLatex.trim().slice(0, 400);
+    } else if (request.verification.verifiedRepairLatex) {
+      response.repairLatex = request.verification.verifiedRepairLatex;
+    }
   }
   return response;
 };
