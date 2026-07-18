@@ -147,7 +147,11 @@ export class LocalEvidenceTeachingProvider implements TeachingProvider {
 
 export const getTeachingProvider = (): TeachingProvider => {
   const provider = (process.env.AI_PROVIDER ?? 'ollama') as AIProviderName;
-  if (provider === 'ollama') return new OllamaTeachingProvider();
+  console.log(`Configured AI provider: ${provider}`);
+  if (provider === 'ollama') {
+    console.log('Using Ollama as the AI teaching provider.');
+    return new OllamaTeachingProvider();
+  }
   if (provider === 'openai-compatible') return new OpenAICompatibleTeachingProvider();
   if (provider === 'local') return new LocalEvidenceTeachingProvider();
   throw new TeachingProviderError('AI_PROVIDER must be ollama, openai-compatible, or local.', 500);
