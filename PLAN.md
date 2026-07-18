@@ -1,5 +1,7 @@
 # ProofLab implementation plan
 
+> **Implementation update — calculus and complex numbers:** The original algebra-only MVP below has been extended. ProofLab now uses a single FastAPI/SymPy backend (not Next.js API routes or Math.js), retains Ollama/OpenAI-compatible/local teaching-provider selection in Python, and adds task-scoped polynomial derivative, complex-simplification, and simple imaginary-root workflows. Where this historical plan conflicts with the current README, the README and FastAPI OpenAPI contract are authoritative.
+
 ## 1. Product definition
 
 ProofLab is a visual algebra-reasoning debugger for students roughly aged 13–18. Students enter a sequence of algebra steps and see each step as a card in a connected reasoning chain. ProofLab verifies each transition, identifies the first invalid transition, shows concrete evidence, and offers an optional AI hint, explanation, or repair.

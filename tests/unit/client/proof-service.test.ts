@@ -10,6 +10,9 @@ describe('problem library', () => {
       'linear-balance',
       'negative-square',
       'quadratic-solution-check',
+      'polynomial-derivative',
+      'complex-product',
+      'complex-roots',
     ]);
   });
 
@@ -34,5 +37,28 @@ describe('problem library', () => {
     const board = await ProofService.loadProblem(linear);
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(board.steps.map((step) => step.status)).toEqual(['root', 'valid', 'valid']);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
+      mode: 'algebra',
+      previousStep: { kind: 'equation' },
+      nextStep: { kind: 'equation' },
+    });
+  });
+
+  it('uses task-scoped claim kinds for complex solution sets', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      status: 'invalid', rule: 'complex-solution-set', summary: 'A root is missing.', evidence: {
+        kind: 'solution-set', expectedSolutionsLatex: ['2 i', '- 2 i'], submittedSolutionsLatex: ['2 i'], missingSolutionsLatex: ['- 2 i'], unexpectedSolutionsLatex: [],
+      }, verifiedRepairLatex: '\\{2 i, - 2 i\\}',
+    }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const problem = ProofService.getProblemLibrary().find((candidate) => candidate.id === 'complex-roots');
+    const board = await ProofService.loadProblem(problem);
+    expect(board.edges[0].label).toBe('incomplete solution set');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
+      mode: 'complex-solve',
+      previousStep: { kind: 'equation' },
+      nextStep: { kind: 'solution-set' },
+    });
   });
 });

@@ -124,6 +124,10 @@ button.edge-container.selected .edge-line { box-shadow: 0 0 0 7px rgba(91, 92, 2
 
 .add-step-card { align-items: center; background: rgba(255,255,255,.55); border-style: dashed; color: #465269; display: flex; font-size: 14px; font-weight: 700; gap: 8px; justify-content: center; min-height: 62px; transition: border-color .16s, color .16s, background .16s; }
 .add-step-card:hover { background: #f0f0ff; border-color: var(--accent); color: var(--accent); }
+.add-step-options { display: grid; gap: 10px; }
+.solution-set-card { border-color: #b9baf6; }
+.inline-evidence-math { display: inline-block; font-size: inherit; margin-left: 4px; }
+.evidence-line { align-items: baseline; display: flex; font-size: 12px; gap: 4px; margin-top: 8px; }
 .composer-card { padding: 16px; box-shadow: var(--shadow-card); }
 .composer-heading { margin-bottom: 12px; }.composer-heading > span { color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .08em; }
 .equation-field { display: block; width: 100%; min-height: 61px; padding: 13px 15px; border: 1px solid #bdc7d8; border-radius: 10px; background: #fff; color: var(--ink); font-size: 25px; --caret-color: var(--accent); --selection-background-color: #e9e9ff; }
