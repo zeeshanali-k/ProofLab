@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test:unit": "vitest run",
-    "test:api": "PYTHONPATH=backend python3 -m pytest -q backend/tests",
+    "test:api": "uv run --project backend pytest -q backend/tests",
     "test:e2e": "playwright test"
   },
   "dependencies": {

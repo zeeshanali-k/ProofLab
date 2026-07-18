@@ -3,12 +3,13 @@ from __future__ import annotations
 from enum import Enum
 from typing import Annotated, Literal, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ProblemMode(str, Enum):
     ALGEBRA = "algebra"
     DERIVATIVE = "derivative"
+    INTEGRAL = "integral"
     COMPLEX_SIMPLIFY = "complex-simplify"
     COMPLEX_SOLVE = "complex-solve"
 
@@ -18,6 +19,7 @@ class ClaimKind(str, Enum):
     EXPRESSION = "expression"
     FUNCTION = "function"
     DERIVATIVE = "derivative"
+    ANTIDERIVATIVE = "antiderivative"
     SOLUTION_SET = "solution-set"
 
 
@@ -108,6 +110,66 @@ class VerifyRequest(BaseModel):
     mode: ProblemMode
     previous_step: ProofStep = Field(alias="previousStep")
     next_step: ProofStep = Field(alias="nextStep")
+
+
+class CanonicalGoalKind(str, Enum):
+    DERIVATIVE = "derivative"
+    COMPLEX_SIMPLIFY = "complex-simplify"
+    COMPLEX_SOLVE = "complex-solve"
+
+
+class CanonicalGoal(BaseModel):
+    """The problem-defined target; it is never inferred from learner input."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    kind: CanonicalGoalKind
+    terminal_derivative_order: int | None = Field(default=None, alias="terminalDerivativeOrder", ge=1, le=8)
+
+    @model_validator(mode="after")
+    def derivative_targets_need_an_order(self) -> "CanonicalGoal":
+        if self.kind == CanonicalGoalKind.DERIVATIVE and self.terminal_derivative_order is None:
+            raise ValueError("Derivative goals need terminalDerivativeOrder.")
+        if self.kind != CanonicalGoalKind.DERIVATIVE and self.terminal_derivative_order is not None:
+            raise ValueError("Only derivative goals use terminalDerivativeOrder.")
+        return self
+
+
+class CompletionStatus(str, Enum):
+    COMPLETE = "complete"
+    IN_PROGRESS = "in-progress"
+    NEEDS_CORRECTION = "needs-correction"
+    NOT_APPLICABLE = "not-applicable"
+
+
+class CompletionResult(BaseModel):
+    """Deliberately contains no expression or answer disclosure."""
+
+    status: CompletionStatus
+
+
+class AssessCompletionRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    mode: ProblemMode
+    given_step: ProofStep = Field(alias="givenStep")
+    terminal_learner_step: ProofStep = Field(alias="terminalLearnerStep")
+    learner_steps: list[ProofStep] = Field(default_factory=list, alias="learnerSteps", max_length=64)
+    canonical_goal: CanonicalGoal | None = Field(default=None, alias="canonicalGoal")
+
+
+class RevealFinalFormRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    mode: ProblemMode
+    given_step: ProofStep = Field(alias="givenStep")
+    canonical_goal: CanonicalGoal | None = Field(default=None, alias="canonicalGoal")
+
+
+class RevealFinalFormResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    canonical_latex: str = Field(alias="canonicalLatex")
 
 
 class ExplainMode(str, Enum):

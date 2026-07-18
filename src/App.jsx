@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ProofService, ENV_MODE } from './api/ProofService';
 import EquationField from './components/EquationField';
+import CanonicalProgress from './components/CanonicalProgress';
 import MathDisplay from './components/MathDisplay';
 import TeachingContent from './components/TeachingContent';
 import { CheckIcon, BrokenIcon, PlusIcon } from './components/Icons';
@@ -17,19 +18,22 @@ const STATUS_COPY = {
 
 const defaultClaimKind = (problem) => {
   if (problem.mode === 'derivative') return 'derivative';
+  if (problem.mode === 'integral') return 'antiderivative';
   if (problem.mode === 'complex-simplify') return 'expression';
   return 'equation';
 };
 
 const initialComposerValue = (kind) => {
   if (kind === 'derivative') return "f'(x) = ";
+  if (kind === 'antiderivative') return 'F(x) =  + C';
   if (kind === 'solution-set') return '\\{ \\}';
   return '';
 };
 
 const scopeCopy = (mode) => ({
   algebra: 'This problem checks one-variable linear and quadratic algebra.',
-  derivative: 'This problem checks polynomial derivatives. Trigonometry and integrals are not included yet.',
+  derivative: 'This problem checks polynomial and sin, cos, or tan derivatives with polynomial inner functions.',
+  integral: 'This problem checks restricted indefinite integrals of polynomials plus sin(ax+b) and cos(ax+b), with + C.',
   'complex-simplify': 'This problem checks rectangular complex arithmetic using i.',
   'complex-solve': 'This problem currently checks simple rational imaginary roots.',
 }[mode] ?? 'This step needs rechecking.');
@@ -59,6 +63,8 @@ export default function App() {
   const [isLoadingProblem, setIsLoadingProblem] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [announcement, setAnnouncement] = useState('');
+  const [revealedFinalForm, setRevealedFinalForm] = useState(null);
+  const [isRevealingFinalForm, setIsRevealingFinalForm] = useState(false);
   const helpRequestId = useRef(0);
   const clientIdSequence = useRef(0);
 
@@ -94,6 +100,8 @@ export default function App() {
     const selected = next.edges.find((edge) => edge.status === 'invalid') ?? next.edges.at(-1);
     setSelectedEdgeId(selected?.id ?? null);
     setComposer(null);
+    setRevealedFinalForm(null);
+    setIsRevealingFinalForm(false);
     clearTeachingContent();
     setInspectorMode('evidence');
   }
@@ -126,14 +134,17 @@ export default function App() {
     try {
       const result = await ProofService.verifyStep(previous, next, data.problem.mode);
       const edge = { ...result, id: edgeId, from: previous.id, to: next.id };
+      const nextSteps = addStep
+        ? [...data.steps, { ...next, status: result.status, timestamp: 'Just checked' }]
+        : data.steps.map((step) => (step.id === stepId ? { ...step, status: result.status, math: next.math } : step));
+      const completionStatus = await ProofService.assessCompletion(data.problem, nextSteps);
       setData((current) => ({
         ...current,
-        steps: addStep
-          ? [...current.steps, { ...next, status: result.status, timestamp: 'Just checked' }]
-          : current.steps.map((step) => (step.id === stepId ? { ...step, status: result.status, math: next.math } : step)),
+        steps: nextSteps,
         edges: current.edges.some((candidate) => candidate.id === edgeId)
           ? current.edges.map((candidate) => (candidate.id === edgeId ? edge : candidate))
           : [...current.edges, edge],
+        completionStatus,
       }));
       setSelectedEdgeId(edgeId);
       setInspectorMode('evidence');
@@ -189,7 +200,8 @@ export default function App() {
           break;
         }
       }
-      setData({ ...before, steps: workingSteps, edges: workingEdges });
+      const completionStatus = await ProofService.assessCompletion(before.problem, workingSteps);
+      setData({ ...before, steps: workingSteps, edges: workingEdges, completionStatus });
       setSelectedEdgeId(selectedId);
       setInspectorMode('evidence');
       clearTeachingContent();
@@ -270,6 +282,7 @@ export default function App() {
       ...current,
       steps: current.steps.filter((step) => !removed.has(step.id)),
       edges: current.edges.filter((edge) => !removed.has(edge.from) && !removed.has(edge.to)),
+      completionStatus: current.problem.canonicalGoal ? 'in-progress' : 'not-applicable',
     }));
     setSelectedEdgeId(null);
     setAnnouncement('Step removed. Later steps need to be added again.');
@@ -279,6 +292,20 @@ export default function App() {
     if (!data.problem) return;
     await loadProblem(data.problem);
     setAnnouncement(`${data.problem.title} has been reset.`);
+  };
+
+  const revealFinalForm = async () => {
+    if (!data.problem.canonicalGoal || isRevealingFinalForm) return;
+    setIsRevealingFinalForm(true);
+    try {
+      const result = await ProofService.revealFinalForm(data.problem, data.steps[0]);
+      setRevealedFinalForm(result.canonicalLatex);
+      setAnnouncement('The canonical final form is shown without changing your reasoning path.');
+    } catch (error) {
+      setAnnouncement(error instanceof Error ? error.message : 'ProofLab could not reveal the final form.');
+    } finally {
+      setIsRevealingFinalForm(false);
+    }
   };
 
   if (!data.problem) return <div className="loading-lab">{loadError || 'Opening your algebra lab…'}</div>;
@@ -291,7 +318,6 @@ export default function App() {
   const expectedCount = Math.max(data.problem.seedSteps?.length ?? 0, checkedCount);
   const progress = expectedCount ? `${checkedCount} of ${expectedCount} steps checked` : checkedCount ? `${checkedCount} step${checkedCount === 1 ? '' : 's'} checked` : 'Add a step to begin';
   const progressDots = data.edges.length ? data.edges.slice(0, 4).map((edge) => edge.status) : ['pending'];
-
   return (
     <div className="app-container">
       <header className="app-header">
@@ -302,7 +328,7 @@ export default function App() {
             </svg>
             ProofLab
           </div>
-          <span className="breadcrumb">{data.problem.mode === 'derivative' ? 'Calculus Lab' : data.problem.mode.startsWith('complex') ? 'Complex Lab' : 'Algebra Lab'} <span>/</span> {data.problem.category}</span>
+          <span className="breadcrumb">{['derivative', 'integral'].includes(data.problem.mode) ? 'Calculus Lab' : data.problem.mode.startsWith('complex') ? 'Complex Lab' : 'Algebra Lab'} <span>/</span> {data.problem.category}</span>
         </div>
         <div className="header-right">
           <span className="save-status"><span className="save-dot" /> Saved locally</span>
@@ -325,6 +351,9 @@ export default function App() {
             {progressDots.map((status, index) => <span key={`${status}-${index}`} className={`progress-dot ${status === 'valid' ? 'checked' : status === 'invalid' ? 'error' : status === 'unsupported' || status === 'inconclusive' ? 'warning' : ''}`} />)}
             <span className="progress-text">{progress}</span>
           </div>
+          {data.problem.canonicalGoal && (
+            <CanonicalProgress status={data.completionStatus} onReveal={revealFinalForm} isRevealing={isRevealingFinalForm} revealedFinalForm={revealedFinalForm} />
+          )}
           <div className="problem-actions">
             <button className="choose-problem" onClick={() => setIsProblemPickerOpen(true)} disabled={isLoadingProblem}>Choose a problem</button>
             <button className="reset-example" onClick={resetExample} disabled={isLoadingProblem}>Reset {data.problem.isCustom ? 'my problem' : 'example'}</button>
@@ -372,7 +401,7 @@ export default function App() {
             <div className="edge-container pending-edge" aria-hidden="true"><span className="edge-line pending" /></div>
             {composer ? (
               <section className="composer-card" aria-label={composer.mode === 'edit' ? 'Edit equation' : 'Add next step'}>
-                <div className="composer-heading"><span>{composer.mode === 'edit' ? 'EDIT THIS STEP' : composer.kind === 'derivative' ? 'YOUR DERIVATIVE' : composer.kind === 'solution-set' ? 'YOUR SOLUTION SET' : 'YOUR NEXT STEP'}</span><button className="icon-btn" onClick={() => setComposer(null)} aria-label="Close equation composer">×</button></div>
+                <div className="composer-heading"><span>{composer.mode === 'edit' ? 'EDIT THIS STEP' : composer.kind === 'derivative' ? 'YOUR DERIVATIVE' : composer.kind === 'antiderivative' ? 'YOUR ANTIDERIVATIVE' : composer.kind === 'solution-set' ? 'YOUR SOLUTION SET' : 'YOUR NEXT STEP'}</span><button className="icon-btn" onClick={() => setComposer(null)} aria-label="Close equation composer">×</button></div>
                 <EquationField value={composer.value} onChange={(value) => setComposer((current) => ({ ...current, value }))} />
                 <div className="math-toolbar" aria-label="Equation shortcuts">
                   <button onClick={() => setComposer((current) => ({ ...current, value: `${current.value}\\frac{ }{ }` }))}>Fraction</button>
@@ -388,7 +417,7 @@ export default function App() {
                 <button className="add-step-card solution-set-card" onClick={() => openComposer('add', null, 'solution-set')}><PlusIcon /> Submit solution set</button>
               </div>
             ) : (
-              <button className="add-step-card" onClick={() => openComposer('add')}><PlusIcon /> {data.problem.mode === 'derivative' ? 'Add derivative' : 'Add next step'}</button>
+              <button className="add-step-card" onClick={() => openComposer('add')}><PlusIcon /> {data.problem.mode === 'derivative' ? 'Add next derivative' : data.problem.mode === 'integral' ? 'Add antiderivative' : 'Add next step'}</button>
             )}
           </div>
         </section>
@@ -404,7 +433,7 @@ export default function App() {
               {inspectorMode === 'evidence' && (
                 <>
                   <TeachingContent className="finding-text" content={selectedEdge.inspectorData.finding} />
-                  {selectedEdge.inspectorData.evidence && <EvidenceCard evidence={selectedEdge.inspectorData.evidence} />}
+                  {selectedEdge.inspectorData.evidence && <EvidenceCard evidence={selectedEdge.inspectorData.evidence} rule={selectedEdge.verification?.rule} />}
                   {isInvalid && <div className="inspector-actions"><button className="btn-outline" onClick={() => requestHelp('hint')} disabled={isHelping}>Give me a hint</button><button className="btn-secondary" onClick={() => requestHelp('explain')} disabled={isHelping}>Explain why</button><button className="btn-primary" onClick={() => requestHelp('repair')} disabled={isHelping}>{isHelping ? 'Preparing…' : 'Show repair'}</button></div>}
                   {isValid && <p className="valid-note">The rule detected: <strong>{selectedEdge.label}</strong></p>}
                   {!isInvalid && !isValid && <p className="scope-note">{scopeCopy(data.problem.mode)}</p>}
@@ -423,7 +452,7 @@ export default function App() {
   );
 }
 
-function EvidenceCard({ evidence }) {
+function EvidenceCard({ evidence, rule }) {
   if (evidence.kind === 'evaluation') {
     return (
       <section className="counterexample-card">
@@ -437,12 +466,13 @@ function EvidenceCard({ evidence }) {
     );
   }
   if (evidence.kind === 'derivative-check') {
+    const isIntegral = rule === 'indefinite-integral';
     return (
       <section className="counterexample-card">
-        <h3>Derivative check: try {evidence.inputLatex}</h3>
+        <h3>{isIntegral ? 'Antiderivative check' : 'Derivative check'}: try {evidence.inputLatex}</h3>
         <div className="calc-table">
           <div className="calc-row"><span className="calc-label">Expected</span><MathDisplay math={evidence.expectedLatex} className="calc-math" /><span className="calc-result">= {evidence.expectedValue}</span></div>
-          <div className="calc-row"><span className="calc-label">Your derivative</span><MathDisplay math={evidence.submittedLatex} className="calc-math" /><span className="calc-result">= {evidence.submittedValue}</span></div>
+          <div className="calc-row"><span className="calc-label">{isIntegral ? 'Your result' : 'Your derivative'}</span><MathDisplay math={evidence.submittedLatex} className="calc-math" /><span className="calc-result">= {evidence.submittedValue}</span></div>
         </div>
       </section>
     );

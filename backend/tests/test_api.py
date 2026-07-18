@@ -85,13 +85,159 @@ def test_derivative_mode_accepts_mathlive_prime_notation() -> None:
     assert result["status"] == "valid"
 
 
-def test_derivative_mode_honestly_rejects_trigonometry() -> None:
+def test_derivative_mode_supports_trigonometry_chain_rules_and_repeated_notation() -> None:
+    trig = verify(
+        "derivative",
+        step("s1", "f(x) = \\sin(3x^2 + 1)", "function"),
+        step("s2", "f'(x) = 6x\\cos(3x^2 + 1)", "derivative"),
+    )
+    assert trig["status"] == "valid"
+    assert trig["rule"] == "differentiate-trigonometric"
+
+    repeated = verify(
+        "derivative",
+        step("s2", "f'(x) = 3x^2 + \\cos(x)", "derivative"),
+        step("s3", "f^{\\prime\\prime}(x) = 6x - \\sin(x)", "derivative"),
+    )
+    assert repeated["status"] == "valid"
+
+    tangent = verify(
+        "derivative",
+        step("s1", "f(x) = \\tan(2x)", "function"),
+        step("s2", "f'(x) = 2\\tan(2x)^2 + 2", "derivative"),
+    )
+    assert tangent["status"] == "valid"
+
+
+def test_derivative_mode_rejects_skipped_derivative_orders() -> None:
     result = verify(
         "derivative",
-        step("s1", "f(x) = sin(x)", "function"),
-        step("s2", "f'(x) = cos(x)", "derivative"),
+        step("s1", "f(x) = x^3", "function"),
+        step("s2", "f''(x) = 6x", "derivative"),
     )
     assert result["status"] == "unsupported"
+
+
+def test_integral_mode_checks_restricted_antiderivatives_and_requires_c() -> None:
+    valid = verify(
+        "integral",
+        step("s1", "\\int 3x^2 + \\cos(2x + 1)\\, dx", "expression"),
+        step("s2", "F(x) = x^3 + \\frac{1}{2}\\sin(2x + 1) + C", "antiderivative"),
+    )
+    assert valid["status"] == "valid"
+    assert valid["rule"] == "indefinite-integral"
+
+    missing_constant = verify(
+        "integral",
+        step("s1", "\\int x^2 \\, dx", "expression"),
+        step("s2", "F(x) = \\frac{1}{3}x^3", "antiderivative"),
+    )
+    assert missing_constant["status"] == "invalid"
+    assert "+ C" in missing_constant["summary"]
+
+    unsupported = verify(
+        "integral",
+        step("s1", "\\int \\tan(x) \\, dx", "expression"),
+        step("s2", "F(x) = x + C", "antiderivative"),
+    )
+    assert unsupported["status"] == "unsupported"
+
+
+def assess(mode: str, given: dict[str, str], terminal: dict[str, str], steps: list[dict[str, str]], goal: dict | None) -> dict:
+    response = client.post(
+        "/assess-completion",
+        json={
+            "mode": mode,
+            "givenStep": given,
+            "terminalLearnerStep": terminal,
+            "learnerSteps": steps,
+            "canonicalGoal": goal,
+        },
+    )
+    assert response.status_code == 200
+    return response.json()
+
+
+def test_completion_reports_canonical_status_without_disclosing_an_answer() -> None:
+    given = step("s1", "f(x) = x^3 + \\sin(x)", "function")
+    first = step("s2", "f'(x) = 3x^2 + \\cos(x)", "derivative")
+    second = step("s3", "f''(x) = 6x - \\sin(x)", "derivative")
+    complete = assess(
+        "derivative",
+        given,
+        second,
+        [first, second],
+        {"kind": "derivative", "terminalDerivativeOrder": 2},
+    )
+    assert complete == {"status": "complete"}
+
+    in_progress = assess(
+        "derivative",
+        given,
+        first,
+        [first],
+        {"kind": "derivative", "terminalDerivativeOrder": 2},
+    )
+    assert in_progress == {"status": "in-progress"}
+
+    bad_first = step("s2", "f'(x) = 3x^2 + \\sin(x)", "derivative")
+    needs_correction = assess(
+        "derivative",
+        given,
+        second,
+        [bad_first, second],
+        {"kind": "derivative", "terminalDerivativeOrder": 2},
+    )
+    assert needs_correction == {"status": "needs-correction"}
+
+    open_ended = assess("integral", step("s1", "\\int x \\, dx", "expression"), step("s2", "F(x) = x^2 + C", "antiderivative"), [], None)
+    assert open_ended == {"status": "not-applicable"}
+
+
+def test_completion_and_reveal_support_complex_tasks_but_not_open_ended_ones() -> None:
+    complex_given = step("s1", "(2 + 3i)(1 - 2i)", "expression")
+    terminal = step("s2", "8 - i", "expression")
+    assert assess("complex-simplify", complex_given, terminal, [terminal], {"kind": "complex-simplify"}) == {"status": "complete"}
+
+    reveal = client.post(
+        "/reveal-final-form",
+        json={"mode": "complex-simplify", "givenStep": complex_given, "canonicalGoal": {"kind": "complex-simplify"}},
+    )
+    assert reveal.status_code == 200
+    assert reveal.json() == {"canonicalLatex": "8 - i"}
+
+    roots_given = step("roots", "x^2 + 4 = 0", "equation")
+    incomplete_roots = step("roots-answer", "\\{2i\\}", "solution-set")
+    assert assess("complex-solve", roots_given, incomplete_roots, [incomplete_roots], {"kind": "complex-solve"}) == {"status": "needs-correction"}
+    roots_reveal = client.post(
+        "/reveal-final-form",
+        json={"mode": "complex-solve", "givenStep": roots_given, "canonicalGoal": {"kind": "complex-solve"}},
+    )
+    assert roots_reveal.status_code == 200
+    assert roots_reveal.json() == {"canonicalLatex": "\\{2 i, - 2 i\\}"}
+
+    derivative_reveal = client.post(
+        "/reveal-final-form",
+        json={
+            "mode": "derivative",
+            "givenStep": step("s1", "f(x) = \\sin(2x)", "function"),
+            "canonicalGoal": {"kind": "derivative", "terminalDerivativeOrder": 1},
+        },
+    )
+    assert derivative_reveal.status_code == 200
+    assert derivative_reveal.json()["canonicalLatex"].startswith("f'(x) =")
+
+    rejected = client.post(
+        "/reveal-final-form",
+        json={"mode": "integral", "givenStep": step("s1", "\\int x \\, dx", "expression"), "canonicalGoal": None},
+    )
+    assert rejected.status_code == 400
+
+    algebra_rejected = client.post(
+        "/reveal-final-form",
+        json={"mode": "algebra", "givenStep": step("s1", "x + 1 = 2", "equation"), "canonicalGoal": None},
+    )
+    assert algebra_rejected.status_code == 400
 
 
 def test_complex_simplification_compares_both_components() -> None:

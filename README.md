@@ -1,6 +1,6 @@
 # ProofLab
 
-ProofLab is a visual reasoning debugger for algebra, introductory polynomial calculus, and complex numbers. Rather than marking a learner wrong, it identifies the first transition that changes the mathematical claim and shows concrete evidence.
+ProofLab is a visual reasoning debugger for algebra, introductory trig calculus, and complex numbers. Rather than marking a learner wrong, it identifies the first transition that changes the mathematical claim and shows concrete evidence.
 
 ## Run locally
 
@@ -57,6 +57,8 @@ Next.js is frontend-only. The browser calls the single FastAPI backend directly:
 
 ```text
 Proof Board → FastAPI /verify → restricted parser → SymPy verifier
+Proof Board → FastAPI /assess-completion → verified chain + canonical target
+Proof Board → FastAPI /reveal-final-form → deterministic canonical target
 Proof Board → FastAPI /explain → Ollama | OpenAI-compatible API | local fallback
 ```
 
@@ -65,11 +67,14 @@ FastAPI publishes OpenAPI contracts at `/openapi.json`, accepts requests only fr
 ## Learning modes
 
 - **Algebra:** one-variable linear and quadratic equation transformations.
-- **Derivative:** polynomial `f(x) = …` to `f'(x) = …`, including constant, sum, product, power, and polynomial chain rules.
+- **Derivative:** polynomial and `sin`, `cos`, or `tan` derivatives with polynomial-inner chain rules. Repeated notation such as `f''(x)` is supported, and every transition must advance by one order.
+- **Integral:** indefinite integrals of polynomials plus `sin(ax+b)` and `cos(ax+b)`, entered as `\int … \, dx` and answered as `F(x) = … + C`.
 - **Complex simplify:** rectangular arithmetic with rational values and `i`.
 - **Complex solve:** simple `x² + c = 0` equations with rational imaginary roots, entered as `{bi, -bi}`.
 
-Trigonometry, integration, variable denominators, radicals, polar form, and general complex quadratics deliberately return `unsupported` for now.
+Tangent integration, trig identities, definite integrals, variable denominators, radicals, polar form, and general complex quadratics deliberately return `unsupported`.
+
+Derivative and complex tasks carry problem-defined canonical targets. Their progress is shown as **Complete**, **In progress**, or **Needs correction**, and **Reveal final form** displays the deterministic target without editing learner work. Algebra transformations and indefinite integrals are intentionally open-ended: they retain transition-by-transition checking and do not offer a final-form reveal.
 
 ## AI teaching layer
 

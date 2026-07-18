@@ -53,7 +53,40 @@ const PROBLEM_LIBRARY = [
     rootKind: 'function',
     prompt: 'f(x) = x^3 + 2x',
     goal: 'Use the power rule to find the derivative.',
-    seedSteps: [{ math: "f'(x) = 3x + 2", kind: 'derivative' }],
+    canonicalGoal: { kind: 'derivative', terminalDerivativeOrder: 1 },
+    seedSteps: [{ math: "f'(x) = 3x^2 + 2", kind: 'derivative' }],
+  },
+  {
+    id: 'trig-chain-derivative',
+    title: 'Differentiate a trig chain',
+    category: 'Calculus',
+    mode: 'derivative',
+    rootKind: 'function',
+    prompt: 'f(x) = \\sin(3x^2 + 1)',
+    goal: 'Apply the chain rule to the polynomial inside sine.',
+    canonicalGoal: { kind: 'derivative', terminalDerivativeOrder: 1 },
+    seedSteps: [{ math: "f'(x) = 6x\\cos(3x^2 + 1)", kind: 'derivative' }],
+  },
+  {
+    id: 'repeated-derivative',
+    title: 'Differentiate twice',
+    category: 'Calculus',
+    mode: 'derivative',
+    rootKind: 'function',
+    prompt: 'f(x) = x^3 + \\sin(x)',
+    goal: 'Find the second derivative, one derivative at a time.',
+    canonicalGoal: { kind: 'derivative', terminalDerivativeOrder: 2 },
+    seedSteps: [{ math: "f'(x) = 3x^2 + \\cos(x)", kind: 'derivative' }],
+  },
+  {
+    id: 'indefinite-integral',
+    title: 'Integrate polynomial and cosine',
+    category: 'Calculus',
+    mode: 'integral',
+    rootKind: 'expression',
+    prompt: '\\int 3x^2 + \\cos(2x + 1)\\, dx',
+    goal: 'Find any valid antiderivative and include + C.',
+    seedSteps: [],
   },
   {
     id: 'complex-product',
@@ -63,6 +96,7 @@ const PROBLEM_LIBRARY = [
     rootKind: 'expression',
     prompt: '(2 + 3i)(1 - 2i)',
     goal: 'Simplify into a + bi form.',
+    canonicalGoal: { kind: 'complex-simplify' },
     seedSteps: [{ math: '8 + i', kind: 'expression' }],
   },
   {
@@ -73,6 +107,7 @@ const PROBLEM_LIBRARY = [
     rootKind: 'equation',
     prompt: 'x^2 + 4 = 0',
     goal: 'Enter every solution in the complex solution set.',
+    canonicalGoal: { kind: 'complex-solve' },
     seedSteps: [{ math: '\\{2i\\}', kind: 'solution-set' }],
   },
 ];
@@ -87,7 +122,8 @@ const titleFor = (result) => {
 
 const labelFor = (result) => {
   if (result.status === 'invalid' && result.rule === 'complex-solution-set') return 'incomplete solution set';
-  if (result.status === 'invalid' && result.rule === 'differentiate-polynomial') return 'incorrect derivative';
+  if (result.status === 'invalid' && ['differentiate-polynomial', 'differentiate-trigonometric'].includes(result.rule)) return 'incorrect derivative';
+  if (result.status === 'invalid' && result.rule === 'indefinite-integral') return 'incorrect antiderivative';
   if (result.status === 'invalid' && result.rule === 'complex-simplification') return 'different complex value';
   const labels = {
     'expand-square': 'expanded square',
@@ -95,6 +131,8 @@ const labelFor = (result) => {
     'solution-substitution': 'tested by substitution',
     'equivalent-rearrangement': 'equivalent',
     'differentiate-polynomial': 'correct derivative',
+    'differentiate-trigonometric': 'correct trig derivative',
+    'indefinite-integral': 'valid antiderivative',
     'complex-simplification': 'complex expression simplified',
     'complex-solution-set': 'solution set complete',
   };
@@ -160,7 +198,7 @@ export const ProofService = {
       edges.push({ ...edge, id: `${problem.id}-e${index}`, from: steps[index - 1].id, to: steps[index].id });
     }
 
-    return { problem, steps, edges };
+    return { problem, steps, edges, completionStatus: await this.assessCompletion(problem, steps) };
   },
 
   createCustomProblem({ title, prompt, goal }) {
@@ -184,6 +222,28 @@ export const ProofService = {
       nextStep: { id: nextStep.id, latex: nextStep.math, kind: nextStep.kind },
     });
     return edgeFromResult(result, previousStep, nextStep);
+  },
+
+  async assessCompletion(problem, steps) {
+    if (!problem.canonicalGoal) return 'not-applicable';
+    const learnerSteps = steps.slice(1);
+    if (!learnerSteps.length) return 'in-progress';
+    const result = await requestJson('/assess-completion', {
+      mode: problem.mode,
+      givenStep: { id: steps[0].id, latex: steps[0].math, kind: steps[0].kind },
+      terminalLearnerStep: { id: learnerSteps.at(-1).id, latex: learnerSteps.at(-1).math, kind: learnerSteps.at(-1).kind },
+      learnerSteps: learnerSteps.map((step) => ({ id: step.id, latex: step.math, kind: step.kind })),
+      canonicalGoal: problem.canonicalGoal,
+    });
+    return result.status;
+  },
+
+  async revealFinalForm(problem, givenStep) {
+    return requestJson('/reveal-final-form', {
+      mode: problem.mode,
+      givenStep: { id: givenStep.id, latex: givenStep.math, kind: givenStep.kind },
+      canonicalGoal: problem.canonicalGoal,
+    });
   },
 
   async explain(previousStep, nextStep, verification, mode) {

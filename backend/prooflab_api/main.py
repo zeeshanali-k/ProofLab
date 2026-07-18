@@ -12,13 +12,35 @@ if __package__ in {None, ""}:
     # directory, then import through the package so every sibling module keeps
     # its normal relative imports.
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-    from prooflab_api.contracts import ErrorResponse, ExplanationRequest, ExplanationResult, VerificationResult, VerifyRequest
+    from prooflab_api.contracts import (
+        AssessCompletionRequest,
+        CompletionResult,
+        ErrorResponse,
+        ExplanationRequest,
+        ExplanationResult,
+        RevealFinalFormRequest,
+        RevealFinalFormResult,
+        VerificationResult,
+        VerifyRequest,
+    )
     from prooflab_api.teaching import TeachingProviderError, get_teaching_provider
-    from prooflab_api.verifier import verify_transition
+    from prooflab_api.verifier import assess_completion, canonical_final_latex, verify_transition
+    from prooflab_api.parser import MathSyntaxError
 else:
-    from .contracts import ErrorResponse, ExplanationRequest, ExplanationResult, VerificationResult, VerifyRequest
+    from .contracts import (
+        AssessCompletionRequest,
+        CompletionResult,
+        ErrorResponse,
+        ExplanationRequest,
+        ExplanationResult,
+        RevealFinalFormRequest,
+        RevealFinalFormResult,
+        VerificationResult,
+        VerifyRequest,
+    )
     from .teaching import TeachingProviderError, get_teaching_provider
-    from .verifier import verify_transition
+    from .verifier import assess_completion, canonical_final_latex, verify_transition
+    from .parser import MathSyntaxError
 
 
 def _allowed_origins() -> list[str]:
@@ -44,6 +66,25 @@ async def health() -> dict[str, str]:
 @app.post("/verify", response_model=VerificationResult, responses={422: {"model": ErrorResponse}})
 async def verify(request: VerifyRequest) -> VerificationResult:
     return verify_transition(request.mode, request.previous_step, request.next_step)
+
+
+@app.post("/assess-completion", response_model=CompletionResult, responses={422: {"model": ErrorResponse}})
+async def assess(request: AssessCompletionRequest) -> CompletionResult:
+    return assess_completion(
+        request.mode,
+        request.given_step,
+        request.terminal_learner_step,
+        request.learner_steps,
+        request.canonical_goal,
+    )
+
+
+@app.post("/reveal-final-form", response_model=RevealFinalFormResult, responses={400: {"model": ErrorResponse}, 422: {"model": ErrorResponse}})
+async def reveal_final_form(request: RevealFinalFormRequest) -> RevealFinalFormResult:
+    try:
+        return RevealFinalFormResult(canonicalLatex=canonical_final_latex(request.mode, request.given_step, request.canonical_goal))
+    except MathSyntaxError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @app.post("/explain", response_model=ExplanationResult, responses={400: {"model": ErrorResponse}, 502: {"model": ErrorResponse}, 503: {"model": ErrorResponse}})

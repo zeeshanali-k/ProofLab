@@ -5,7 +5,11 @@ from collections.abc import Iterable
 import sympy as sp
 
 from .contracts import (
+    CanonicalGoal,
+    CanonicalGoalKind,
     ClaimKind,
+    CompletionResult,
+    CompletionStatus,
     ComplexComparisonEvidence,
     DerivativeEvidence,
     EquationEvaluation,
@@ -16,7 +20,17 @@ from .contracts import (
     VerificationResult,
     VerificationStatus,
 )
-from .parser import MathSyntaxError, X, parse_derivative, parse_equation, parse_expression, parse_function, parse_solution_set
+from .parser import (
+    MathSyntaxError,
+    X,
+    parse_antiderivative,
+    parse_derivative,
+    parse_equation,
+    parse_expression,
+    parse_function,
+    parse_integral,
+    parse_solution_set,
+)
 
 
 SAMPLE_VALUES = (3, -7, -3, -2, -1, 0, 1, 2, 7)
@@ -211,39 +225,90 @@ def verify_algebra(previous_step: ProofStep, next_step: ProofStep) -> Verificati
     )
 
 
-def verify_derivative(previous_step: ProofStep, next_step: ProofStep) -> VerificationResult:
-    if previous_step.kind != ClaimKind.FUNCTION or next_step.kind != ClaimKind.DERIVATIVE:
-        return _unsupported(MathSyntaxError("A derivative transition goes from f(x) = … to f'(x) = …."))
-    function = parse_function(previous_step.latex)
-    submitted = parse_derivative(next_step.latex)
-    expected = sp.expand(sp.diff(function, X))
-    expected_latex = f"f'(x) = {_latex(expected)}"
-    if _is_zero(expected - submitted):
-        return VerificationResult(
-            status=VerificationStatus.VALID,
-            rule="differentiate-polynomial",
-            summary="Nice—this is the correct derivative.",
-            verifiedRepairLatex=expected_latex,
-        )
+def _derivative_latex(order: int, expression: sp.Expr) -> str:
+    primes = "'" * order
+    return f"f{primes}(x) = {_latex(expression)}"
+
+
+def _has_trigonometry(expression: sp.Expr) -> bool:
+    return bool(expression.atoms(sp.sin, sp.cos, sp.tan))
+
+
+def _derivative_evidence(expected: sp.Expr, submitted: sp.Expr) -> DerivativeEvidence | None:
     for value in SAMPLE_VALUES:
         expected_value = sp.simplify(expected.subs(X, value))
         submitted_value = sp.simplify(submitted.subs(X, value))
         if not _is_zero(expected_value - submitted_value):
-            return VerificationResult(
-                status=VerificationStatus.INVALID,
-                rule="differentiate-polynomial",
-                summary="This derivative does not match the original function.",
-                evidence=DerivativeEvidence(
-                    kind="derivative-check",
-                    inputLatex=f"x = {value}",
-                    expectedLatex=_latex(expected),
-                    submittedLatex=_latex(submitted),
-                    expectedValue=_display_number(expected_value),
-                    submittedValue=_display_number(submitted_value),
-                ),
-                verifiedRepairLatex=expected_latex,
+            return DerivativeEvidence(
+                kind="derivative-check",
+                inputLatex=f"x = {value}",
+                expectedLatex=_latex(expected),
+                submittedLatex=_latex(submitted),
+                expectedValue=_display_number(expected_value),
+                submittedValue=_display_number(submitted_value),
             )
+    return None
+
+
+def verify_derivative(previous_step: ProofStep, next_step: ProofStep) -> VerificationResult:
+    if previous_step.kind == ClaimKind.FUNCTION:
+        previous_order = 0
+        function = parse_function(previous_step.latex)
+    elif previous_step.kind == ClaimKind.DERIVATIVE:
+        previous_order, function = parse_derivative(previous_step.latex)
+    else:
+        return _unsupported(MathSyntaxError("A derivative transition must start with f(x) or an earlier derivative."))
+    if next_step.kind != ClaimKind.DERIVATIVE:
+        return _unsupported(MathSyntaxError("The next calculus step must use derivative notation."))
+    next_order, submitted = parse_derivative(next_step.latex)
+    if next_order != previous_order + 1:
+        return _unsupported(MathSyntaxError("Each derivative transition must increase the prime order by one."))
+    expected = sp.expand(sp.diff(function, X))
+    expected_latex = _derivative_latex(next_order, expected)
+    rule = "differentiate-trigonometric" if _has_trigonometry(function) else "differentiate-polynomial"
+    if _is_zero(expected - submitted):
+        return VerificationResult(
+            status=VerificationStatus.VALID,
+            rule=rule,
+            summary="Nice—this is the correct derivative.",
+            verifiedRepairLatex=expected_latex,
+        )
+    if evidence := _derivative_evidence(expected, submitted):
+        return VerificationResult(
+            status=VerificationStatus.INVALID,
+            rule=rule,
+            summary="This derivative does not match the previous function.",
+            evidence=evidence,
+            verifiedRepairLatex=expected_latex,
+        )
     return _inconclusive("The derivative differed symbolically but no safe check value was available.")
+
+
+def verify_integral(previous_step: ProofStep, next_step: ProofStep) -> VerificationResult:
+    if previous_step.kind != ClaimKind.EXPRESSION or next_step.kind != ClaimKind.ANTIDERIVATIVE:
+        return _unsupported(MathSyntaxError("An integral transition goes from ∫ … dx to F(x) = … + C."))
+    integrand = parse_integral(previous_step.latex)
+    submitted, has_constant = parse_antiderivative(next_step.latex)
+    submitted_derivative = sp.expand(sp.diff(submitted, X))
+    if _is_zero(integrand - submitted_derivative):
+        if has_constant:
+            return VerificationResult(
+                status=VerificationStatus.VALID,
+                rule="indefinite-integral",
+                summary="Nice—differentiating your antiderivative returns the integrand.",
+            )
+        return VerificationResult(
+            status=VerificationStatus.INVALID,
+            rule="indefinite-integral",
+            summary="An indefinite integral needs the constant of integration, + C.",
+            evidence=_derivative_evidence(integrand, submitted_derivative),
+        )
+    return VerificationResult(
+        status=VerificationStatus.INVALID,
+        rule="indefinite-integral",
+        summary="Differentiating this antiderivative does not return the integrand.",
+        evidence=_derivative_evidence(integrand, submitted_derivative),
+    )
 
 
 def verify_complex_simplification(previous_step: ProofStep, next_step: ProofStep) -> VerificationResult:
@@ -335,6 +400,8 @@ def verify_transition(mode: ProblemMode, previous_step: ProofStep, next_step: Pr
             return verify_algebra(previous_step, next_step)
         if mode == ProblemMode.DERIVATIVE:
             return verify_derivative(previous_step, next_step)
+        if mode == ProblemMode.INTEGRAL:
+            return verify_integral(previous_step, next_step)
         if mode == ProblemMode.COMPLEX_SIMPLIFY:
             return verify_complex_simplification(previous_step, next_step)
         if mode == ProblemMode.COMPLEX_SOLVE:
@@ -344,3 +411,81 @@ def verify_transition(mode: ProblemMode, previous_step: ProofStep, next_step: Pr
         return _unsupported(error)
     except Exception:
         return _inconclusive("The symbolic verifier could not safely finish this check.")
+
+
+def _goal_matches_mode(mode: ProblemMode, goal: CanonicalGoal | None) -> bool:
+    if goal is None:
+        return False
+    return (
+        (mode == ProblemMode.DERIVATIVE and goal.kind == CanonicalGoalKind.DERIVATIVE)
+        or (mode == ProblemMode.COMPLEX_SIMPLIFY and goal.kind == CanonicalGoalKind.COMPLEX_SIMPLIFY)
+        or (mode == ProblemMode.COMPLEX_SOLVE and goal.kind == CanonicalGoalKind.COMPLEX_SOLVE)
+    )
+
+
+def canonical_final_latex(mode: ProblemMode, given_step: ProofStep, goal: CanonicalGoal | None) -> str:
+    """Return only a problem-defined deterministic target for eligible modes."""
+    if not _goal_matches_mode(mode, goal):
+        raise MathSyntaxError("This problem does not have a canonical final form.")
+    assert goal is not None
+    if mode == ProblemMode.DERIVATIVE:
+        if given_step.kind != ClaimKind.FUNCTION:
+            raise MathSyntaxError("Derivative problems must start with f(x) = ….")
+        expression = parse_function(given_step.latex)
+        for _ in range(goal.terminal_derivative_order or 0):
+            expression = sp.expand(sp.diff(expression, X))
+        return _derivative_latex(goal.terminal_derivative_order or 1, expression)
+    if mode == ProblemMode.COMPLEX_SIMPLIFY:
+        if given_step.kind != ClaimKind.EXPRESSION:
+            raise MathSyntaxError("Complex simplification problems must start with an expression.")
+        return _latex(sp.simplify(parse_expression(given_step.latex, allow_x=False, allow_i=True)))
+    if mode == ProblemMode.COMPLEX_SOLVE:
+        if given_step.kind != ClaimKind.EQUATION:
+            raise MathSyntaxError("Complex solution problems must start with an equation.")
+        return _solution_latex(_simple_imaginary_roots(parse_equation(given_step.latex)))
+    raise MathSyntaxError("This problem does not have a canonical final form.")
+
+
+def _same_step(first: ProofStep, second: ProofStep) -> bool:
+    return first.id == second.id and first.latex == second.latex and first.kind == second.kind
+
+
+def assess_completion(
+    mode: ProblemMode,
+    given_step: ProofStep,
+    terminal_learner_step: ProofStep,
+    learner_steps: list[ProofStep],
+    goal: CanonicalGoal | None,
+) -> CompletionResult:
+    """Assess a complete submitted chain without putting a target in the response."""
+    if mode in {ProblemMode.ALGEBRA, ProblemMode.INTEGRAL} or not _goal_matches_mode(mode, goal):
+        return CompletionResult(status=CompletionStatus.NOT_APPLICABLE)
+    if not learner_steps or not _same_step(learner_steps[-1], terminal_learner_step):
+        return CompletionResult(status=CompletionStatus.NEEDS_CORRECTION)
+    chain = [given_step, *learner_steps]
+    for previous_step, next_step in zip(chain, chain[1:]):
+        if verify_transition(mode, previous_step, next_step).status != VerificationStatus.VALID:
+            return CompletionResult(status=CompletionStatus.NEEDS_CORRECTION)
+    try:
+        canonical_latex = canonical_final_latex(mode, given_step, goal)
+        if mode == ProblemMode.DERIVATIVE:
+            order, terminal_expression = parse_derivative(terminal_learner_step.latex)
+            target_order = goal.terminal_derivative_order if goal else None
+            expected_order, expected_expression = parse_derivative(canonical_latex)
+            matches = order == target_order == expected_order and _is_zero(terminal_expression - expected_expression)
+        elif mode == ProblemMode.COMPLEX_SIMPLIFY:
+            matches = terminal_learner_step.kind == ClaimKind.EXPRESSION and _is_zero(
+                parse_expression(terminal_learner_step.latex, allow_x=False, allow_i=True)
+                - parse_expression(canonical_latex, allow_x=False, allow_i=True)
+            )
+        else:
+            submitted_solutions = parse_solution_set(terminal_learner_step.latex)
+            expected_solutions = parse_solution_set(canonical_latex)
+            matches = (
+                terminal_learner_step.kind == ClaimKind.SOLUTION_SET
+                and not [solution for solution in submitted_solutions if not _contains_equivalent(expected_solutions, solution)]
+                and not [solution for solution in expected_solutions if not _contains_equivalent(submitted_solutions, solution)]
+            )
+    except MathSyntaxError:
+        return CompletionResult(status=CompletionStatus.NEEDS_CORRECTION)
+    return CompletionResult(status=CompletionStatus.COMPLETE if matches else CompletionStatus.IN_PROGRESS)
