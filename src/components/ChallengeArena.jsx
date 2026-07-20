@@ -148,8 +148,10 @@ export default function ChallengeArena({ challengeId }) {
       <ArenaHeader challenge={challenge} />
       <main className="challenge-arena-layout">
         <aside className="challenge-brief">
-          <Link href="/leetmath" className="back-to-catalog">← All challenges</Link>
-          <span className="panel-eyebrow">CHALLENGE #{String(challenge.number).padStart(3, '0')}</span>
+          <div className="challenge-navigation">
+            <Link href="/leetmath" className="back-to-catalog">← All challenges</Link>
+            <span className="challenge-number-card" aria-label={`Active challenge ${String(challenge.number).padStart(3, '0')}`}><small>ACTIVE</small><strong>#{String(challenge.number).padStart(3, '0')}</strong></span>
+          </div>
           <h1>{challenge.title}</h1>
           <p>{challenge.statementText}</p>
           <MathDisplay math={challenge.statementLatex} className="challenge-statement-math" />

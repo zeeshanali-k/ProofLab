@@ -22,6 +22,23 @@ function DisplayMath({ expression }) {
 }
 
 const inlineToken = /(\$\$[\s\S]*?\$\$|\$[^$\n]+\$|\\\([\s\S]*?\\\)|\*\*[\s\S]*?\*\*)/;
+const bareParenthesizedMath = /(\([^()\n]*[+\-*/^=<>][^()\n]*\)(?:\s*\^\s*(?:\{[^}]+\}|\d+))?)/g;
+
+function renderPlainText(text, prefix) {
+  const tokens = [];
+  let cursor = 0;
+  let match;
+  let index = 0;
+
+  while ((match = bareParenthesizedMath.exec(text)) !== null) {
+    if (match.index > cursor) tokens.push(text.slice(cursor, match.index));
+    tokens.push(<InlineMath key={`${prefix}-math-${index}`} expression={match[0]} />);
+    cursor = match.index + match[0].length;
+    index += 1;
+  }
+  if (cursor < text.length) tokens.push(text.slice(cursor));
+  return tokens;
+}
 
 function renderInline(text, prefix) {
   const tokens = [];
@@ -31,7 +48,7 @@ function renderInline(text, prefix) {
   let index = 0;
 
   while ((match = matcher.exec(text)) !== null) {
-    if (match.index > cursor) tokens.push(text.slice(cursor, match.index));
+    if (match.index > cursor) tokens.push(...renderPlainText(text.slice(cursor, match.index), `${prefix}-plain-${index}`));
     const token = match[0];
     const key = `${prefix}-${index}`;
     if (token.startsWith('$') && !token.startsWith('$$')) {
@@ -46,7 +63,7 @@ function renderInline(text, prefix) {
     cursor = match.index + token.length;
     index += 1;
   }
-  if (cursor < text.length) tokens.push(text.slice(cursor));
+  if (cursor < text.length) tokens.push(...renderPlainText(text.slice(cursor), `${prefix}-plain-end`));
   return tokens;
 }
 
