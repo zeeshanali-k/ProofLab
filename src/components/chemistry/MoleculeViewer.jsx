@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 
+let offscreenCanvasShimUsers = 0;
+let offscreenCanvasShimInstalled = false;
+
 export function MoleculeViewer({ pdbId = '1CRN', smiles = undefined, style = 'cartoon', width = 500, height = 400 }) {
 	const containerRef = useRef(null);
 	const viewerRef = useRef(null);
@@ -64,8 +67,11 @@ export function MoleculeViewer({ pdbId = '1CRN', smiles = undefined, style = 'ca
 		// without that API, the check itself throws a ReferenceError instead of
 		// falling back to a regular canvas. Define it as null only when it is
 		// missing so 3Dmol takes its normal canvas-rendering path.
-		const hasOffscreenCanvas = 'OffscreenCanvas' in window;
-		if (!hasOffscreenCanvas) {
+		const usesOffscreenCanvasShim =
+			offscreenCanvasShimInstalled || typeof window.OffscreenCanvas === 'undefined';
+		if (usesOffscreenCanvasShim) {
+			offscreenCanvasShimInstalled = true;
+			offscreenCanvasShimUsers += 1;
 			window.OffscreenCanvas = null;
 		}
 
@@ -123,8 +129,14 @@ export function MoleculeViewer({ pdbId = '1CRN', smiles = undefined, style = 'ca
 			}
 			// Remove only the compatibility shim installed above. Native support is
 			// never disabled or overwritten.
-			if (!hasOffscreenCanvas) {
-				delete window.OffscreenCanvas;
+			if (usesOffscreenCanvasShim) {
+				offscreenCanvasShimUsers -= 1;
+				if (offscreenCanvasShimUsers === 0) {
+					if (window.OffscreenCanvas === null) {
+						delete window.OffscreenCanvas;
+					}
+					offscreenCanvasShimInstalled = false;
+				}
 			}
 		};
 	}, [loadMolecule]);
