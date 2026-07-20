@@ -533,6 +533,246 @@
 	height: auto;
 }
 
+/* 3D System Viewer — Preview Card */
+.bio-3d-preview {
+	position: relative;
+	width: 100%;
+	min-height: 280px;
+	max-height: 420px;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	overflow: hidden;
+	cursor: pointer;
+	background: #f8fafc;
+	transition: transform 0.2s, box-shadow 0.2s;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.bio-3d-preview:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.bio-3d-preview:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+.bio-3d-preview-img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	transition: opacity 0.3s;
+	display: block;
+	padding: 8px;
+}
+
+.bio-3d-preview-placeholder {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 2px dashed var(--border);
+	border-radius: 12px;
+}
+
+.bio-3d-preview-spinner {
+	width: 28px;
+	height: 28px;
+	border: 3px solid var(--border);
+	border-radius: 50%;
+	animation: bio-spin 0.8s linear infinite;
+}
+
+.bio-3d-preview-fallback {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 12px;
+	background: var(--surface);
+}
+
+.bio-3d-preview-fallback .bio-diagram-container {
+	border: none;
+	padding: 0;
+}
+
+.bio-3d-preview-overlay {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	padding: 16px 14px 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	pointer-events: none;
+}
+
+.bio-3d-preview-label {
+	font-weight: 700;
+	font-size: 0.95rem;
+	color: white;
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.bio-3d-preview-cta {
+	font-size: 0.78rem;
+	color: rgba(255, 255, 255, 0.9);
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 3D Fullscreen Modal */
+.bio-3d-modal-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 9999;
+	background: rgba(0, 0, 0, 0.7);
+	backdrop-filter: blur(4px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+	animation: bio-modal-fadein 0.2s ease-out;
+}
+
+@keyframes bio-modal-fadein {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+.bio-3d-modal {
+	width: 100%;
+	max-width: 1400px;
+	height: 90vh;
+	max-height: 900px;
+	display: flex;
+	flex-direction: column;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+	overflow: hidden;
+	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+	animation: bio-modal-slideup 0.25s ease-out;
+}
+
+@keyframes bio-modal-slideup {
+	from { transform: translateY(20px); opacity: 0; }
+	to { transform: translateY(0); opacity: 1; }
+}
+
+.bio-3d-modal-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 20px;
+	border-bottom: 2px solid var(--border);
+}
+
+.bio-3d-modal-header h2 {
+	margin: 0;
+	font-size: 1.15rem;
+	color: var(--ink);
+}
+
+.bio-3d-modal-close {
+	background: none;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	font-size: 1rem;
+	color: var(--muted);
+	transition: background 0.15s, color 0.15s;
+}
+
+.bio-3d-modal-close:hover {
+	background: var(--field);
+	color: var(--ink);
+}
+
+.bio-3d-modal-body {
+	flex: 1;
+	min-height: 0;
+	position: relative;
+	background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.bio-3d-modal-body canvas {
+	display: block;
+	width: 100% !important;
+	height: 100% !important;
+	min-height: 650px;
+}
+
+.bio-3d-modal-loading {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+
+.bio-3d-modal-error {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 20px;
+	text-align: center;
+	color: #92400e;
+	background: #fef3c7;
+	font-size: 0.9rem;
+}
+
+.bio-3d-modal-footer {
+	padding: 10px 20px;
+	text-align: center;
+	font-size: 0.78rem;
+	color: var(--muted);
+	border-top: 1px solid var(--border);
+	background: var(--surface);
+}
+
+.bio-3d-modal-footer kbd {
+	display: inline-block;
+	padding: 1px 6px;
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	background: var(--card);
+	font-family: inherit;
+	font-size: 0.75rem;
+}
+
+/* Shared spinner */
+.bio-3d-spinner {
+	width: 32px;
+	height: 32px;
+	border: 3px solid var(--border);
+	border-top-color: var(--accent);
+	border-radius: 50%;
+	animation: bio-spin 0.8s linear infinite;
+}
+
+@keyframes bio-spin {
+	to { transform: rotate(360deg); }
+}
+
 /* System Info Panel */
 .bio-system-panel {
 	display: flex;
@@ -742,6 +982,18 @@
 	}
 	.bio-systems-diagram {
 		position: static;
+	}
+	.bio-3d-preview {
+		min-height: 220px;
+		max-height: 320px;
+	}
+	.bio-3d-modal {
+		max-width: 100%;
+		height: 92vh;
+		max-height: none;
+	}
+	.bio-3d-modal-body canvas {
+		min-height: 350px;
 	}
 	.bio-system-nav-btn {
 		padding: 6px 10px;

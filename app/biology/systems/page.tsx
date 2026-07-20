@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { SystemNavigation } from '../../../src/components/biology/systems/SystemNavigation';
 import { SystemInfoPanel } from '../../../src/components/biology/systems/SystemInfoPanel';
-import { SystemDiagram2D } from '../../../src/components/biology/systems/SystemDiagram2D';
+import { SystemViewer3D } from '../../../src/components/biology/systems/SystemViewer3D';
 import { SYSTEM_CONTENT } from '@/lib/biology/systemContent';
 import type { SystemId } from '@/lib/biology/systemContent';
 
@@ -22,7 +22,7 @@ export default function SystemsPage() {
 
 			<div className="bio-systems-layout">
 				<div className="bio-systems-diagram">
-					<SystemDiagram2D systemId={activeSystem} />
+					<SystemViewer3D systemId={activeSystem} />
 				</div>
 				<div className="bio-systems-info">
 					<SystemInfoPanel system={system} />
