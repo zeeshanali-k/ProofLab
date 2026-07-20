@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { ProofService, ENV_MODE } from './api/ProofService';
 import EquationField from './components/EquationField';
 import CanonicalProgress from './components/CanonicalProgress';
@@ -9,6 +10,9 @@ import MathDisplay from './components/MathDisplay';
 import InequalityNumberLine from './components/InequalityNumberLine';
 import TeachingContent from './components/TeachingContent';
 import { CheckIcon, BrokenIcon, PlusIcon } from './components/Icons';
+import RoughWorkBoardModal from './components/RoughWorkBoardModal';
+import { ThemeToggle, WorkspaceTabs } from './components/WorkspaceNavigation';
+import { proofBoardKey } from './lib/roughWorkStorage';
 
 const STATUS_COPY = {
   root: 'Given',
@@ -65,6 +69,7 @@ export default function App() {
   const [isProblemOpen, setIsProblemOpen] = useState(false);
   const [isProblemPickerOpen, setIsProblemPickerOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [isRoughWorkOpen, setIsRoughWorkOpen] = useState(false);
   const [isLoadingProblem, setIsLoadingProblem] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [announcement, setAnnouncement] = useState('');
@@ -73,6 +78,7 @@ export default function App() {
   const helpRequestId = useRef(0);
   const clientIdSequence = useRef(0);
   const helpButtonRef = useRef(null);
+  const roughWorkButtonRef = useRef(null);
 
   useEffect(() => {
     ProofService.fetchInitialState().then(setData).catch((error) => setLoadError(error instanceof Error ? error.message : 'ProofLab could not load a problem.'));
@@ -86,6 +92,19 @@ export default function App() {
   const closeGuide = () => {
     setIsGuideOpen(false);
     window.requestAnimationFrame(() => helpButtonRef.current?.focus());
+  };
+
+  const closeRoughWork = () => {
+    const close = () => setIsRoughWorkOpen(false);
+    if (typeof document.startViewTransition === 'function') document.startViewTransition(() => flushSync(close));
+    else close();
+    window.requestAnimationFrame(() => roughWorkButtonRef.current?.focus());
+  };
+
+  const openRoughWork = () => {
+    const open = () => setIsRoughWorkOpen(true);
+    if (typeof document.startViewTransition === 'function') document.startViewTransition(() => flushSync(open));
+    else open();
   };
 
   const chooseEdge = (id) => {
@@ -335,14 +354,14 @@ export default function App() {
       <header className="app-header">
         <div className="header-left">
           <div className="wordmark" aria-label="ProofLab">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="logo-icon" aria-hidden="true">
-              <circle cx="6" cy="12" r="3" /><circle cx="18" cy="12" r="3" /><line x1="9" y1="12" x2="15" y2="12" />
-            </svg>
+            <span className="brand-infinity" aria-hidden="true">∞</span>
             ProofLab
           </div>
+          <WorkspaceTabs current="learn" />
           <span className="breadcrumb">{['derivative', 'integral'].includes(data.problem.mode) ? 'Calculus Lab' : data.problem.mode === 'inequality' ? 'Inequality Lab' : data.problem.mode.startsWith('complex') ? 'Complex Lab' : 'Algebra Lab'} <span>/</span> {data.problem.category}</span>
         </div>
         <div className="header-right">
+          <ThemeToggle />
           <span className="save-status"><span className="save-dot" /> Saved locally</span>
           <button className="problem-toggle" onClick={() => setIsProblemOpen((open) => !open)}>Problem</button>
           <button className="icon-btn" ref={helpButtonRef} onClick={() => setIsGuideOpen(true)} aria-label="Open ProofLab guide" title="Open the ProofLab platform guide.">?</button>
@@ -374,6 +393,10 @@ export default function App() {
 
         <section className="reasoning-path" aria-label="Reasoning path">
           <div className="path-intro"><span>REASONING PATH</span><span>{ENV_MODE}</span></div>
+          <button type="button" className="rough-work-launcher rough-work-path-launcher" onClick={openRoughWork} ref={roughWorkButtonRef} aria-label="Open rough work board" title="Open rough work board" style={{ viewTransitionName: isRoughWorkOpen ? 'none' : 'rough-work-launcher' }}>
+            <span className="rough-work-launcher-copy"><span className="panel-eyebrow">ROUGH WORK</span><strong>Open drawing board</strong></span>
+            <span className="rough-work-launcher-glyph" aria-hidden="true">✎</span>
+          </button>
           <div className="path-container">
             {data.steps.map((step) => {
               const edgeOut = data.edges.find((edge) => edge.from === step.id);
@@ -460,6 +483,7 @@ export default function App() {
         </aside>
       </main>
       {isProblemPickerOpen && <ProblemPicker problems={ProofService.getProblemLibrary()} isLoading={isLoadingProblem} onClose={() => setIsProblemPickerOpen(false)} onSelect={(problem) => loadProblem(problem)} onCustom={(problem) => loadProblem(problem, true)} />}
+      <RoughWorkBoardModal open={isRoughWorkOpen} boardKey={proofBoardKey(data.problem.id)} title={data.problem.title} onClose={closeRoughWork} sharedTransitionName="rough-work-launcher" />
       <div className="sr-only" aria-live="polite">{announcement}</div>
       </>}
     </div>
