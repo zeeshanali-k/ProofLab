@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 class ProblemMode(str, Enum):
     ALGEBRA = "algebra"
+    INEQUALITY = "inequality"
     DERIVATIVE = "derivative"
     INTEGRAL = "integral"
     COMPLEX_SIMPLIFY = "complex-simplify"
@@ -16,6 +17,7 @@ class ProblemMode(str, Enum):
 
 class ClaimKind(str, Enum):
     EQUATION = "equation"
+    INEQUALITY = "inequality"
     EXPRESSION = "expression"
     FUNCTION = "function"
     DERIVATIVE = "derivative"
@@ -86,8 +88,46 @@ class SolutionSetEvidence(BaseModel):
     unexpected_solutions_latex: list[str] = Field(default_factory=list, alias="unexpectedSolutionsLatex")
 
 
+class InequalityRegion(BaseModel):
+    """A server-normalized half-line; clients render it without solving math."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    boundary_latex: str = Field(alias="boundaryLatex")
+    direction: Literal["left", "right"]
+    inclusive: bool
+
+
+class InequalityNumberLine(BaseModel):
+    """Relative plot positions, constrained so the browser never derives them."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    previous_boundary_position: float = Field(alias="previousBoundaryPosition", ge=0, le=100)
+    submitted_boundary_position: float = Field(alias="submittedBoundaryPosition", ge=0, le=100)
+    test_value_position: float = Field(alias="testValuePosition", ge=0, le=100)
+
+
+class InequalityRegionEvidence(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    kind: Literal["inequality-region"]
+    previous_region: InequalityRegion = Field(alias="previousRegion")
+    submitted_region: InequalityRegion = Field(alias="submittedRegion")
+    test_value_latex: str = Field(alias="testValueLatex")
+    previous_includes_test: bool = Field(alias="previousIncludesTest")
+    submitted_includes_test: bool = Field(alias="submittedIncludesTest")
+    number_line: InequalityNumberLine = Field(alias="numberLine")
+
+
 Evidence = Annotated[
-    Union[EvaluationEvidence, DerivativeEvidence, ComplexComparisonEvidence, SolutionSetEvidence],
+    Union[
+        EvaluationEvidence,
+        DerivativeEvidence,
+        ComplexComparisonEvidence,
+        SolutionSetEvidence,
+        InequalityRegionEvidence,
+    ],
     Field(discriminator="kind"),
 ]
 
@@ -113,6 +153,7 @@ class VerifyRequest(BaseModel):
 
 
 class CanonicalGoalKind(str, Enum):
+    INEQUALITY = "inequality"
     DERIVATIVE = "derivative"
     COMPLEX_SIMPLIFY = "complex-simplify"
     COMPLEX_SOLVE = "complex-solve"

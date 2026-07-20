@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 
 import sympy as sp
 
@@ -13,6 +14,9 @@ from .contracts import (
     ComplexComparisonEvidence,
     DerivativeEvidence,
     EquationEvaluation,
+    InequalityNumberLine,
+    InequalityRegion,
+    InequalityRegionEvidence,
     EvaluationEvidence,
     ProblemMode,
     ProofStep,
@@ -29,11 +33,19 @@ from .parser import (
     parse_expression,
     parse_function,
     parse_integral,
+    parse_inequality,
     parse_solution_set,
 )
 
 
 SAMPLE_VALUES = (3, -7, -3, -2, -1, 0, 1, 2, 7)
+
+
+@dataclass(frozen=True)
+class SolutionRegion:
+    boundary: sp.Rational
+    direction: str
+    inclusive: bool
 
 
 def _latex(value: sp.Expr | int | float) -> str:
@@ -225,9 +237,138 @@ def verify_algebra(previous_step: ProofStep, next_step: ProofStep) -> Verificati
     )
 
 
+def _inequality_region(left: sp.Expr, right: sp.Expr, operator: str) -> SolutionRegion:
+    residual = sp.Poly(sp.expand(left - right), X)
+    coefficient = sp.simplify(residual.coeff_monomial(X))
+    constant = sp.simplify(residual.coeff_monomial(1))
+    boundary = sp.simplify(-constant / coefficient)
+    if not boundary.is_Rational:
+        raise MathSyntaxError("The inequality boundary must be a rational number for the number line.")
+    positive_coefficient = bool(coefficient > 0)
+    if operator in {"<", "<="}:
+        direction = "left" if positive_coefficient else "right"
+    else:
+        direction = "right" if positive_coefficient else "left"
+    return SolutionRegion(boundary=boundary, direction=direction, inclusive=operator in {"<=", ">="})
+
+
+def _region_latex(region: SolutionRegion) -> str:
+    operator = "\\le" if region.inclusive and region.direction == "left" else "\\ge" if region.inclusive else "<" if region.direction == "left" else ">"
+    return f"x {operator} {_latex(region.boundary)}"
+
+
+def _regions_match(first: SolutionRegion, second: SolutionRegion) -> bool:
+    return (
+        _is_zero(first.boundary - second.boundary)
+        and first.direction == second.direction
+        and first.inclusive == second.inclusive
+    )
+
+
+def _region_contains(region: SolutionRegion, value: sp.Rational) -> bool:
+    if region.direction == "left":
+        return bool(value <= region.boundary) if region.inclusive else bool(value < region.boundary)
+    return bool(value >= region.boundary) if region.inclusive else bool(value > region.boundary)
+
+
+def _region_test_value(previous: SolutionRegion, submitted: SolutionRegion) -> sp.Rational:
+    candidates = [
+        sp.Integer(0),
+        previous.boundary,
+        submitted.boundary,
+        previous.boundary - 1,
+        previous.boundary + 1,
+        submitted.boundary - 1,
+        submitted.boundary + 1,
+        sp.simplify((previous.boundary + submitted.boundary) / 2),
+    ]
+    for value in candidates:
+        if _region_contains(previous, value) != _region_contains(submitted, value):
+            return value
+    return sp.Integer(0)
+
+
+def _number_line_positions(previous: SolutionRegion, submitted: SolutionRegion, test_value: sp.Rational) -> InequalityNumberLine:
+    values = (previous.boundary, submitted.boundary, test_value)
+    minimum, maximum = min(values), max(values)
+    if minimum == maximum:
+        minimum -= 1
+        maximum += 1
+    else:
+        padding = max(sp.Integer(1), sp.simplify((maximum - minimum) / 2))
+        minimum -= padding
+        maximum += padding
+
+    def position(value: sp.Rational) -> float:
+        return float(10 + 80 * sp.simplify((value - minimum) / (maximum - minimum)))
+
+    return InequalityNumberLine(
+        previousBoundaryPosition=position(previous.boundary),
+        submittedBoundaryPosition=position(submitted.boundary),
+        testValuePosition=position(test_value),
+    )
+
+
+def _inequality_evidence(previous: SolutionRegion, submitted: SolutionRegion) -> InequalityRegionEvidence:
+    test_value = _region_test_value(previous, submitted)
+    return InequalityRegionEvidence(
+        kind="inequality-region",
+        previousRegion=InequalityRegion(
+            boundaryLatex=_latex(previous.boundary),
+            direction=previous.direction,
+            inclusive=previous.inclusive,
+        ),
+        submittedRegion=InequalityRegion(
+            boundaryLatex=_latex(submitted.boundary),
+            direction=submitted.direction,
+            inclusive=submitted.inclusive,
+        ),
+        testValueLatex=_latex(test_value),
+        previousIncludesTest=_region_contains(previous, test_value),
+        submittedIncludesTest=_region_contains(submitted, test_value),
+        numberLine=_number_line_positions(previous, submitted, test_value),
+    )
+
+
+def verify_inequality(previous_step: ProofStep, next_step: ProofStep) -> VerificationResult:
+    if previous_step.kind != ClaimKind.INEQUALITY or next_step.kind != ClaimKind.INEQUALITY:
+        return _unsupported(MathSyntaxError("Inequality steps must both use <, ≤, >, or ≥."))
+    previous = _inequality_region(*parse_inequality(previous_step.latex))
+    submitted = _inequality_region(*parse_inequality(next_step.latex))
+    evidence = _inequality_evidence(previous, submitted)
+    if _regions_match(previous, submitted):
+        return VerificationResult(
+            status=VerificationStatus.VALID,
+            rule="inequality-region-preserved",
+            summary=f"Both inequalities describe {_region_latex(previous)}.",
+            evidence=evidence,
+        )
+    sign_flip = (
+        _is_zero(previous.boundary - submitted.boundary)
+        and previous.direction != submitted.direction
+        and previous.inclusive == submitted.inclusive
+    )
+    return VerificationResult(
+        status=VerificationStatus.INVALID,
+        rule="inequality-sign-flip" if sign_flip else "inequality-region-mismatch",
+        summary=(
+            "Dividing by a negative reverses the inequality sign."
+            if sign_flip
+            else "These inequalities describe different solution regions."
+        ),
+        evidence=evidence,
+        verifiedRepairLatex=_region_latex(previous),
+    )
+
+
 def _derivative_latex(order: int, expression: sp.Expr) -> str:
     primes = "'" * order
     return f"f{primes}(x) = {_latex(expression)}"
+
+
+def _derivative_notation(order: int) -> str:
+    primes = "'" * order
+    return f"f{primes}(x)"
 
 
 def _has_trigonometry(expression: sp.Expr) -> bool:
@@ -250,6 +391,19 @@ def _derivative_evidence(expected: sp.Expr, submitted: sp.Expr) -> DerivativeEvi
     return None
 
 
+def _derivative_order_guidance(previous_order: int, next_order: int, expression: sp.Expr) -> str:
+    expected_notation = _derivative_notation(previous_order + 1)
+    submitted_notation = _derivative_notation(next_order)
+    guidance = [
+        f"After {_derivative_notation(previous_order)}, the next derivative must be {expected_notation}, not {submitted_notation}.",
+    ]
+    if expression.is_Mul:
+        guidance.append("Use the product rule: differentiate the factors separately, then combine the resulting terms.")
+    if _has_trigonometry(expression):
+        guidance.append("Use the chain rule for the polynomial inside the trigonometric function.")
+    return "\n\n".join(guidance)
+
+
 def verify_derivative(previous_step: ProofStep, next_step: ProofStep) -> VerificationResult:
     if previous_step.kind == ClaimKind.FUNCTION:
         previous_order = 0
@@ -262,7 +416,11 @@ def verify_derivative(previous_step: ProofStep, next_step: ProofStep) -> Verific
         return _unsupported(MathSyntaxError("The next calculus step must use derivative notation."))
     next_order, submitted = parse_derivative(next_step.latex)
     if next_order != previous_order + 1:
-        return _unsupported(MathSyntaxError("Each derivative transition must increase the prime order by one."))
+        return VerificationResult(
+            status=VerificationStatus.INVALID,
+            rule="derivative-order",
+            summary=_derivative_order_guidance(previous_order, next_order, function),
+        )
     expected = sp.expand(sp.diff(function, X))
     expected_latex = _derivative_latex(next_order, expected)
     rule = "differentiate-trigonometric" if _has_trigonometry(function) else "differentiate-polynomial"
@@ -398,6 +556,8 @@ def verify_transition(mode: ProblemMode, previous_step: ProofStep, next_step: Pr
     try:
         if mode == ProblemMode.ALGEBRA:
             return verify_algebra(previous_step, next_step)
+        if mode == ProblemMode.INEQUALITY:
+            return verify_inequality(previous_step, next_step)
         if mode == ProblemMode.DERIVATIVE:
             return verify_derivative(previous_step, next_step)
         if mode == ProblemMode.INTEGRAL:
@@ -417,7 +577,8 @@ def _goal_matches_mode(mode: ProblemMode, goal: CanonicalGoal | None) -> bool:
     if goal is None:
         return False
     return (
-        (mode == ProblemMode.DERIVATIVE and goal.kind == CanonicalGoalKind.DERIVATIVE)
+        (mode == ProblemMode.INEQUALITY and goal.kind == CanonicalGoalKind.INEQUALITY)
+        or (mode == ProblemMode.DERIVATIVE and goal.kind == CanonicalGoalKind.DERIVATIVE)
         or (mode == ProblemMode.COMPLEX_SIMPLIFY and goal.kind == CanonicalGoalKind.COMPLEX_SIMPLIFY)
         or (mode == ProblemMode.COMPLEX_SOLVE and goal.kind == CanonicalGoalKind.COMPLEX_SOLVE)
     )
@@ -428,6 +589,10 @@ def canonical_final_latex(mode: ProblemMode, given_step: ProofStep, goal: Canoni
     if not _goal_matches_mode(mode, goal):
         raise MathSyntaxError("This problem does not have a canonical final form.")
     assert goal is not None
+    if mode == ProblemMode.INEQUALITY:
+        if given_step.kind != ClaimKind.INEQUALITY:
+            raise MathSyntaxError("Inequality problems must start with an inequality.")
+        return _region_latex(_inequality_region(*parse_inequality(given_step.latex)))
     if mode == ProblemMode.DERIVATIVE:
         if given_step.kind != ClaimKind.FUNCTION:
             raise MathSyntaxError("Derivative problems must start with f(x) = ….")
@@ -468,7 +633,15 @@ def assess_completion(
             return CompletionResult(status=CompletionStatus.NEEDS_CORRECTION)
     try:
         canonical_latex = canonical_final_latex(mode, given_step, goal)
-        if mode == ProblemMode.DERIVATIVE:
+        if mode == ProblemMode.INEQUALITY:
+            if terminal_learner_step.kind != ClaimKind.INEQUALITY:
+                matches = False
+            else:
+                matches = _regions_match(
+                    _inequality_region(*parse_inequality(terminal_learner_step.latex)),
+                    _inequality_region(*parse_inequality(canonical_latex)),
+                )
+        elif mode == ProblemMode.DERIVATIVE:
             order, terminal_expression = parse_derivative(terminal_learner_step.latex)
             target_order = goal.terminal_derivative_order if goal else None
             expected_order, expected_expression = parse_derivative(canonical_latex)

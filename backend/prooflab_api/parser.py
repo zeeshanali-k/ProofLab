@@ -61,11 +61,19 @@ def normalize_latex(source: str, *, preserve_braces: bool = False) -> str:
         .replace("\\tan", " tan")
         .replace("\\left", "")
         .replace("\\right", "")
+        .replace("\\leq", " <= ")
+        .replace("\\le", " <= ")
+        .replace("\\geq", " >= ")
+        .replace("\\ge", " >= ")
+        .replace("\\lt", " < ")
+        .replace("\\gt", " > ")
         .replace("\\cdot", "*")
         .replace("\\times", "*")
         .replace("^{\\prime}", "'")
         .replace("\\prime", "'")
         .replace("−", "-")
+        .replace("≤", " <= ")
+        .replace("≥", " >= ")
         .replace("²", "^2")
         .replace("\\,", "")
         .replace("\\!", "")
@@ -280,6 +288,30 @@ def parse_equation(source: str, *, allow_i: bool = False, max_degree: int = 2) -
     if sp.denom(sp.cancel(left)).has(X) or sp.denom(sp.cancel(right)).has(X):
         raise MathSyntaxError("Variable denominators are outside the current scope.")
     return left, right
+
+
+def parse_inequality(source: str) -> tuple[sp.Expr, sp.Expr, str]:
+    """Parse one supported linear relation without broadening the expression grammar."""
+
+    normalized = normalize_latex(source)
+    matches = list(re.finditer(r"<=|>=|<|>", normalized))
+    if len(matches) != 1:
+        raise MathSyntaxError("Use exactly one inequality sign: <, ≤, >, or ≥.")
+    match = matches[0]
+    left_source, operator, right_source = normalized[:match.start()], match.group(), normalized[match.end():]
+    if not left_source.strip() or not right_source.strip():
+        raise MathSyntaxError("Both sides of an inequality need an expression.")
+    left = parse_expression(left_source, allow_x=True)
+    right = parse_expression(right_source, allow_x=True)
+    if sp.denom(sp.cancel(left)).has(X) or sp.denom(sp.cancel(right)).has(X):
+        raise MathSyntaxError("Variable denominators are outside the current scope.")
+    try:
+        degree = sp.Poly(sp.expand(left - right), X).degree()
+    except sp.PolynomialError as error:
+        raise MathSyntaxError("Only one-variable linear inequalities are supported.") from error
+    if degree != 1:
+        raise MathSyntaxError("An inequality must simplify to a non-constant linear expression in x.")
+    return left, right, operator
 
 
 def _function_parts(source: str, *, expected_order: int | None) -> tuple[int, str]:

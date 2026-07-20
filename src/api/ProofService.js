@@ -26,6 +26,17 @@ const PROBLEM_LIBRARY = [
     seedSteps: [{ math: '3x = 15', kind: 'equation' }, { math: 'x = 5', kind: 'equation' }],
   },
   {
+    id: 'inequality-sign-flip',
+    title: 'Flip the inequality sign',
+    category: 'Inequalities',
+    mode: 'inequality',
+    rootKind: 'inequality',
+    prompt: '-2x + 3 > 7',
+    goal: 'Keep the solution region when you divide by a negative.',
+    canonicalGoal: { kind: 'inequality' },
+    seedSteps: [{ math: '-2x > 4', kind: 'inequality' }, { math: 'x > -2', kind: 'inequality' }],
+  },
+  {
     id: 'negative-square',
     title: 'A negative cross term',
     category: 'Quadratics',
@@ -44,6 +55,16 @@ const PROBLEM_LIBRARY = [
     prompt: 'x^2 - 5x + 6 = 0',
     goal: 'Rearrange, then test a value by substitution.',
     seedSteps: [{ math: 'x^2 - 5x = -6', kind: 'equation' }, { math: 'x = 2', kind: 'equation' }],
+  },
+  {
+    id: 'factor-then-solve',
+    title: 'Factor, then test a root',
+    category: 'Quadratics',
+    mode: 'algebra',
+    rootKind: 'equation',
+    prompt: 'x^2 - 5x + 6 = 0',
+    goal: 'Factor the quadratic, then test a root from the factors.',
+    seedSteps: [{ math: '(x - 2)(x - 3) = 0', kind: 'equation' }, { math: 'x = 2', kind: 'equation' }],
   },
   {
     id: 'polynomial-derivative',
@@ -68,6 +89,17 @@ const PROBLEM_LIBRARY = [
     seedSteps: [{ math: "f'(x) = 6x\\cos(3x^2 + 1)", kind: 'derivative' }],
   },
   {
+    id: 'product-rule-derivative',
+    title: 'Differentiate a product',
+    category: 'Calculus',
+    mode: 'derivative',
+    rootKind: 'function',
+    prompt: 'f(x) = x^2\\sin(x)',
+    goal: 'Use the product rule to differentiate both factors.',
+    canonicalGoal: { kind: 'derivative', terminalDerivativeOrder: 1 },
+    seedSteps: [{ math: "f'(x) = 2x\\sin(x) + x^2\\cos(x)", kind: 'derivative' }],
+  },
+  {
     id: 'repeated-derivative',
     title: 'Differentiate twice',
     category: 'Calculus',
@@ -87,6 +119,16 @@ const PROBLEM_LIBRARY = [
     prompt: '\\int 3x^2 + \\cos(2x + 1)\\, dx',
     goal: 'Find any valid antiderivative and include + C.',
     seedSteps: [],
+  },
+  {
+    id: 'missing-integration-constant',
+    title: 'Do not lose + C',
+    category: 'Calculus',
+    mode: 'integral',
+    rootKind: 'expression',
+    prompt: '\\int x^2\\, dx',
+    goal: 'Check whether an indefinite integral includes the constant of integration.',
+    seedSteps: [{ math: 'F(x) = \\frac{1}{3}x^3', kind: 'antiderivative' }],
   },
   {
     id: 'complex-product',
@@ -110,18 +152,34 @@ const PROBLEM_LIBRARY = [
     canonicalGoal: { kind: 'complex-solve' },
     seedSteps: [{ math: '\\{2i\\}', kind: 'solution-set' }],
   },
+  {
+    id: 'complex-complete-roots',
+    title: 'Complete a complex solution set',
+    category: 'Complex equations',
+    mode: 'complex-solve',
+    rootKind: 'equation',
+    prompt: 'x^2 + 9 = 0',
+    goal: 'Include both imaginary roots in the solution set.',
+    canonicalGoal: { kind: 'complex-solve' },
+    seedSteps: [{ math: '\\{3i, -3i\\}', kind: 'solution-set' }],
+  },
 ];
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
 const titleFor = (result) => {
   if (result.status === 'valid') return 'This step is verified';
+  if (result.status === 'invalid' && result.rule === 'inequality-sign-flip') return 'Reverse the inequality sign';
+  if (result.status === 'invalid' && result.rule === 'derivative-order') return 'Advance the derivative order';
   if (result.status === 'invalid') return 'This transition needs repair';
   return 'This step needs rechecking';
 };
 
 const labelFor = (result) => {
+  if (result.status === 'invalid' && result.rule === 'inequality-sign-flip') return 'sign did not flip';
+  if (result.status === 'invalid' && result.rule === 'inequality-region-mismatch') return 'solution region changed';
   if (result.status === 'invalid' && result.rule === 'complex-solution-set') return 'incomplete solution set';
+  if (result.status === 'invalid' && result.rule === 'derivative-order') return 'advance derivative order';
   if (result.status === 'invalid' && ['differentiate-polynomial', 'differentiate-trigonometric'].includes(result.rule)) return 'incorrect derivative';
   if (result.status === 'invalid' && result.rule === 'indefinite-integral') return 'incorrect antiderivative';
   if (result.status === 'invalid' && result.rule === 'complex-simplification') return 'different complex value';
@@ -130,6 +188,7 @@ const labelFor = (result) => {
     'balance-operation': 'balanced both sides',
     'solution-substitution': 'tested by substitution',
     'equivalent-rearrangement': 'equivalent',
+    'inequality-region-preserved': 'solution region preserved',
     'differentiate-polynomial': 'correct derivative',
     'differentiate-trigonometric': 'correct trig derivative',
     'indefinite-integral': 'valid antiderivative',
@@ -141,6 +200,20 @@ const labelFor = (result) => {
   return 'needs rechecking';
 };
 
+const mistakePatternFor = (result) => {
+  if (result.status !== 'invalid') return null;
+  if (result.rule === 'inequality-sign-flip') return 'Sign did not flip';
+  if (result.rule === 'equivalent-rearrangement' && result.likelyMissingTerm) return 'Middle term dropped';
+  if (result.rule === 'differentiate-trigonometric') return 'Chain rule missed';
+  if (result.rule === 'indefinite-integral' && !result.evidence) return 'Constant of integration missing';
+  if (
+    result.rule === 'complex-solution-set'
+    && result.evidence?.missingSolutionsLatex?.length === 1
+    && result.evidence?.unexpectedSolutionsLatex?.length === 0
+  ) return 'One complex root missing';
+  return null;
+};
+
 const edgeFromResult = (result, previousStep, nextStep) => ({
   status: result.status,
   label: labelFor(result),
@@ -149,6 +222,7 @@ const edgeFromResult = (result, previousStep, nextStep) => ({
     title: titleFor(result),
     finding: result.summary,
     evidence: result.evidence,
+    mistakePattern: mistakePatternFor(result),
     previousStep,
     nextStep,
   },

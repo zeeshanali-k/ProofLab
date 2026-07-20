@@ -1,6 +1,54 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('canonical calculus and complex tasks', () => {
+  test('shows the inequality sign-flip number line, then completes after correction', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Choose a problem' }).click();
+    await page.getByRole('button', { name: /Flip the inequality sign/ }).click();
+
+    const inspector = page.getByLabel('Transition evidence');
+    await expect(inspector.getByRole('heading', { name: 'Reverse the inequality sign' })).toBeVisible();
+    await expect(inspector.getByText('Mistake pattern')).toBeVisible();
+    await expect(inspector.getByText('Sign did not flip')).toBeVisible();
+    await expect(inspector.getByText('Reality check:')).toBeVisible();
+    await expect(inspector.getByText('The correct region does not accept it; your region accepts it.')).toBeVisible();
+    await expect(page.getByLabel('Canonical progress: Needs correction')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Edit STEP 3' }).click();
+    const field = page.getByLabel('Equation input');
+    await field.evaluate((element, latex) => {
+      const mathField = element as unknown as { value: string };
+      mathField.value = latex;
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    }, 'x < -2');
+    await page.getByRole('button', { name: 'Check step' }).click();
+
+    await expect(inspector.getByText('Verified solution region')).toBeVisible();
+    await expect(page.getByLabel('Canonical progress: Complete')).toBeVisible();
+  });
+
+  test('coaches a repeated derivative notation mistake without revealing the answer', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Choose a problem' }).click();
+    await page.getByRole('button', { name: /Differentiate a trig chain/ }).click();
+    await page.getByRole('button', { name: 'Add next derivative' }).click();
+
+    const field = page.getByLabel('Equation input');
+    await field.evaluate((element, latex) => {
+      const mathField = element as unknown as { value: string };
+      mathField.value = latex;
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    }, "f'(x) = 36x\\sin(3x^2 + 1)");
+    await page.getByRole('button', { name: 'Check step' }).click();
+
+    const inspector = page.getByLabel('Transition evidence');
+    await expect(inspector.getByRole('heading', { name: 'Advance the derivative order' })).toBeVisible();
+    await expect(inspector.getByText("the next derivative must be f''(x)")).toBeVisible();
+    await expect(inspector.getByText('Use the product rule: differentiate the factors separately, then combine the resulting terms.')).toBeVisible();
+    await expect(inspector.getByText('Use the chain rule for the polynomial inside the trigonometric function.')).toBeVisible();
+    await expect(inspector.getByText('Expected', { exact: true })).toHaveCount(0);
+  });
+
   test('shows completion for a verified derivative task', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('button', { name: 'Choose a problem' }).click();

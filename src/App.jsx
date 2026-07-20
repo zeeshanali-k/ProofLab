@@ -4,7 +4,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ProofService, ENV_MODE } from './api/ProofService';
 import EquationField from './components/EquationField';
 import CanonicalProgress from './components/CanonicalProgress';
+import GuideScreen from './components/GuideScreen';
 import MathDisplay from './components/MathDisplay';
+import InequalityNumberLine from './components/InequalityNumberLine';
 import TeachingContent from './components/TeachingContent';
 import { CheckIcon, BrokenIcon, PlusIcon } from './components/Icons';
 
@@ -17,6 +19,7 @@ const STATUS_COPY = {
 };
 
 const defaultClaimKind = (problem) => {
+  if (problem.mode === 'inequality') return 'inequality';
   if (problem.mode === 'derivative') return 'derivative';
   if (problem.mode === 'integral') return 'antiderivative';
   if (problem.mode === 'complex-simplify') return 'expression';
@@ -32,6 +35,7 @@ const initialComposerValue = (kind) => {
 
 const scopeCopy = (mode) => ({
   algebra: 'This problem checks one-variable linear and quadratic algebra.',
+  inequality: 'This problem checks one-variable linear <, ≤, >, and ≥ inequalities.',
   derivative: 'This problem checks polynomial and sin, cos, or tan derivatives with polynomial inner functions.',
   integral: 'This problem checks restricted indefinite integrals of polynomials plus sin(ax+b) and cos(ax+b), with + C.',
   'complex-simplify': 'This problem checks rectangular complex arithmetic using i.',
@@ -60,6 +64,7 @@ export default function App() {
   const [helpEdgeId, setHelpEdgeId] = useState(null);
   const [isProblemOpen, setIsProblemOpen] = useState(false);
   const [isProblemPickerOpen, setIsProblemPickerOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isLoadingProblem, setIsLoadingProblem] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [announcement, setAnnouncement] = useState('');
@@ -67,6 +72,7 @@ export default function App() {
   const [isRevealingFinalForm, setIsRevealingFinalForm] = useState(false);
   const helpRequestId = useRef(0);
   const clientIdSequence = useRef(0);
+  const helpButtonRef = useRef(null);
 
   useEffect(() => {
     ProofService.fetchInitialState().then(setData).catch((error) => setLoadError(error instanceof Error ? error.message : 'ProofLab could not load a problem.'));
@@ -76,6 +82,11 @@ export default function App() {
     () => data.edges.find((edge) => edge.id === selectedEdgeId),
     [data.edges, selectedEdgeId],
   );
+
+  const closeGuide = () => {
+    setIsGuideOpen(false);
+    window.requestAnimationFrame(() => helpButtonRef.current?.focus());
+  };
 
   const chooseEdge = (id) => {
     setSelectedEdgeId(id);
@@ -320,6 +331,7 @@ export default function App() {
   const progressDots = data.edges.length ? data.edges.slice(0, 4).map((edge) => edge.status) : ['pending'];
   return (
     <div className="app-container">
+      {isGuideOpen ? <GuideScreen onClose={closeGuide} /> : <>
       <header className="app-header">
         <div className="header-left">
           <div className="wordmark" aria-label="ProofLab">
@@ -328,12 +340,12 @@ export default function App() {
             </svg>
             ProofLab
           </div>
-          <span className="breadcrumb">{['derivative', 'integral'].includes(data.problem.mode) ? 'Calculus Lab' : data.problem.mode.startsWith('complex') ? 'Complex Lab' : 'Algebra Lab'} <span>/</span> {data.problem.category}</span>
+          <span className="breadcrumb">{['derivative', 'integral'].includes(data.problem.mode) ? 'Calculus Lab' : data.problem.mode === 'inequality' ? 'Inequality Lab' : data.problem.mode.startsWith('complex') ? 'Complex Lab' : 'Algebra Lab'} <span>/</span> {data.problem.category}</span>
         </div>
         <div className="header-right">
           <span className="save-status"><span className="save-dot" /> Saved locally</span>
           <button className="problem-toggle" onClick={() => setIsProblemOpen((open) => !open)}>Problem</button>
-          <button className="icon-btn" aria-label="Help with ProofLab" title="Evidence is shown before any coaching help.">?</button>
+          <button className="icon-btn" ref={helpButtonRef} onClick={() => setIsGuideOpen(true)} aria-label="Open ProofLab guide" title="Open the ProofLab platform guide.">?</button>
           <button className="icon-btn" aria-label="More options">•••</button>
         </div>
       </header>
@@ -401,7 +413,7 @@ export default function App() {
             <div className="edge-container pending-edge" aria-hidden="true"><span className="edge-line pending" /></div>
             {composer ? (
               <section className="composer-card" aria-label={composer.mode === 'edit' ? 'Edit equation' : 'Add next step'}>
-                <div className="composer-heading"><span>{composer.mode === 'edit' ? 'EDIT THIS STEP' : composer.kind === 'derivative' ? 'YOUR DERIVATIVE' : composer.kind === 'antiderivative' ? 'YOUR ANTIDERIVATIVE' : composer.kind === 'solution-set' ? 'YOUR SOLUTION SET' : 'YOUR NEXT STEP'}</span><button className="icon-btn" onClick={() => setComposer(null)} aria-label="Close equation composer">×</button></div>
+                <div className="composer-heading"><span>{composer.mode === 'edit' ? 'EDIT THIS STEP' : composer.kind === 'inequality' ? 'YOUR INEQUALITY' : composer.kind === 'derivative' ? 'YOUR DERIVATIVE' : composer.kind === 'antiderivative' ? 'YOUR ANTIDERIVATIVE' : composer.kind === 'solution-set' ? 'YOUR SOLUTION SET' : 'YOUR NEXT STEP'}</span><button className="icon-btn" onClick={() => setComposer(null)} aria-label="Close equation composer">×</button></div>
                 <EquationField value={composer.value} onChange={(value) => setComposer((current) => ({ ...current, value }))} />
                 <div className="math-toolbar" aria-label="Equation shortcuts">
                   <button onClick={() => setComposer((current) => ({ ...current, value: `${current.value}\\frac{ }{ }` }))}>Fraction</button>
@@ -417,7 +429,7 @@ export default function App() {
                 <button className="add-step-card solution-set-card" onClick={() => openComposer('add', null, 'solution-set')}><PlusIcon /> Submit solution set</button>
               </div>
             ) : (
-              <button className="add-step-card" onClick={() => openComposer('add')}><PlusIcon /> {data.problem.mode === 'derivative' ? 'Add next derivative' : data.problem.mode === 'integral' ? 'Add antiderivative' : 'Add next step'}</button>
+              <button className="add-step-card" onClick={() => openComposer('add')}><PlusIcon /> {data.problem.mode === 'inequality' ? 'Add inequality step' : data.problem.mode === 'derivative' ? 'Add next derivative' : data.problem.mode === 'integral' ? 'Add antiderivative' : 'Add next step'}</button>
             )}
           </div>
         </section>
@@ -433,6 +445,7 @@ export default function App() {
               {inspectorMode === 'evidence' && (
                 <>
                   <TeachingContent className="finding-text" content={selectedEdge.inspectorData.finding} />
+                  {isInvalid && selectedEdge.inspectorData.mistakePattern && <p className="mistake-pattern"><span>Mistake pattern</span>{selectedEdge.inspectorData.mistakePattern}</p>}
                   {selectedEdge.inspectorData.evidence && <EvidenceCard evidence={selectedEdge.inspectorData.evidence} rule={selectedEdge.verification?.rule} />}
                   {isInvalid && <div className="inspector-actions"><button className="btn-outline" onClick={() => requestHelp('hint')} disabled={isHelping}>Give me a hint</button><button className="btn-secondary" onClick={() => requestHelp('explain')} disabled={isHelping}>Explain why</button><button className="btn-primary" onClick={() => requestHelp('repair')} disabled={isHelping}>{isHelping ? 'Preparing…' : 'Show repair'}</button></div>}
                   {isValid && <p className="valid-note">The rule detected: <strong>{selectedEdge.label}</strong></p>}
@@ -448,11 +461,15 @@ export default function App() {
       </main>
       {isProblemPickerOpen && <ProblemPicker problems={ProofService.getProblemLibrary()} isLoading={isLoadingProblem} onClose={() => setIsProblemPickerOpen(false)} onSelect={(problem) => loadProblem(problem)} onCustom={(problem) => loadProblem(problem, true)} />}
       <div className="sr-only" aria-live="polite">{announcement}</div>
+      </>}
     </div>
   );
 }
 
 function EvidenceCard({ evidence, rule }) {
+  if (evidence.kind === 'inequality-region') {
+    return <InequalityNumberLine evidence={evidence} isValid={rule === 'inequality-region-preserved'} />;
+  }
   if (evidence.kind === 'evaluation') {
     return (
       <section className="counterexample-card">

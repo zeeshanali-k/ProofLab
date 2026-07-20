@@ -57,6 +57,71 @@ def test_solution_substitution_remains_supported() -> None:
     assert result["rule"] == "solution-substitution"
 
 
+def test_inequality_mode_normalizes_linear_regions_and_returns_number_line_evidence() -> None:
+    valid = verify(
+        "inequality",
+        step("s1", "-2x + 3 > 7", "inequality"),
+        step("s2", "-2x > 4", "inequality"),
+    )
+    assert valid["status"] == "valid"
+    assert valid["rule"] == "inequality-region-preserved"
+    assert valid["evidence"]["kind"] == "inequality-region"
+    assert valid["evidence"]["previousRegion"] == {"boundaryLatex": "-2", "direction": "left", "inclusive": False}
+    assert valid["evidence"]["testValueLatex"] == "0"
+    assert valid["evidence"]["previousIncludesTest"] is False
+    assert 0 <= valid["evidence"]["numberLine"]["testValuePosition"] <= 100
+
+    corrected = verify(
+        "inequality",
+        step("s2", "-2x > 4", "inequality"),
+        step("s3", "x < -2", "inequality"),
+    )
+    assert corrected["status"] == "valid"
+
+
+def test_inequality_mode_handles_inclusivity_and_exposes_sign_flip_counterexamples() -> None:
+    inclusive = verify(
+        "inequality",
+        step("s1", "x - 3 \\leq 0", "inequality"),
+        step("s2", "x ≤ 3", "inequality"),
+    )
+    assert inclusive["status"] == "valid"
+    assert inclusive["evidence"]["previousRegion"]["inclusive"] is True
+
+    endpoint_mistake = verify(
+        "inequality",
+        step("s1", "x - 3 \\le 0", "inequality"),
+        step("s2", "x < 3", "inequality"),
+    )
+    assert endpoint_mistake["status"] == "invalid"
+    assert endpoint_mistake["rule"] == "inequality-region-mismatch"
+    assert endpoint_mistake["evidence"]["testValueLatex"] == "3"
+    assert endpoint_mistake["evidence"]["previousIncludesTest"] is True
+    assert endpoint_mistake["evidence"]["submittedIncludesTest"] is False
+
+    sign_flip = verify(
+        "inequality",
+        step("s2", "-2x > 4", "inequality"),
+        step("s3", "x > -2", "inequality"),
+    )
+    assert sign_flip["status"] == "invalid"
+    assert sign_flip["rule"] == "inequality-sign-flip"
+    assert sign_flip["evidence"]["testValueLatex"] == "0"
+    assert sign_flip["evidence"]["previousIncludesTest"] is False
+    assert sign_flip["evidence"]["submittedIncludesTest"] is True
+    assert sign_flip["verifiedRepairLatex"] == "x < -2"
+
+
+def test_inequality_mode_rejects_non_linear_constant_and_chained_claims() -> None:
+    for latex in ("x^2 < 4", "2 < 4", "x < 2 < 3"):
+        result = verify(
+            "inequality",
+            step("s1", latex, "inequality"),
+            step("s2", "x < 3", "inequality"),
+        )
+        assert result["status"] == "unsupported"
+
+
 def test_derivative_mode_returns_exact_and_sampled_evidence() -> None:
     valid = verify(
         "derivative",
@@ -109,13 +174,37 @@ def test_derivative_mode_supports_trigonometry_chain_rules_and_repeated_notation
     assert tangent["status"] == "valid"
 
 
-def test_derivative_mode_rejects_skipped_derivative_orders() -> None:
-    result = verify(
+def test_derivative_mode_coaches_same_skipped_and_backward_derivative_orders_without_an_answer() -> None:
+    same_order = verify(
+        "derivative",
+        step("s2", "f'(x) = 6x\\cos(3x^2 + 1)", "derivative"),
+        step("s3", "f'(x) = 36x\\sin(3x^2 + 1)", "derivative"),
+    )
+    assert same_order["status"] == "invalid"
+    assert same_order["rule"] == "derivative-order"
+    assert "f''(x)" in same_order["summary"]
+    assert "product rule" in same_order["summary"]
+    assert "chain rule" in same_order["summary"]
+    assert same_order["evidence"] is None
+    assert same_order["verifiedRepairLatex"] is None
+
+    skipped_order = verify(
         "derivative",
         step("s1", "f(x) = x^3", "function"),
         step("s2", "f''(x) = 6x", "derivative"),
     )
-    assert result["status"] == "unsupported"
+    assert skipped_order["status"] == "invalid"
+    assert skipped_order["rule"] == "derivative-order"
+    assert "f'(x)" in skipped_order["summary"]
+
+    backward_order = verify(
+        "derivative",
+        step("s2", "f''(x) = 6x", "derivative"),
+        step("s3", "f'(x) = 3x^2", "derivative"),
+    )
+    assert backward_order["status"] == "invalid"
+    assert backward_order["rule"] == "derivative-order"
+    assert "f'''(x)" in backward_order["summary"]
 
 
 def test_integral_mode_checks_restricted_antiderivatives_and_requires_c() -> None:
@@ -238,6 +327,24 @@ def test_completion_and_reveal_support_complex_tasks_but_not_open_ended_ones() -
         json={"mode": "algebra", "givenStep": step("s1", "x + 1 = 2", "equation"), "canonicalGoal": None},
     )
     assert algebra_rejected.status_code == 400
+
+
+def test_fixed_target_inequalities_support_completion_and_final_form_reveal() -> None:
+    given = step("s1", "-2x + 3 > 7", "inequality")
+    balance = step("s2", "-2x > 4", "inequality")
+    answer = step("s3", "x < -2", "inequality")
+    assert assess("inequality", given, answer, [balance, answer], {"kind": "inequality"}) == {"status": "complete"}
+
+    wrong_answer = step("s3", "x > -2", "inequality")
+    assert assess("inequality", given, wrong_answer, [balance, wrong_answer], {"kind": "inequality"}) == {"status": "needs-correction"}
+    assert assess("inequality", given, answer, [balance, answer], None) == {"status": "not-applicable"}
+
+    reveal = client.post(
+        "/reveal-final-form",
+        json={"mode": "inequality", "givenStep": given, "canonicalGoal": {"kind": "inequality"}},
+    )
+    assert reveal.status_code == 200
+    assert reveal.json() == {"canonicalLatex": "x < -2"}
 
 
 def test_complex_simplification_compares_both_components() -> None:
