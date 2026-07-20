@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ProofService, ENV_MODE } from './api/ProofService';
 import EquationField from './components/EquationField';
+import CanonicalProgress from './components/CanonicalProgress';
+import GuideScreen from './components/GuideScreen';
 import MathDisplay from './components/MathDisplay';
+import InequalityNumberLine from './components/InequalityNumberLine';
 import TeachingContent from './components/TeachingContent';
 import { CheckIcon, BrokenIcon, PlusIcon } from './components/Icons';
 
@@ -14,6 +17,30 @@ const STATUS_COPY = {
   checking: 'Rechecking…',
   inconclusive: 'Needs rechecking',
 };
+
+const defaultClaimKind = (problem) => {
+  if (problem.mode === 'inequality') return 'inequality';
+  if (problem.mode === 'derivative') return 'derivative';
+  if (problem.mode === 'integral') return 'antiderivative';
+  if (problem.mode === 'complex-simplify') return 'expression';
+  return 'equation';
+};
+
+const initialComposerValue = (kind) => {
+  if (kind === 'derivative') return "f'(x) = ";
+  if (kind === 'antiderivative') return 'F(x) =  + C';
+  if (kind === 'solution-set') return '\\{ \\}';
+  return '';
+};
+
+const scopeCopy = (mode) => ({
+  algebra: 'This problem checks one-variable linear and quadratic algebra.',
+  inequality: 'This problem checks one-variable linear <, ≤, >, and ≥ inequalities.',
+  derivative: 'This problem checks polynomial and sin, cos, or tan derivatives with polynomial inner functions.',
+  integral: 'This problem checks restricted indefinite integrals of polynomials plus sin(ax+b) and cos(ax+b), with + C.',
+  'complex-simplify': 'This problem checks rectangular complex arithmetic using i.',
+  'complex-solve': 'This problem currently checks simple rational imaginary roots.',
+}[mode] ?? 'This step needs rechecking.');
 
 function StatusPill({ status }) {
   return (
@@ -37,11 +64,15 @@ export default function App() {
   const [helpEdgeId, setHelpEdgeId] = useState(null);
   const [isProblemOpen, setIsProblemOpen] = useState(false);
   const [isProblemPickerOpen, setIsProblemPickerOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isLoadingProblem, setIsLoadingProblem] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [announcement, setAnnouncement] = useState('');
+  const [revealedFinalForm, setRevealedFinalForm] = useState(null);
+  const [isRevealingFinalForm, setIsRevealingFinalForm] = useState(false);
   const helpRequestId = useRef(0);
   const clientIdSequence = useRef(0);
+  const helpButtonRef = useRef(null);
 
   useEffect(() => {
     ProofService.fetchInitialState().then(setData).catch((error) => setLoadError(error instanceof Error ? error.message : 'ProofLab could not load a problem.'));
@@ -51,6 +82,11 @@ export default function App() {
     () => data.edges.find((edge) => edge.id === selectedEdgeId),
     [data.edges, selectedEdgeId],
   );
+
+  const closeGuide = () => {
+    setIsGuideOpen(false);
+    window.requestAnimationFrame(() => helpButtonRef.current?.focus());
+  };
 
   const chooseEdge = (id) => {
     setSelectedEdgeId(id);
@@ -75,6 +111,8 @@ export default function App() {
     const selected = next.edges.find((edge) => edge.status === 'invalid') ?? next.edges.at(-1);
     setSelectedEdgeId(selected?.id ?? null);
     setComposer(null);
+    setRevealedFinalForm(null);
+    setIsRevealingFinalForm(false);
     clearTeachingContent();
     setInspectorMode('evidence');
   }
@@ -95,8 +133,9 @@ export default function App() {
     }
   };
 
-  const openComposer = (mode, step = null) => {
-    setComposer({ mode, stepId: step?.id, value: step?.math ?? '' });
+  const openComposer = (mode, step = null, requestedKind = null) => {
+    const kind = step?.kind ?? requestedKind ?? defaultClaimKind(data.problem);
+    setComposer({ mode, stepId: step?.id, kind, value: step?.math ?? initialComposerValue(kind) });
     setInspectorMode('evidence');
     clearTeachingContent();
   };
@@ -104,16 +143,19 @@ export default function App() {
   const applyVerification = async ({ previous, next, stepId, edgeId, addStep }) => {
     setIsChecking(true);
     try {
-      const result = await ProofService.verifyStep(previous, next);
+      const result = await ProofService.verifyStep(previous, next, data.problem.mode);
       const edge = { ...result, id: edgeId, from: previous.id, to: next.id };
+      const nextSteps = addStep
+        ? [...data.steps, { ...next, status: result.status, timestamp: 'Just checked' }]
+        : data.steps.map((step) => (step.id === stepId ? { ...step, status: result.status, math: next.math } : step));
+      const completionStatus = await ProofService.assessCompletion(data.problem, nextSteps);
       setData((current) => ({
         ...current,
-        steps: addStep
-          ? [...current.steps, { ...next, status: result.status, timestamp: 'Just checked' }]
-          : current.steps.map((step) => (step.id === stepId ? { ...step, status: result.status, math: next.math } : step)),
+        steps: nextSteps,
         edges: current.edges.some((candidate) => candidate.id === edgeId)
           ? current.edges.map((candidate) => (candidate.id === edgeId ? edge : candidate))
           : [...current.edges, edge],
+        completionStatus,
       }));
       setSelectedEdgeId(edgeId);
       setInspectorMode('evidence');
@@ -135,6 +177,57 @@ export default function App() {
     }
   };
 
+  const verifyExistingChain = async (startIndex, replacement) => {
+    const before = data;
+    const workingSteps = before.steps.map((step, index) => index === startIndex ? { ...replacement, status: 'checking' } : { ...step });
+    const workingEdges = before.edges.map((edge) => ({ ...edge }));
+
+    setData({
+      ...before,
+      steps: workingSteps.map((step, index) => index >= startIndex ? { ...step, status: 'checking', timestamp: 'Rechecking' } : step),
+      edges: workingEdges.map((edge, index) => index >= startIndex - 1 ? { ...edge, status: 'checking', label: 'rechecking' } : edge),
+    });
+    setIsChecking(true);
+    try {
+      let selectedId = null;
+      for (let index = startIndex; index < workingSteps.length; index += 1) {
+        const previous = workingSteps[index - 1];
+        const next = workingSteps[index];
+        const result = await ProofService.verifyStep(previous, next, before.problem.mode);
+        const edgeIndex = workingEdges.findIndex((edge) => edge.to === next.id);
+        const existingEdge = workingEdges[edgeIndex];
+        const checkedEdge = { ...result, id: existingEdge?.id ?? nextClientId('e'), from: previous.id, to: next.id };
+        workingSteps[index] = { ...next, status: result.status, timestamp: result.status === 'valid' ? 'Checked' : 'Needs rechecking' };
+        if (edgeIndex >= 0) workingEdges[edgeIndex] = checkedEdge;
+        else workingEdges.push(checkedEdge);
+        selectedId ??= checkedEdge.id;
+
+        if (result.status !== 'valid') {
+          for (let later = index + 1; later < workingSteps.length; later += 1) {
+            workingSteps[later] = { ...workingSteps[later], status: 'checking', timestamp: 'Needs rechecking' };
+            const laterEdgeIndex = workingEdges.findIndex((edge) => edge.to === workingSteps[later].id);
+            if (laterEdgeIndex >= 0) workingEdges[laterEdgeIndex] = { ...workingEdges[laterEdgeIndex], status: 'checking', label: 'needs rechecking' };
+          }
+          break;
+        }
+      }
+      const completionStatus = await ProofService.assessCompletion(before.problem, workingSteps);
+      setData({ ...before, steps: workingSteps, edges: workingEdges, completionStatus });
+      setSelectedEdgeId(selectedId);
+      setInspectorMode('evidence');
+      clearTeachingContent();
+      setAnnouncement('ProofLab rechecked this step and every later step it could reach.');
+      setComposer(null);
+      return true;
+    } catch (error) {
+      setData(before);
+      setAnnouncement(error instanceof Error ? error.message : 'ProofLab could not recheck this sequence.');
+      return false;
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
   const submitComposer = async () => {
     if (!composer?.value.trim() || isChecking) return;
 
@@ -144,23 +237,15 @@ export default function App() {
       const existing = data.steps[stepIndex];
       if (!previous || !existing) return;
 
-      const edge = data.edges.find((candidate) => candidate.to === existing.id);
-      const next = { ...existing, math: composer.value, status: 'checking' };
-      const boardBeforeEdit = data;
-      setData((current) => ({
-        ...current,
-        steps: current.steps.map((step, index) => (index >= stepIndex ? { ...step, status: 'checking' } : step)),
-        edges: current.edges.map((candidate) => (candidate.from === previous.id ? { ...candidate, status: 'checking' } : candidate)),
-      }));
-      const verified = await applyVerification({ previous, next, stepId: existing.id, edgeId: edge?.id ?? nextClientId('e'), addStep: false });
-      if (!verified) setData(boardBeforeEdit);
+      const next = { ...existing, math: composer.value, kind: composer.kind, status: 'checking' };
+      await verifyExistingChain(stepIndex, next);
       return;
     }
 
     const previous = data.steps.at(-1);
     if (!previous) return;
     const order = data.steps.length + 1;
-    const next = { id: nextClientId('s'), type: `STEP ${order}`, math: composer.value, status: 'checking' };
+    const next = { id: nextClientId('s'), type: `STEP ${order}`, math: composer.value, kind: composer.kind, status: 'checking' };
     await applyVerification({ previous, next, stepId: next.id, edgeId: nextClientId('e'), addStep: true });
   };
 
@@ -168,8 +253,7 @@ export default function App() {
     if (!selectedEdge) return;
     const faultyStep = data.steps.find((step) => step.id === selectedEdge.to);
     const stepIndex = data.steps.findIndex((step) => step.id === selectedEdge.to);
-    const previous = data.steps[stepIndex - 1];
-    if (!faultyStep || !previous || isChecking) return;
+    if (!faultyStep || stepIndex <= 0 || isChecking) return;
 
     const math = (helpEdgeId === selectedEdge.id ? helpContent?.repairLatex : undefined) || selectedEdge.verification?.verifiedRepairLatex;
     if (!math) {
@@ -177,14 +261,7 @@ export default function App() {
       return;
     }
     const next = { ...faultyStep, math, status: 'checking' };
-    const boardBeforeRepair = data;
-    setData((current) => ({
-      ...current,
-      steps: current.steps.map((step, index) => (index >= stepIndex ? { ...step, status: 'checking' } : step)),
-      edges: current.edges.map((edge) => (edge.id === selectedEdge.id ? { ...edge, status: 'checking' } : edge)),
-    }));
-    const verified = await applyVerification({ previous, next, stepId: faultyStep.id, edgeId: selectedEdge.id, addStep: false });
-    if (!verified) setData(boardBeforeRepair);
+    await verifyExistingChain(stepIndex, next);
   };
 
   const requestHelp = async (mode) => {
@@ -216,6 +293,7 @@ export default function App() {
       ...current,
       steps: current.steps.filter((step) => !removed.has(step.id)),
       edges: current.edges.filter((edge) => !removed.has(edge.from) && !removed.has(edge.to)),
+      completionStatus: current.problem.canonicalGoal ? 'in-progress' : 'not-applicable',
     }));
     setSelectedEdgeId(null);
     setAnnouncement('Step removed. Later steps need to be added again.');
@@ -225,6 +303,20 @@ export default function App() {
     if (!data.problem) return;
     await loadProblem(data.problem);
     setAnnouncement(`${data.problem.title} has been reset.`);
+  };
+
+  const revealFinalForm = async () => {
+    if (!data.problem.canonicalGoal || isRevealingFinalForm) return;
+    setIsRevealingFinalForm(true);
+    try {
+      const result = await ProofService.revealFinalForm(data.problem, data.steps[0]);
+      setRevealedFinalForm(result.canonicalLatex);
+      setAnnouncement('The canonical final form is shown without changing your reasoning path.');
+    } catch (error) {
+      setAnnouncement(error instanceof Error ? error.message : 'ProofLab could not reveal the final form.');
+    } finally {
+      setIsRevealingFinalForm(false);
+    }
   };
 
   if (!data.problem) return <div className="loading-lab">{loadError || 'Opening your algebra lab…'}</div>;
@@ -237,9 +329,9 @@ export default function App() {
   const expectedCount = Math.max(data.problem.seedSteps?.length ?? 0, checkedCount);
   const progress = expectedCount ? `${checkedCount} of ${expectedCount} steps checked` : checkedCount ? `${checkedCount} step${checkedCount === 1 ? '' : 's'} checked` : 'Add a step to begin';
   const progressDots = data.edges.length ? data.edges.slice(0, 4).map((edge) => edge.status) : ['pending'];
-
   return (
     <div className="app-container">
+      {isGuideOpen ? <GuideScreen onClose={closeGuide} /> : <>
       <header className="app-header">
         <div className="header-left">
           <div className="wordmark" aria-label="ProofLab">
@@ -248,12 +340,12 @@ export default function App() {
             </svg>
             ProofLab
           </div>
-          <span className="breadcrumb">Algebra Lab <span>/</span> {data.problem.category}</span>
+          <span className="breadcrumb">{['derivative', 'integral'].includes(data.problem.mode) ? 'Calculus Lab' : data.problem.mode === 'inequality' ? 'Inequality Lab' : data.problem.mode.startsWith('complex') ? 'Complex Lab' : 'Algebra Lab'} <span>/</span> {data.problem.category}</span>
         </div>
         <div className="header-right">
           <span className="save-status"><span className="save-dot" /> Saved locally</span>
           <button className="problem-toggle" onClick={() => setIsProblemOpen((open) => !open)}>Problem</button>
-          <button className="icon-btn" aria-label="Help with ProofLab" title="Evidence is shown before any coaching help.">?</button>
+          <button className="icon-btn" ref={helpButtonRef} onClick={() => setIsGuideOpen(true)} aria-label="Open ProofLab guide" title="Open the ProofLab platform guide.">?</button>
           <button className="icon-btn" aria-label="More options">•••</button>
         </div>
       </header>
@@ -271,6 +363,9 @@ export default function App() {
             {progressDots.map((status, index) => <span key={`${status}-${index}`} className={`progress-dot ${status === 'valid' ? 'checked' : status === 'invalid' ? 'error' : status === 'unsupported' || status === 'inconclusive' ? 'warning' : ''}`} />)}
             <span className="progress-text">{progress}</span>
           </div>
+          {data.problem.canonicalGoal && (
+            <CanonicalProgress status={data.completionStatus} onReveal={revealFinalForm} isRevealing={isRevealingFinalForm} revealedFinalForm={revealedFinalForm} />
+          )}
           <div className="problem-actions">
             <button className="choose-problem" onClick={() => setIsProblemPickerOpen(true)} disabled={isLoadingProblem}>Choose a problem</button>
             <button className="reset-example" onClick={resetExample} disabled={isLoadingProblem}>Reset {data.problem.isCustom ? 'my problem' : 'example'}</button>
@@ -318,17 +413,23 @@ export default function App() {
             <div className="edge-container pending-edge" aria-hidden="true"><span className="edge-line pending" /></div>
             {composer ? (
               <section className="composer-card" aria-label={composer.mode === 'edit' ? 'Edit equation' : 'Add next step'}>
-                <div className="composer-heading"><span>{composer.mode === 'edit' ? 'EDIT THIS STEP' : 'YOUR NEXT STEP'}</span><button className="icon-btn" onClick={() => setComposer(null)} aria-label="Close equation composer">×</button></div>
+                <div className="composer-heading"><span>{composer.mode === 'edit' ? 'EDIT THIS STEP' : composer.kind === 'inequality' ? 'YOUR INEQUALITY' : composer.kind === 'derivative' ? 'YOUR DERIVATIVE' : composer.kind === 'antiderivative' ? 'YOUR ANTIDERIVATIVE' : composer.kind === 'solution-set' ? 'YOUR SOLUTION SET' : 'YOUR NEXT STEP'}</span><button className="icon-btn" onClick={() => setComposer(null)} aria-label="Close equation composer">×</button></div>
                 <EquationField value={composer.value} onChange={(value) => setComposer((current) => ({ ...current, value }))} />
                 <div className="math-toolbar" aria-label="Equation shortcuts">
                   <button onClick={() => setComposer((current) => ({ ...current, value: `${current.value}\\frac{ }{ }` }))}>Fraction</button>
                   <button onClick={() => setComposer((current) => ({ ...current, value: `${current.value}^{ }` }))}>Exponent</button>
                   <button onClick={() => setComposer((current) => ({ ...current, value: `${current.value}( )` }))}>Parentheses</button>
+                  {composer.kind === 'solution-set' && <button onClick={() => setComposer((current) => ({ ...current, value: '\\{ \\}' }))}>Solution set</button>}
                 </div>
-                <div className="composer-actions"><button className="btn-text" onClick={() => setComposer(null)}>Cancel</button><button className="btn-primary" onClick={submitComposer} disabled={isChecking}>{isChecking ? <><span className="spinner" /> Checking…</> : 'Check step'}</button></div>
+                <div className="composer-actions"><button className="btn-text" onClick={() => setComposer(null)}>Cancel</button><button className="btn-primary" onClick={submitComposer} disabled={isChecking}>{isChecking ? <><span className="spinner" /> Checking…</> : composer.kind === 'solution-set' ? 'Check solutions' : 'Check step'}</button></div>
               </section>
+            ) : data.problem.mode === 'complex-solve' ? (
+              <div className="add-step-options">
+                <button className="add-step-card" onClick={() => openComposer('add', null, 'equation')}><PlusIcon /> Add equivalent step</button>
+                <button className="add-step-card solution-set-card" onClick={() => openComposer('add', null, 'solution-set')}><PlusIcon /> Submit solution set</button>
+              </div>
             ) : (
-              <button className="add-step-card" onClick={() => openComposer('add')}><PlusIcon /> Add next step</button>
+              <button className="add-step-card" onClick={() => openComposer('add')}><PlusIcon /> {data.problem.mode === 'inequality' ? 'Add inequality step' : data.problem.mode === 'derivative' ? 'Add next derivative' : data.problem.mode === 'integral' ? 'Add antiderivative' : 'Add next step'}</button>
             )}
           </div>
         </section>
@@ -344,10 +445,11 @@ export default function App() {
               {inspectorMode === 'evidence' && (
                 <>
                   <TeachingContent className="finding-text" content={selectedEdge.inspectorData.finding} />
-                  {selectedEdge.inspectorData.realityCheck && <Counterexample edge={selectedEdge} />}
+                  {isInvalid && selectedEdge.inspectorData.mistakePattern && <p className="mistake-pattern"><span>Mistake pattern</span>{selectedEdge.inspectorData.mistakePattern}</p>}
+                  {selectedEdge.inspectorData.evidence && <EvidenceCard evidence={selectedEdge.inspectorData.evidence} rule={selectedEdge.verification?.rule} />}
                   {isInvalid && <div className="inspector-actions"><button className="btn-outline" onClick={() => requestHelp('hint')} disabled={isHelping}>Give me a hint</button><button className="btn-secondary" onClick={() => requestHelp('explain')} disabled={isHelping}>Explain why</button><button className="btn-primary" onClick={() => requestHelp('repair')} disabled={isHelping}>{isHelping ? 'Preparing…' : 'Show repair'}</button></div>}
                   {isValid && <p className="valid-note">The rule detected: <strong>{selectedEdge.label}</strong></p>}
-                  {!isInvalid && !isValid && <p className="scope-note">This version checks one-variable linear and quadratic algebra.</p>}
+                  {!isInvalid && !isValid && <p className="scope-note">{scopeCopy(data.problem.mode)}</p>}
                 </>
               )}
               {inspectorMode === 'hint' && <HelpPanel kind="hint" content={helpContent} back={() => setInspectorMode('evidence')} />}
@@ -359,20 +461,57 @@ export default function App() {
       </main>
       {isProblemPickerOpen && <ProblemPicker problems={ProofService.getProblemLibrary()} isLoading={isLoadingProblem} onClose={() => setIsProblemPickerOpen(false)} onSelect={(problem) => loadProblem(problem)} onCustom={(problem) => loadProblem(problem, true)} />}
       <div className="sr-only" aria-live="polite">{announcement}</div>
+      </>}
     </div>
   );
 }
 
-function Counterexample({ edge }) {
-  const check = edge.inspectorData.realityCheck;
+function EvidenceCard({ evidence, rule }) {
+  if (evidence.kind === 'inequality-region') {
+    return <InequalityNumberLine evidence={evidence} isValid={rule === 'inequality-region-preserved'} />;
+  }
+  if (evidence.kind === 'evaluation') {
+    return (
+      <section className="counterexample-card">
+        <h3>Reality check: try {evidence.inputLatex}</h3>
+        <div className="calc-table">
+          <div className="calc-row"><span className="calc-label">Original</span><MathDisplay math={evidence.previous.leftLatex} className="calc-math" /><span className="calc-result">= {evidence.previous.rightValue}</span></div>
+          <div className="calc-row"><span className="calc-label">Your step</span><MathDisplay math={evidence.next.leftLatex} className="calc-math" /><span className="calc-result">= {evidence.next.rightValue}</span></div>
+        </div>
+        <p className="calc-note">Because the results differ, this transition cannot be verified.</p>
+      </section>
+    );
+  }
+  if (evidence.kind === 'derivative-check') {
+    const isIntegral = rule === 'indefinite-integral';
+    return (
+      <section className="counterexample-card">
+        <h3>{isIntegral ? 'Antiderivative check' : 'Derivative check'}: try {evidence.inputLatex}</h3>
+        <div className="calc-table">
+          <div className="calc-row"><span className="calc-label">Expected</span><MathDisplay math={evidence.expectedLatex} className="calc-math" /><span className="calc-result">= {evidence.expectedValue}</span></div>
+          <div className="calc-row"><span className="calc-label">{isIntegral ? 'Your result' : 'Your derivative'}</span><MathDisplay math={evidence.submittedLatex} className="calc-math" /><span className="calc-result">= {evidence.submittedValue}</span></div>
+        </div>
+      </section>
+    );
+  }
+  if (evidence.kind === 'complex-comparison') {
+    return (
+      <section className="counterexample-card">
+        <h3>Compare the real and imaginary parts</h3>
+        <div className="calc-table">
+          <div className="calc-row"><span className="calc-label">Expected</span><MathDisplay math={evidence.expectedLatex} className="calc-math" /></div>
+          <div className="calc-row"><span className="calc-label">Your step</span><MathDisplay math={evidence.submittedLatex} className="calc-math" /></div>
+          <div className="calc-row"><span className="calc-label">Difference</span><MathDisplay math={evidence.differenceLatex} className="calc-math" /></div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="counterexample-card">
-      <h3>Reality check: try {check.testValue}</h3>
-      <div className="calc-table">
-        <div className="calc-row"><span className="calc-label">Original</span><MathDisplay math={check.originalMath} className="calc-math" /><span className="calc-result">= {check.originalResult}</span></div>
-        <div className="calc-row"><span className="calc-label">Your step</span><MathDisplay math={check.stepMath} className="calc-math" /><span className="calc-result">= {check.stepResult}</span></div>
-      </div>
-      <p className="calc-note">Because the results differ, these expressions are not equivalent.</p>
+      <h3>Check every root</h3>
+      <div className="evidence-line"><span>Expected:</span><MathDisplay math={`\\{${evidence.expectedSolutionsLatex.join(', ') }\\}`} className="inline-evidence-math" /></div>
+      {evidence.missingSolutionsLatex.length > 0 && <div className="evidence-line"><span>Missing:</span><MathDisplay math={evidence.missingSolutionsLatex.join(', ')} className="inline-evidence-math" /></div>}
+      {evidence.unexpectedSolutionsLatex.length > 0 && <div className="evidence-line"><span>Unexpected:</span><MathDisplay math={evidence.unexpectedSolutionsLatex.join(', ')} className="inline-evidence-math" /></div>}
     </section>
   );
 }

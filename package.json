@@ -8,11 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test:unit": "vitest run"
+    "test:unit": "vitest run",
+    "test:api": "uv run --project backend pytest -q backend/tests",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "katex": "^0.17.0",
-    "mathjs": "^15.2.0",
     "mathlive": "^0.110.0",
     "next": "^16.2.10",
     "react": "^19.2.7",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
