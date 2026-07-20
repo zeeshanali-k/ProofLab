@@ -8,17 +8,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test:unit": "vitest run"
+    "test:unit": "vitest run",
+    "test:api": "uv run --project backend pytest -q backend/tests",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "3dmol": "^2.5.5",
     "@chemistry/formula": "^3.1.3",
+    "@excalidraw/excalidraw": "^0.18.1",
     "@google/model-viewer": "^4.3.1",
     "@medhuelabs/openhuman-viewer": "^0.1.2",
     "@nam088/chemical-balancer": "^1.2.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
-    "@types/three": "^0.185.1",
+    "@types/three": "^0.183.0",
     "chart.js": "^4.5.1",
     "fast-balance": "^1.0.7",
     "hpo-react-visualizer": "^0.0.3",
@@ -35,10 +38,11 @@
     "react-dom": "^19.2.7",
     "react-katex": "^3.1.0",
     "reactreejs": "^1.0.3",
-    "three": "^0.185.1"
+    "three": "^0.183.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
