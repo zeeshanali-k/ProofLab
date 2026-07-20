@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from datetime import datetime
 from enum import Enum
 from typing import Annotated, Literal, Union
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -23,6 +25,100 @@ class ClaimKind(str, Enum):
     DERIVATIVE = "derivative"
     ANTIDERIVATIVE = "antiderivative"
     SOLUTION_SET = "solution-set"
+
+
+class ChallengeAnswerKind(str, Enum):
+    EQUATION = "equation"
+    INEQUALITY = "inequality"
+    DERIVATIVE = "derivative"
+    ANTIDERIVATIVE = "antiderivative"
+    EXPRESSION = "expression"
+    SOLUTION_SET = "solution-set"
+
+
+class VisualizerType(str, Enum):
+    NONE = "none"
+    NUMBER_LINE = "number-line"
+    COMPLEX_PLANE = "complex-plane"
+
+
+class VisualizationPhase(str, Enum):
+    DRAFT = "draft"
+    ACCEPTED = "accepted"
+    INCORRECT = "incorrect"
+
+
+class ChallengeSubmissionStatus(str, Enum):
+    ACCEPTED = "accepted"
+    INCORRECT = "incorrect"
+    FORMAT_ERROR = "format-error"
+    UNSUPPORTED = "unsupported"
+
+
+class ChallengeCatalogItem(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    number: int
+    slug: str
+    title: str
+    topic: str
+    difficulty: str
+    answer_kind: ChallengeAnswerKind = Field(alias="answerKind")
+    visualizer_type: VisualizerType = Field(alias="visualizerType")
+    simulation_preview: str = Field(alias="simulationPreview")
+
+
+class ChallengeDetail(ChallengeCatalogItem):
+    statement_latex: str = Field(alias="statementLatex")
+    statement_text: str = Field(alias="statementText")
+    constraints: list[str]
+    starter_draft: str = Field(alias="starterDraft")
+    public_example_latex: str = Field(alias="publicExampleLatex")
+    public_example_text: str = Field(alias="publicExampleText")
+
+
+class ChallengePreviewRequest(BaseModel):
+    latex: str = Field(min_length=1, max_length=1_500)
+
+
+class ChallengeSubmitRequest(ChallengePreviewRequest):
+    model_config = ConfigDict(populate_by_name=True)
+
+    anonymous_session_id: UUID = Field(alias="anonymousSessionId")
+
+
+class ChallengeVisualization(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    type: VisualizerType
+    phase: VisualizationPhase
+    learner_data: dict[str, object] = Field(default_factory=dict, alias="learnerData")
+
+
+class ChallengePreviewResponse(BaseModel):
+    visualization: ChallengeVisualization
+
+
+class ChallengeSubmissionResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    status: ChallengeSubmissionStatus
+    summary: str
+    rule: str | None = None
+    visualization: ChallengeVisualization
+    submission_id: int | None = Field(default=None, alias="submissionId")
+    attempt_count: int = Field(default=0, alias="attemptCount")
+
+
+class ChallengeSubmissionRecord(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int
+    challenge_id: str = Field(alias="challengeId")
+    submitted_latex: str = Field(alias="submittedLatex")
+    status: ChallengeSubmissionStatus
+    created_at: datetime = Field(alias="createdAt")
 
 
 class VerificationStatus(str, Enum):

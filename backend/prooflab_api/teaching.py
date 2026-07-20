@@ -41,6 +41,7 @@ def _system_prompt() -> str:
             "Correctness is already decided by supplied verification evidence. Never override or reinterpret it.",
             "Use only the submitted steps and verified evidence. Be concise, encouraging, and specific.",
             'Return exactly one JSON object: {"title":"...","body":"...","question":"... optional","repairLatex":"... optional"}.',
+            "Wrap every mathematical expression in $...$ so the learner sees properly typeset notation; never leave math as plain text.",
             "Hint mode asks one guiding question and must not reveal a corrected answer or missing term.",
             "Explain mode is under 100 words. Repair mode may propose one draft repair; ProofLab will verify it.",
         ]
