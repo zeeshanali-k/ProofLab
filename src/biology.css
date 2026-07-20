@@ -1051,3 +1051,15 @@
 	.page-header h1 { font-size: 1.5rem; }
 	.dashboard-header h1 { font-size: 1.75rem; }
 }
+
+/* Theme continuity for diagrams, controls, and information panels. */
+.bio-page :is(input, select, textarea, option) { background: var(--field); border-color: var(--border); color: var(--ink); }
+.bio-page :is(.bio-viewer-container, .bio-parent-visual, .bio-pea-visual-row, .bio-bug-visual, .bio-reservoir-card, .bio-flux-item) { background: var(--surface); border-color: var(--border); color: var(--ink); }
+.bio-page :is(.bio-info, .bio-info-card, .bio-system-item, .bio-cycle-canvas, .bio-zoom-btn, .bio-tree-legend, .bio-chromosome-canvas, .bio-chromosome-legend, .bio-diagram-container, .bio-system-list li, .bio-organ-card, .bio-structure-item, .bio-parent-card, .bio-offspring-card, .bio-copy-btn, .bio-cycle-content) { background: var(--field); border-color: var(--border); color: var(--ink); }
+.bio-page .bio-result { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 42%, var(--border)); color: var(--ink); }
+html[data-theme="dark"] .bio-page :is(.bio-condition-card, .bio-errors) { background: var(--evidence-bg); border-color: color-mix(in srgb, var(--invalid) 48%, var(--border)); }
+html[data-theme="dark"] .bio-page .bio-condition-name, html[data-theme="dark"] .bio-page .bio-errors-title, html[data-theme="dark"] .bio-page .bio-error-item { color: #ffb6b9; }
+html[data-theme="dark"] .bio-page :is(.bio-fun-fact, .bio-human-impact) { background: #42391d; border-color: #75652b; }
+html[data-theme="dark"] .bio-page :is(.bio-fun-fact, .bio-human-impact, .bio-human-impact h5, .bio-human-impact p) { color: #ffe69a; }
+.bio-page :is(.bio-card, .bio-info-card, .bio-system-item, .bio-organ-card, .bio-structure-item, .bio-parent-card, .bio-offspring-card) { transition: background-color .28s ease, border-color .28s ease, box-shadow .28s ease, transform .28s cubic-bezier(.2,.9,.25,1.2); }
+.bio-page :is(.bio-card, .bio-info-card, .bio-system-item, .bio-organ-card, .bio-structure-item, .bio-parent-card, .bio-offspring-card):hover { border-color: color-mix(in srgb, var(--accent) 48%, var(--border)); }

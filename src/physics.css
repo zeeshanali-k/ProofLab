@@ -749,3 +749,18 @@
 		font-size: 1.75rem;
 	}
 }
+
+/* Theme continuity for simulators, charts, and control surfaces. */
+:is(.physics-page, .physics-dashboard) :is(input, select, textarea, option) { background: var(--field); border-color: var(--border); color: var(--ink); }
+:is(.physics-page, .physics-dashboard) :is(.physics-formula-display, .physics-slider-group, .physics-canvas, .physics-circuit-component) { background: var(--surface); border-color: var(--border); color: var(--ink); }
+:is(.physics-page, .physics-dashboard) :is(.physics-chart-container, .physics-formula-note, .physics-copy-btn, .physics-error-fix, .physics-vector-item, .physics-mode-btn, .physics-pause-btn) { background: var(--field); border-color: var(--border); color: var(--ink); }
+:is(.physics-page, .physics-dashboard) .physics-result { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); color: var(--ink); }
+:is(.physics-page, .physics-dashboard) .physics-result-red { background: color-mix(in srgb, var(--invalid) 10%, var(--surface)); border-color: color-mix(in srgb, var(--invalid) 45%, var(--border)); }
+:is(.physics-page, .physics-dashboard) .physics-metric-blue { background: color-mix(in srgb, #3b82f6 10%, var(--surface)); border-color: color-mix(in srgb, #3b82f6 35%, var(--border)); }
+:is(.physics-page, .physics-dashboard) .physics-metric-green { background: color-mix(in srgb, #22c55e 10%, var(--surface)); border-color: color-mix(in srgb, #22c55e 35%, var(--border)); }
+:is(.physics-page, .physics-dashboard) .physics-metric-red { background: color-mix(in srgb, #ef4444 10%, var(--surface)); border-color: color-mix(in srgb, #ef4444 35%, var(--border)); }
+:is(.physics-page, .physics-dashboard) .physics-metric-purple { background: color-mix(in srgb, #8b5cf6 10%, var(--surface)); border-color: color-mix(in srgb, #8b5cf6 35%, var(--border)); }
+html[data-theme="dark"] :is(.physics-page, .physics-dashboard) .physics-errors { background: var(--evidence-bg); border-color: color-mix(in srgb, var(--invalid) 48%, var(--border)); }
+html[data-theme="dark"] :is(.physics-page, .physics-dashboard) .physics-result-red { background: #412731; border-color: #754452; }
+:is(.physics-page, .physics-dashboard) :is(.physics-card, .physics-vector-item, .physics-circuit-component, .physics-chart-container, .highlight-card) { transition: background-color .28s ease, border-color .28s ease, box-shadow .28s ease, transform .28s cubic-bezier(.2,.9,.25,1.2); }
+:is(.physics-page, .physics-dashboard) :is(.physics-card, .physics-vector-item, .physics-circuit-component, .physics-chart-container, .highlight-card):hover { border-color: color-mix(in srgb, var(--accent) 48%, var(--border)); }

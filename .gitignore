@@ -33,3 +33,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+backend/.pytest_cache/
+backend/prooflab_api/__pycache__/

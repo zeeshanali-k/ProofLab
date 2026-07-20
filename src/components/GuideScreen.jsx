@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { ThemeToggle } from './WorkspaceNavigation';
 
 const GUIDE_SECTIONS = [
   {
@@ -178,7 +177,7 @@ export default function GuideScreen({ onClose }) {
     <section className="guide-screen" aria-labelledby="guide-title">
       <header className="guide-header">
         <div className="guide-wordmark"><span aria-hidden="true">◎</span> ProofLab <span>/</span> Guide</div>
-        <div className="guide-header-actions"><ThemeToggle /><button className="guide-close-button" onClick={onClose}>← Back to proof</button></div>
+        <div className="guide-header-actions"><button className="guide-close-button" onClick={onClose}>← Back to proof</button></div>
       </header>
 
       <div className="guide-layout">

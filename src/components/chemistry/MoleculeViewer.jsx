@@ -60,11 +60,14 @@ export function MoleculeViewer({ pdbId = '1CRN', smiles = undefined, style = 'ca
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
 
-		// 3Dmol.js uses OffscreenCanvas.transferToImageBitmap internally, which
-		// throws in Next.js/Turbopack environments. Removing it forces 3Dmol to
-		// fall back to standard canvas rendering, which works reliably.
-		const OrigOffscreenCanvas = window.OffscreenCanvas;
-		delete window.OffscreenCanvas;
+		// 3Dmol.js checks `OffscreenCanvas` as an unqualified global. In browsers
+		// without that API, the check itself throws a ReferenceError instead of
+		// falling back to a regular canvas. Define it as null only when it is
+		// missing so 3Dmol takes its normal canvas-rendering path.
+		const hasOffscreenCanvas = 'OffscreenCanvas' in window;
+		if (!hasOffscreenCanvas) {
+			window.OffscreenCanvas = null;
+		}
 
 		let cancelled = false;
 
@@ -111,12 +114,17 @@ export function MoleculeViewer({ pdbId = '1CRN', smiles = undefined, style = 'ca
 		return () => {
 			cancelled = true;
 			if (viewerRef.current) {
-				try { viewerRef.current.clear(); } catch {}
+				try {
+					viewerRef.current.clear();
+				} catch {
+					// The renderer may already be disposed during a route transition.
+				}
 				viewerRef.current = null;
 			}
-			// Restore OffscreenCanvas for other components
-			if (OrigOffscreenCanvas) {
-				window.OffscreenCanvas = OrigOffscreenCanvas;
+			// Remove only the compatibility shim installed above. Native support is
+			// never disabled or overwritten.
+			if (!hasOffscreenCanvas) {
+				delete window.OffscreenCanvas;
 			}
 		};
 	}, [loadMolecule]);

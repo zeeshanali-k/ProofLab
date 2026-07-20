@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { LeetMathService } from '../api/LeetMathService';
-import { ThemeToggle, WorkspaceTabs } from './WorkspaceNavigation';
+import { WorkspaceTabs } from './WorkspaceNavigation';
 
 const FILTERS = ['All', 'Algebra', 'Inequalities', 'Calculus', 'Complex'];
 
@@ -12,7 +12,7 @@ function ArenaHeader() {
     <header className="arena-header">
       <Link href="/" className="wordmark" aria-label="Return to ProofLab learning workspace"><span aria-hidden="true">∞</span>ProofLab</Link>
       <WorkspaceTabs current="leetmath" />
-      <div className="arena-header-actions"><span className="arena-status">30 deterministic challenges</span><ThemeToggle /></div>
+      <div className="arena-header-actions"><span className="arena-status">30 deterministic challenges</span></div>
     </header>
   );
 }

@@ -233,7 +233,7 @@ export function SystemDiagram2D({ systemId }: { systemId: SystemId }) {
 	return (
 		<div className="bio-diagram-container">
 			<svg viewBox={diagram.viewBox} className="bio-diagram-svg">
-				<rect x="0" y="0" width="300" height="400" rx="12" fill="#fafbfc" />
+				<rect x="0" y="0" width="300" height="400" rx="12" fill="var(--surface)" />
 				{diagram.elements}
 			</svg>
 		</div>
