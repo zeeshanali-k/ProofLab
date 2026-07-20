@@ -1,0 +1,3862 @@
+/* Chemistry Module Styles */
+
+/* Chemistry Dashboard */
+.chemistry-dashboard {
+	min-height: 100vh;
+	padding: 40px 24px;
+	max-width: 1200px;
+	margin: 0 auto;
+}
+
+.dashboard-header {
+	text-align: center;
+	margin-bottom: 40px;
+}
+
+.dashboard-header h1 {
+	font-size: 2.5rem;
+	margin: 0;
+	color: var(--ink);
+}
+
+.dashboard-subtitle {
+	color: var(--muted);
+	font-size: 1.1rem;
+	margin-top: 8px;
+}
+
+.tools-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: 24px;
+}
+
+.tool-card {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+	padding: 32px 24px;
+	text-align: center;
+	text-decoration: none;
+	color: inherit;
+	transition: all 0.2s ease;
+	box-shadow: var(--shadow-sm);
+}
+
+.tool-card:hover {
+	border-color: var(--accent);
+	box-shadow: var(--shadow-card);
+	transform: translateY(-2px);
+}
+
+.tool-icon {
+	font-size: 3rem;
+	margin-bottom: 16px;
+}
+
+.tool-name {
+	font-size: 1.25rem;
+	font-weight: 600;
+	margin: 0 0 8px 0;
+	color: var(--ink);
+}
+
+.tool-description {
+	color: var(--muted);
+	font-size: 0.9rem;
+	line-height: 1.5;
+	margin: 0;
+}
+
+.dashboard-footer {
+	text-align: center;
+	margin-top: 40px;
+}
+
+.back-to-prooflab {
+	color: var(--accent);
+	text-decoration: none;
+	font-weight: 500;
+}
+
+.back-to-prooflab:hover {
+	text-decoration: underline;
+}
+
+/* Chemistry Pages - Common */
+.chemistry-page {
+	min-height: 100vh;
+	padding: 40px 24px;
+	max-width: 1200px;
+	margin: 0 auto;
+}
+
+.page-header {
+	margin-bottom: 40px;
+}
+
+.page-header h1 {
+	font-size: 2rem;
+	margin: 0 0 8px 0;
+	color: var(--ink);
+}
+
+.page-description {
+	color: var(--muted);
+	font-size: 1rem;
+	line-height: 1.6;
+	margin: 0;
+}
+
+/* Chemistry Link in Header */
+.chemistry-link {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	text-decoration: none;
+	color: var(--ink);
+	font-weight: 500;
+	padding: 8px 12px;
+	border-radius: 8px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	font-size: 0.9rem;
+	white-space: nowrap;
+	transition: all 0.2s ease;
+}
+
+.chemistry-link:hover {
+	background: #f6f8fc;
+	color: var(--accent);
+	border-color: var(--accent);
+}
+
+.chemistry-icon {
+	font-size: 1.1rem;
+}
+
+/* Balance Page */
+.balance-page {
+	/* Inherits from .chemistry-page */
+}
+
+.balance-container {
+	max-width: 800px;
+	margin: 0 auto;
+}
+
+/* Equation Input */
+.equation-input-container {
+	margin-bottom: 24px;
+}
+
+.input-group {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 8px;
+}
+
+.equation-input-field {
+	flex: 1;
+	padding: 14px 18px;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	font-family: monospace;
+	font-size: 1.1rem;
+	background: var(--card);
+	color: var(--ink);
+}
+
+.equation-input-field:focus {
+	outline: none;
+	border-color: var(--accent);
+	box-shadow: var(--focus);
+}
+
+.equation-balance-btn {
+	padding: 14px 28px;
+	background: var(--accent);
+	color: white;
+	border: none;
+	border-radius: 10px;
+	font-weight: 600;
+	font-size: 1rem;
+	transition: background-color 0.2s ease;
+	white-space: nowrap;
+}
+
+.equation-balance-btn:hover:not(:disabled) {
+	background: #4a4bc6;
+}
+
+.equation-balance-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.equation-hint {
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+
+.error-message {
+	padding: 16px 20px;
+	background: #fff1f0;
+	border: 1px solid #ffd4d2;
+	border-radius: 10px;
+	color: var(--invalid);
+	margin-bottom: 24px;
+}
+
+/* Balanced Equation Display */
+.balanced-equation-card {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+	padding: 32px;
+	margin-bottom: 24px;
+}
+
+.equation-display {
+	text-align: center;
+	font-size: 1.5rem;
+	margin-bottom: 24px;
+}
+
+.equation-details {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 32px;
+	margin-bottom: 24px;
+}
+
+.equation-side h4 {
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--ink);
+	margin: 0 0 12px 0;
+}
+
+.equation-species {
+	padding: 8px 0;
+	font-size: 1.1rem;
+	border-bottom: 1px solid #f0f2f5;
+}
+
+.equation-species:last-child {
+	border-bottom: none;
+}
+
+.steps-toggle {
+	background: none;
+	border: none;
+	color: var(--accent);
+	font-weight: 500;
+	padding: 8px 0;
+	cursor: pointer;
+	text-decoration: underline;
+	font-size: 0.95rem;
+}
+
+.steps-toggle:hover {
+	color: #4a4bc6;
+}
+
+.steps-container {
+	margin-top: 16px;
+	padding: 20px;
+	background: #fbfcff;
+	border-radius: 10px;
+	border: 1px solid #e0e7ff;
+}
+
+.step-item {
+	padding: 8px 0;
+	font-family: monospace;
+	font-size: 0.9rem;
+	color: var(--muted);
+	border-bottom: 1px solid #e0e7ff;
+}
+
+.step-item:last-child {
+	border-bottom: none;
+}
+
+.step-number {
+	color: var(--accent);
+	font-weight: 600;
+	margin-right: 8px;
+}
+
+/* Reaction Classifier */
+.reaction-classifier {
+	padding: 20px;
+	background: #fff1f0;
+	border: 1px solid #ffd4d2;
+	border-radius: 10px;
+	margin-top: 20px;
+}
+
+.reaction-type-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 16px;
+	background: white;
+	border-radius: 8px;
+	font-weight: 600;
+	margin-bottom: 12px;
+}
+
+.reaction-icon {
+	font-size: 1.2rem;
+}
+
+.reaction-type-label {
+	font-size: 1rem;
+}
+
+.reaction-description {
+	color: var(--muted);
+	font-size: 0.9rem;
+	line-height: 1.5;
+}
+
+.classify-btn {
+	padding: 10px 20px;
+	background: white;
+	color: var(--accent);
+	border: 1px solid var(--accent);
+	border-radius: 8px;
+	font-weight: 500;
+	cursor: pointer;
+	margin-top: 16px;
+	transition: all 0.2s ease;
+}
+
+.classify-btn:hover {
+	background: var(--accent);
+	color: white;
+}
+
+.balance-examples {
+	margin-top: 32px;
+	padding-top: 24px;
+	border-top: 1px solid var(--border);
+}
+
+.balance-examples h3 {
+	color: var(--ink);
+	font-size: 1rem;
+	margin: 0 0 16px 0;
+}
+
+.example-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.example-btn {
+	padding: 10px 20px;
+	background: var(--card);
+	color: var(--ink);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 0.9rem;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.example-btn:hover {
+	background: #f6f8fc;
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+/* Calculator Page */
+.calculator-page {
+	/* Inherits from .chemistry-page */
+}
+
+.calculator-tabs {
+	display: flex;
+	gap: 4px;
+	margin-bottom: 32px;
+	border-bottom: 1px solid var(--border);
+	padding-bottom: 16px;
+}
+
+.tab-btn {
+	padding: 12px 24px;
+	background: none;
+	border: none;
+	color: var(--muted);
+	font-weight: 500;
+	border-radius: 8px 8px 0 0;
+	cursor: pointer;
+	font-size: 0.95rem;
+	transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+	color: var(--ink);
+	background: #f6f8fc;
+}
+
+.tab-btn.active {
+	color: var(--accent);
+	background: var(--card);
+	border-bottom: 2px solid var(--accent);
+}
+
+.calculator-content {
+	max-width: 800px;
+	margin: 0 auto;
+}
+
+/* Molar Mass Calculator */
+.molar-mass-calculator h2 {
+	font-size: 1.25rem;
+	color: var(--ink);
+	margin: 0 0 20px 0;
+}
+
+.calculator-input {
+	flex: 1;
+	padding: 14px 18px;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	font-family: monospace;
+	font-size: 1.1rem;
+	background: var(--card);
+	color: var(--ink);
+}
+
+.calculator-btn {
+	padding: 14px 28px;
+	background: var(--accent);
+	color: white;
+	border: none;
+	border-radius: 10px;
+	font-weight: 600;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background-color 0.2s ease;
+}
+
+.calculator-btn:hover {
+	background: #4a4bc6;
+}
+
+.molar-mass-result {
+	margin-top: 24px;
+	padding: 24px;
+	background: #fbfcff;
+	border-radius: 12px;
+	border: 1px solid #e0e7ff;
+}
+
+.molar-mass-result h3 {
+	color: var(--ink);
+	font-size: 1rem;
+	margin: 0 0 16px 0;
+}
+
+.result-main {
+	font-size: 1.25rem;
+	color: var(--ink);
+	margin-bottom: 20px;
+}
+
+.result-main strong {
+	color: var(--accent);
+}
+
+.breakdown-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.9rem;
+}
+
+.breakdown-table th,
+.breakdown-table td {
+	padding: 10px 12px;
+	text-align: left;
+	border-bottom: 1px solid #e0e7ff;
+}
+
+.breakdown-table th {
+	color: var(--muted);
+	font-weight: 600;
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.breakdown-table tr:hover {
+	background: white;
+}
+
+/* pH Calculator */
+.ph-calculator h2 {
+	font-size: 1.25rem;
+	color: var(--ink);
+	margin: 0 0 20px 0;
+}
+
+.ph-options {
+	display: grid;
+	gap: 24px;
+}
+
+.ph-option {
+	padding: 20px;
+	background: #fbfcff;
+	border-radius: 12px;
+	border: 1px solid #e0e7ff;
+}
+
+.ph-option label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--ink);
+	font-weight: 500;
+	margin-bottom: 12px;
+	cursor: pointer;
+}
+
+.ph-input {
+	flex: 1;
+	padding: 12px 16px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-family: monospace;
+	font-size: 1rem;
+	background: var(--card);
+	color: var(--ink);
+}
+
+.ph-btn {
+	padding: 12px 24px;
+	background: var(--accent);
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-weight: 500;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.ph-result {
+	margin-top: 24px;
+	padding: 24px;
+	background: white;
+	border-radius: 12px;
+	border: 1px solid var(--border);
+}
+
+.ph-result h3 {
+	color: var(--ink);
+	font-size: 1rem;
+	margin: 0 0 20px 0;
+}
+
+.result-grid {
+	display: grid;
+	gap: 16px;
+}
+
+.result-item {
+	padding: 12px 16px;
+	background: #fbfcff;
+	border-radius: 8px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.result-label {
+	color: var(--muted);
+	font-size: 0.9rem;
+	font-weight: 500;
+}
+
+.result-value {
+	color: var(--ink);
+	font-weight: 600;
+}
+
+.ph-classification {
+	margin-top: 20px;
+	padding: 12px;
+	background: #f0f2f5;
+	border-radius: 8px;
+	text-align: center;
+	font-weight: 600;
+}
+
+.ph-acid {
+	color: #e85d5d;
+}
+
+.ph-neutral {
+	color: var(--valid);
+}
+
+.ph-base {
+	color: #5b5ce2;
+}
+
+/* Stoichiometry Calculator */
+.stoichiometry-calculator h2 {
+	font-size: 1.25rem;
+	color: var(--ink);
+	margin: 0 0 20px 0;
+}
+
+.stoich-form {
+	padding: 24px;
+	background: #fbfcff;
+	border-radius: 12px;
+	border: 1px solid #e0e7ff;
+	margin-bottom: 24px;
+}
+
+.form-group {
+	margin-bottom: 16px;
+}
+
+.form-group label {
+	color: var(--ink);
+	font-weight: 600;
+	font-size: 0.9rem;
+	margin-bottom: 6px;
+	display: block;
+}
+
+.stoich-input {
+	width: 100%;
+	padding: 12px 16px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-family: monospace;
+	font-size: 1rem;
+	background: var(--card);
+	color: var(--ink);
+}
+
+.form-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+}
+
+.stoich-calc-btn {
+	padding: 14px 28px;
+	background: var(--accent);
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-weight: 600;
+	cursor: pointer;
+	white-space: nowrap;
+	width: 100%;
+	margin-top: 8px;
+}
+
+.stoich-result {
+	padding: 24px;
+	background: white;
+	border-radius: 12px;
+	border: 1px solid var(--border);
+}
+
+.stoich-result h3 {
+	color: var(--ink);
+	font-size: 1rem;
+	margin: 0 0 16px 0;
+}
+
+.stoich-info {
+	color: var(--ink);
+	font-size: 1rem;
+	line-height: 1.8;
+}
+
+.stoich-info strong {
+	color: var(--accent);
+}
+
+.verified {
+	color: var(--valid);
+	font-weight: 500;
+}
+
+.formula-parser-section {
+	margin-top: 40px;
+	padding-top: 24px;
+	border-top: 1px solid var(--border);
+}
+
+.formula-parser-section h3 {
+	color: var(--ink);
+	font-size: 1.25rem;
+	margin: 0 0 20px 0;
+}
+
+/* Formula Parser */
+.formula-parser-container {
+	margin-bottom: 24px;
+}
+
+.formula-input-field {
+	flex: 1;
+	padding: 14px 18px;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	font-family: monospace;
+	font-size: 1.1rem;
+	background: var(--card);
+	color: var(--ink);
+}
+
+.formula-parse-btn {
+	padding: 14px 28px;
+	background: var(--valid);
+	color: white;
+	border: none;
+	border-radius: 10px;
+	font-weight: 600;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.formula-error {
+	color: var(--invalid);
+	font-size: 0.9rem;
+	margin-top: 8px;
+}
+
+.formula-result-card {
+	margin-top: 20px;
+	padding: 24px;
+	background: #fbfcff;
+	border-radius: 12px;
+	border: 1px solid #e0e7ff;
+}
+
+.formula-section {
+	margin-bottom: 20px;
+}
+
+.formula-label {
+	color: var(--muted);
+	font-weight: 600;
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-bottom: 8px;
+}
+
+.formula-value {
+	font-size: 1.25rem;
+}
+
+.formula-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 24px;
+}
+
+.formula-column {
+	background: white;
+	padding: 16px;
+	border-radius: 8px;
+}
+
+.column-title {
+	color: var(--ink);
+	font-weight: 600;
+	font-size: 0.9rem;
+	margin-bottom: 12px;
+}
+
+.formula-element {
+	padding: 8px 0;
+	font-size: 0.95rem;
+	border-bottom: 1px solid #e0e7ff;
+}
+
+.formula-element:last-child {
+	border-bottom: none;
+}
+
+.element-symbol {
+	color: var(--accent);
+	font-weight: 600;
+	font-family: monospace;
+}
+
+.element-count {
+	color: var(--ink);
+	margin-left: 8px;
+}
+
+.formula-molecular-weight {
+	font-size: 1.25rem;
+	color: var(--ink);
+	font-weight: 600;
+}
+
+/* Viewer Page */
+.viewer-page {
+	/* Inherits from .chemistry-page */
+}
+
+.viewer-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+	margin-bottom: 32px;
+	padding: 24px;
+	background: #fbfcff;
+	border-radius: 12px;
+	border: 1px solid #e0e7ff;
+}
+
+.control-group {
+	flex: 1;
+	min-width: 200px;
+}
+
+.control-label {
+	color: var(--ink);
+	font-weight: 600;
+	font-size: 0.9rem;
+	margin-bottom: 8px;
+	display: block;
+}
+
+.pdb-selector {
+	display: flex;
+	gap: 12px;
+}
+
+.pdb-select {
+	flex: 1;
+	padding: 12px 16px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-family: monospace;
+	font-size: 1rem;
+	background: var(--card);
+	color: var(--ink);
+	cursor: pointer;
+}
+
+.load-btn {
+	padding: 12px 24px;
+	background: var(--accent);
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-weight: 600;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.style-select {
+	width: 100%;
+	padding: 12px 16px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 1rem;
+	background: var(--card);
+	color: var(--ink);
+	cursor: pointer;
+}
+
+.dimension-controls {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.dimension-input {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.dimension-input label {
+	color: var(--muted);
+	font-size: 0.8rem;
+	font-weight: 500;
+}
+
+.dimension-input input {
+	padding: 10px 12px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	font-family: monospace;
+	font-size: 0.9rem;
+	background: var(--card);
+	color: var(--ink);
+}
+
+.viewer-container {
+	margin-bottom: 32px;
+	background: white;
+	border-radius: 16px;
+	border: 1px solid var(--border);
+	box-shadow: var(--shadow-card);
+	overflow: hidden;
+}
+
+.molecule-viewer-canvas {
+	width: 100%;
+	min-height: 400px;
+	background: white;
+	border-radius: 12px 12px 0 0;
+}
+
+.molecule-viewer-container {
+	position: relative;
+}
+
+.molecule-error {
+	padding: 20px;
+	background: #fff1f0;
+	border: 1px solid #ffd4d2;
+	border-radius: 8px;
+	color: var(--invalid);
+	text-align: center;
+	margin-top: 16px;
+}
+
+.molecule-loading {
+	padding: 20px;
+	text-align: center;
+	color: var(--muted);
+}
+
+.molecule-hint {
+	padding: 12px 20px;
+	text-align: center;
+	color: var(--muted);
+	font-size: 0.85rem;
+	background: #f6f8fc;
+	border-radius: 0 0 12px 12px;
+}
+
+.viewer-info {
+	max-width: 800px;
+	margin: 0 auto;
+}
+
+.viewer-info h3 {
+	color: var(--ink);
+	font-size: 1.25rem;
+	margin: 0 0 16px 0;
+}
+
+.viewer-info h4 {
+	color: var(--ink);
+	font-size: 1rem;
+	margin: 20px 0 12px 0;
+}
+
+.controls-list {
+	padding-left: 24px;
+	margin-bottom: 20px;
+}
+
+.controls-list li {
+	margin-bottom: 8px;
+	color: var(--muted);
+	line-height: 1.5;
+}
+
+.controls-list strong {
+	color: var(--ink);
+}
+
+.pdb-examples {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.pdb-example-btn {
+	padding: 8px 16px;
+	background: var(--card);
+	color: var(--ink);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 0.85rem;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.pdb-example-btn:hover {
+	background: #f6f8fc;
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+/* ============================================
+   ADVANCED CALCULATOR MODULES — SHARED STYLES
+   (Stoichiometry, Solution, Thermo, Equilibrium,
+    Electrochemistry, Geometry)
+   ============================================ */
+
+/* Calculator container wrappers */
+.stoichiometry-calculator-container,
+.electrochemistry-calculator-container,
+.equilibrium-calculator-container,
+.thermochemistry-calculator-container,
+.solution-calculator-container,
+.geometry-visualizer {
+	max-width: 900px;
+	margin: 0 auto;
+}
+
+/* Calculator section (each tab content) */
+.calculator-section {
+	padding: 28px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+	margin-bottom: 24px;
+}
+
+.calculator-section h3 {
+	font-size: 1.2rem;
+	color: var(--ink);
+	margin: 0 0 6px 0;
+}
+
+.calculator-description {
+	color: var(--muted);
+	font-size: 0.9rem;
+	margin-bottom: 20px;
+}
+
+/* Input grid layout */
+.input-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 16px;
+	margin-bottom: 20px;
+}
+
+.input-item {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.input-item.full-width {
+	grid-column: 1 / -1;
+}
+
+.input-item label {
+	font-weight: 600;
+	color: var(--ink);
+	font-size: 0.88rem;
+}
+
+/* Form inputs used across advanced modules */
+.equation-input,
+.formula-input,
+.formula-select,
+.number-input,
+.concentrations-input,
+.ion-input,
+.bonds-input,
+.masses-input,
+.stoich-input {
+	width: 100%;
+	padding: 12px 16px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-family: monospace;
+	font-size: 0.95rem;
+	background: var(--card);
+	color: var(--ink);
+	transition: border-color 0.2s ease;
+	box-sizing: border-box;
+}
+
+.equation-input:focus,
+.formula-input:focus,
+.formula-select:focus,
+.number-input:focus,
+.concentrations-input:focus,
+.ion-input:focus,
+.bonds-input:focus,
+.masses-input:focus {
+	outline: none;
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.formula-select,
+.unit-select {
+	cursor: pointer;
+	appearance: auto;
+}
+
+/* Buttons */
+.calculate-btn {
+	padding: 12px 24px;
+	background: var(--accent);
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-weight: 600;
+	font-size: 0.95rem;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+	white-space: nowrap;
+}
+
+.calculate-btn:hover {
+	background: #4a4bc6;
+}
+
+.calculate-btn.secondary {
+	background: var(--card);
+	color: var(--accent);
+	border: 1px solid var(--accent);
+}
+
+.calculate-btn.secondary:hover {
+	background: var(--accent);
+	color: white;
+}
+
+.calculate-btn.small {
+	padding: 8px 16px;
+	font-size: 0.85rem;
+}
+
+.button-group {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-bottom: 20px;
+}
+
+/* Result cards */
+.result-card {
+	margin-top: 20px;
+	padding: 24px;
+	background: #fbfcff;
+	border: 1px solid #e0e7ff;
+	border-radius: 12px;
+}
+
+.result-card h4 {
+	font-size: 1rem;
+	color: var(--ink);
+	margin: 0 0 16px 0;
+}
+
+.result-card h5 {
+	font-size: 0.9rem;
+	color: var(--ink);
+	margin: 16px 0 8px 0;
+}
+
+.result-item {
+	padding: 10px 14px;
+	background: white;
+	border: 1px solid #eef0f5;
+	border-radius: 8px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 8px;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.result-item .label {
+	color: var(--muted);
+	font-size: 0.88rem;
+	font-weight: 500;
+}
+
+.result-item .value {
+	color: var(--ink);
+	font-weight: 600;
+	font-size: 0.95rem;
+}
+
+.result-item.highlight {
+	background: rgba(99, 102, 241, 0.06);
+	border-color: var(--accent);
+}
+
+.result-item.highlight .value {
+	color: var(--accent);
+	font-size: 1.05rem;
+}
+
+.result-item.spontaneous {
+	background: #f0fdf0;
+	border-color: #a8e6a8;
+}
+
+.result-item.nonspontaneous {
+	background: #fff5f5;
+	border-color: #ffd4d2;
+}
+
+.result-item.exothermic {
+	background: #fff5f5;
+	border-color: #ffb3b3;
+}
+
+.result-item.endothermic {
+	background: #f0f4ff;
+	border-color: #b3c6ff;
+}
+
+/* Tables in advanced modules */
+.stoich-table,
+.concentration-table,
+.battery-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.88rem;
+	margin-top: 12px;
+}
+
+.stoich-table th,
+.concentration-table th,
+.battery-table th {
+	padding: 10px 12px;
+	text-align: left;
+	background: white;
+	color: var(--muted);
+	font-weight: 600;
+	font-size: 0.82rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	border-bottom: 2px solid #e0e7ff;
+}
+
+.stoich-table td,
+.concentration-table td,
+.battery-table td {
+	padding: 10px 12px;
+	border-bottom: 1px solid #eef0f5;
+	color: var(--ink);
+}
+
+.stoich-table tr:hover td,
+.concentration-table tr:hover td,
+.battery-table tr:hover td {
+	background: white;
+}
+
+/* Notes and hints */
+.thermo-note,
+.faraday-note,
+.buffer-note,
+.solubility-note,
+.electro-note,
+.equilibrium-note,
+.le-chatelier-note,
+.bond-hint,
+.battery-note {
+	margin-top: 16px;
+	padding: 12px 16px;
+	background: white;
+	border-left: 4px solid var(--accent);
+	border-radius: 0 8px 8px 0;
+	font-size: 0.88rem;
+	color: var(--ink);
+	line-height: 1.6;
+}
+
+/* Reaction summary blocks */
+.reaction-summary {
+	margin-bottom: 16px;
+	padding: 16px;
+	background: white;
+	border-radius: 8px;
+	border: 1px solid #eef0f5;
+}
+
+.reaction-equation {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-family: monospace;
+	font-size: 1rem;
+	flex-wrap: wrap;
+}
+
+.reaction-equation .side {
+	color: var(--ink);
+}
+
+.reaction-equation .arrow {
+	color: var(--accent);
+	font-size: 1.3rem;
+}
+
+.half-reaction {
+	padding: 10px;
+	background: #fbfcff;
+	border-radius: 6px;
+	margin-bottom: 8px;
+}
+
+.half-reaction .label {
+	font-size: 0.82rem;
+	color: var(--muted);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.half-reaction .reaction {
+	font-family: monospace;
+	font-size: 0.9rem;
+	color: var(--ink);
+	margin: 4px 0;
+}
+
+.half-reaction .potential {
+	font-size: 0.85rem;
+	color: var(--accent);
+	font-weight: 600;
+}
+
+/* Cell notation */
+.cell-notation {
+	padding: 10px 14px;
+	background: white;
+	border: 1px dashed var(--accent);
+	border-radius: 8px;
+	font-family: monospace;
+	font-size: 0.9rem;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-bottom: 8px;
+}
+
+.cell-notation .label {
+	color: var(--muted);
+	font-weight: 600;
+	font-size: 0.82rem;
+}
+
+.cell-notation .value {
+	color: var(--ink);
+}
+
+/* Enthalpy grid */
+.enthalpy-details,
+.bond-summary {
+	margin-top: 16px;
+}
+
+.enthalpy-grid {
+	display: grid;
+	gap: 4px;
+}
+
+.grid-header {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+	padding: 8px 12px;
+	background: white;
+	border-radius: 6px;
+	font-weight: 600;
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+
+.grid-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+	padding: 8px 12px;
+	background: white;
+	border-radius: 6px;
+	font-size: 0.9rem;
+	border-bottom: 1px solid #eef0f5;
+}
+
+/* Bond energy items */
+.bond-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.bond-item {
+	display: flex;
+	justify-content: space-between;
+	padding: 6px 12px;
+	background: white;
+	border-radius: 6px;
+	font-size: 0.88rem;
+}
+
+.bond-name {
+	font-family: monospace;
+	color: var(--ink);
+}
+
+.bond-energy {
+	font-weight: 600;
+	color: var(--accent);
+}
+
+.bond-total {
+	padding: 8px 12px;
+	font-weight: 700;
+	font-size: 0.95rem;
+	color: var(--ink);
+	border-top: 2px solid #e0e7ff;
+	margin-top: 4px;
+}
+
+.bond-section {
+	margin-bottom: 16px;
+}
+
+.bond-section h5 {
+	font-size: 0.88rem;
+	color: var(--ink);
+	margin: 0 0 8px 0;
+}
+
+.bond-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-bottom: 16px;
+}
+
+.bond-tag {
+	padding: 4px 10px;
+	background: white;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	font-size: 0.8rem;
+	font-family: monospace;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.bond-tag:hover {
+	border-color: var(--accent);
+	color: var(--accent);
+	background: rgba(99, 102, 241, 0.04);
+}
+
+/* Compound list (thermo) */
+.compound-list-btn {
+	padding: 6px 12px;
+	background: white;
+	color: var(--accent);
+	border: 1px solid var(--accent);
+	border-radius: 6px;
+	font-size: 0.82rem;
+	cursor: pointer;
+	margin-top: 8px;
+	transition: all 0.2s ease;
+}
+
+.compound-list-btn:hover {
+	background: var(--accent);
+	color: white;
+}
+
+.compound-list {
+	padding: 16px;
+	background: white;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	margin-bottom: 16px;
+}
+
+.compound-list h5 {
+	font-size: 0.88rem;
+	margin: 0 0 12px 0;
+}
+
+.compound-grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	max-height: 200px;
+	overflow-y: auto;
+}
+
+.compound-item {
+	padding: 4px 10px;
+	background: #fbfcff;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	font-size: 0.8rem;
+	font-family: monospace;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.compound-item:hover {
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+/* Dilution diagram */
+.dilution-diagram {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 16px;
+	background: white;
+	border-radius: 10px;
+	border: 1px solid #eef0f5;
+	margin-bottom: 16px;
+}
+
+.flask {
+	flex: 1;
+	text-align: center;
+	padding: 16px;
+	border-radius: 10px;
+}
+
+.flask.initial {
+	background: rgba(99, 102, 241, 0.06);
+	border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.flask.final {
+	background: rgba(99, 102, 241, 0.03);
+	border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.flask-label {
+	font-size: 0.82rem;
+	color: var(--muted);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.flask-value {
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--ink);
+	margin-top: 4px;
+}
+
+.dilution-diagram .arrow {
+	font-size: 1.5rem;
+	color: var(--accent);
+	font-weight: bold;
+}
+
+.result-summary {
+	margin-top: 12px;
+	padding: 12px;
+	background: white;
+	border-radius: 8px;
+	font-size: 0.9rem;
+	color: var(--ink);
+	line-height: 1.6;
+}
+
+/* Concentration conversion */
+.conversion-result {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 16px;
+	background: white;
+	border-radius: 10px;
+	margin-bottom: 12px;
+}
+
+.conversion-input,
+.conversion-output {
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+}
+
+.conversion-input .value,
+.conversion-output .value {
+	font-size: 1.2rem;
+	font-weight: 700;
+	color: var(--ink);
+}
+
+.conversion-input .unit,
+.conversion-output .unit {
+	font-size: 0.9rem;
+	color: var(--muted);
+	font-weight: 500;
+}
+
+.conversion-arrow {
+	font-size: 1.3rem;
+	color: var(--accent);
+	font-weight: bold;
+}
+
+/* pH results grid */
+.ph-results-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.ph-indicator {
+	margin-top: 16px;
+	position: relative;
+	padding-bottom: 24px;
+}
+
+.ph-meter {
+	display: block;
+	background: linear-gradient(to right,
+		#ff0000, #ff4500, #ff8c00, #ffd700,
+		#9acd32, #32cd32, #008000,
+		#006400, #00008b, #0000cd, #19197e
+	);
+	border-radius: 10px;
+}
+
+.ph-scale {
+	display: flex;
+	justify-content: space-between;
+	position: relative;
+	margin-top: 4px;
+}
+
+.ph-mark {
+	font-size: 0.7rem;
+	color: var(--muted);
+}
+
+/* Direction indicators */
+.direction-forward {
+	background: #f0fdf0 !important;
+	border-color: #a8e6a8 !important;
+}
+
+.direction-reverse {
+	background: #fff5f5 !important;
+	border-color: #ffd4d2 !important;
+}
+
+.direction-at-equilibrium {
+	background: #f0f4ff !important;
+	border-color: #b3c6ff !important;
+}
+
+/* Potential hint */
+.potential-hint {
+	font-size: 0.82rem;
+	color: var(--accent);
+	font-weight: 600;
+	margin-top: 4px;
+}
+
+/* Time input group */
+.time-input-group {
+	display: flex;
+	gap: 8px;
+}
+
+.time-input-group input {
+	flex: 1;
+}
+
+.time-input-group select {
+	width: 120px;
+}
+
+/* Battery list */
+.battery-list {
+	margin-top: 20px;
+}
+
+.battery-list h5 {
+	font-size: 0.9rem;
+	margin: 0 0 12px 0;
+}
+
+/* Acid/Base results */
+.acid-results,
+.base-results {
+	padding: 12px;
+	background: white;
+	border-radius: 8px;
+	border: 1px solid #eef0f5;
+}
+
+.acid-results h5,
+.base-results h5 {
+	font-size: 0.9rem;
+	margin: 0 0 12px 0;
+	color: var(--ink);
+}
+
+/* Geometry visualizer specific */
+.geometry-visualizer .visualizer-header {
+	margin-bottom: 24px;
+}
+
+.geometry-visualizer .visualizer-header h2 {
+	font-size: 1.3rem;
+	color: var(--ink);
+	margin: 0 0 6px 0;
+}
+
+.geometry-visualizer .subtitle {
+	color: var(--muted);
+	font-size: 0.9rem;
+	margin: 0;
+}
+
+.geometry-visualizer .input-section {
+	margin-bottom: 24px;
+}
+
+.formula-input-group {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	margin-bottom: 16px;
+}
+
+.formula-input-group label {
+	font-weight: 600;
+	color: var(--ink);
+	font-size: 0.9rem;
+	white-space: nowrap;
+}
+
+.formula-input-group .formula-input {
+	flex: 1;
+}
+
+.examples-grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.examples-grid .example-btn {
+	padding: 6px 14px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 0.85rem;
+	color: var(--accent);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.examples-grid .example-btn:hover {
+	background: rgba(99, 102, 241, 0.06);
+	border-color: var(--accent);
+}
+
+.geometry-result .result-header {
+	margin-bottom: 20px;
+}
+
+.geometry-result .result-header h3 {
+	font-size: 1.1rem;
+	color: var(--ink);
+	margin: 0;
+}
+
+.geometry-result .result-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+	gap: 16px;
+	margin-bottom: 24px;
+}
+
+.geometry-card,
+.vsepr-card,
+.properties-card {
+	padding: 20px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+}
+
+.geometry-card h4,
+.vsepr-card h4,
+.properties-card h4 {
+	font-size: 0.9rem;
+	color: var(--muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	margin: 0 0 12px 0;
+}
+
+.geometry-name {
+	font-size: 1.3rem;
+	font-weight: 700;
+	color: var(--accent);
+	margin-bottom: 12px;
+}
+
+.geometry-description {
+	color: var(--ink);
+	font-size: 0.88rem;
+	line-height: 1.6;
+	margin: 0;
+}
+
+.vsepr-details {
+	margin-top: 12px;
+}
+
+.vsepr-stat {
+	display: flex;
+	justify-content: space-between;
+	padding: 6px 0;
+	border-bottom: 1px solid #eef0f5;
+	font-size: 0.88rem;
+}
+
+.vsepr-stat:last-child {
+	border-bottom: none;
+}
+
+.stat-label {
+	color: var(--muted);
+}
+
+.stat-value {
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.property-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.property-item {
+	display: flex;
+	justify-content: space-between;
+	padding: 6px 0;
+	font-size: 0.88rem;
+}
+
+.property-label {
+	color: var(--muted);
+}
+
+.property-value {
+	font-weight: 600;
+	color: var(--ink);
+}
+
+/* ASCII art for geometry */
+.ascii-art {
+	text-align: center;
+	padding: 12px;
+	background: white;
+	border-radius: 8px;
+	border: 1px solid #eef0f5;
+	margin: 12px 0;
+}
+
+.ascii-art pre {
+	font-family: monospace;
+	font-size: 0.85rem;
+	line-height: 1.4;
+	color: var(--ink);
+	margin: 0;
+}
+
+.art-label {
+	font-size: 0.8rem;
+	color: var(--muted);
+	margin-top: 8px;
+}
+
+/* All geometries grid */
+.all-geometries {
+	margin-top: 24px;
+	padding: 20px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+}
+
+.all-geometries h3 {
+	font-size: 1.1rem;
+	margin: 0 0 16px 0;
+}
+
+.geometries-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.geometry-tile {
+	padding: 16px;
+	background: white;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+}
+
+.geometry-tile h4 {
+	font-size: 0.95rem;
+	color: var(--accent);
+	margin: 0 0 6px 0;
+}
+
+.geometry-tile p {
+	font-size: 0.82rem;
+	color: var(--muted);
+	margin: 0 0 4px 0;
+}
+
+.geometry-tile .geo-description {
+	font-size: 0.82rem;
+	color: var(--ink);
+	line-height: 1.4;
+}
+
+.show-all-btn,
+.hide-all-btn {
+	padding: 10px 20px;
+	background: white;
+	color: var(--accent);
+	border: 1px solid var(--accent);
+	border-radius: 8px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.show-all-btn:hover,
+.hide-all-btn:hover {
+	background: var(--accent);
+	color: white;
+}
+
+/* Periodic table button in modules */
+.periodic-table-btn {
+	padding: 8px 16px;
+	background: white;
+	color: var(--accent);
+	border: 1px solid var(--accent);
+	border-radius: 8px;
+	font-size: 0.85rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	margin-top: 8px;
+}
+
+.periodic-table-btn:hover {
+	background: var(--accent);
+	color: white;
+}
+
+/* Copy button variants in modules */
+.copy-result-btn,
+.copy-value-btn,
+.copy-all-btn,
+.copy-formula-btn {
+	padding: 4px 10px;
+	font-size: 0.78rem;
+	background: white;
+	color: var(--muted);
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.copy-result-btn:hover,
+.copy-value-btn:hover,
+.copy-all-btn:hover,
+.copy-formula-btn:hover {
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+.copy-all-btn {
+	margin-top: 12px;
+	display: inline-block;
+}
+
+/* Nernst equation display */
+.nernst-equation {
+	margin-top: 12px;
+	padding: 10px 14px;
+	background: white;
+	border-radius: 8px;
+	font-family: monospace;
+	font-size: 0.88rem;
+	color: var(--muted);
+	text-align: center;
+	border: 1px solid #eef0f5;
+}
+
+/* Reaction text in battery table */
+.reaction-text {
+	font-family: monospace;
+	font-size: 0.8rem;
+	color: var(--muted);
+}
+
+/* Elements list in stoichiometry */
+.elements-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.element-item {
+	padding: 4px 10px;
+	background: white;
+	border: 1px solid #eef0f5;
+	border-radius: 6px;
+	font-family: monospace;
+	font-size: 0.85rem;
+}
+
+/* Formula display in results */
+.result-formula {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 12px;
+	font-size: 1.1rem;
+}
+
+/* pH input group */
+.ph-input-group {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.ph-input-group .input-item {
+	flex-direction: row;
+	align-items: center;
+	gap: 12px;
+}
+
+.ph-input-group .input-item label {
+	min-width: 180px;
+}
+
+.ph-input-group .input-item .calculate-btn {
+	flex-shrink: 0;
+}
+
+.divider {
+	text-align: center;
+	color: var(--muted);
+	font-size: 0.85rem;
+	font-weight: 600;
+	padding: 4px 0;
+}
+
+/* Error message in modules */
+.calculator-section ~ .error-message,
+.stoichiometry-calculator-container .error-message,
+.electrochemistry-calculator-container .error-message,
+.equilibrium-calculator-container .error-message,
+.thermochemistry-calculator-container .error-message,
+.solution-calculator-container .error-message {
+	padding: 14px 18px;
+	background: #fff1f0;
+	border: 1px solid #ffd4d2;
+	border-radius: 10px;
+	color: var(--invalid);
+	margin-top: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+	.chemistry-dashboard {
+		padding: 24px 16px;
+	}
+	
+	.tools-grid {
+		grid-template-columns: 1fr;
+	}
+	
+	.chemistry-page {
+		padding: 24px 16px;
+	}
+	
+	.equation-details {
+		grid-template-columns: 1fr;
+		gap: 16px;
+	}
+	
+	.form-row {
+		grid-template-columns: 1fr;
+	}
+	
+	.viewer-controls {
+		flex-direction: column;
+	}
+	
+	.dimension-controls {
+		grid-template-columns: 1fr;
+	}
+	
+	.ph-options {
+		grid-template-columns: 1fr;
+	}
+	
+	.chemistry-link {
+		display: none;
+	}
+}
+
+@media (max-width: 480px) {
+	.page-header h1 {
+		font-size: 1.5rem;
+	}
+	
+	.dashboard-header h1 {
+		font-size: 1.75rem;
+	}
+	
+	.result-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ============================================
+   PERSISTENT NAVIGATION BAR
+   ============================================ */
+
+.main-navbar {
+	background: rgba(255, 255, 255, 0.94);
+	border-bottom: 1px solid var(--border);
+	padding: 0 24px;
+	height: 48px;
+	display: flex;
+	align-items: center;
+	position: sticky;
+	top: 0;
+	z-index: 100;
+}
+
+.nav-container {
+	display: flex;
+	gap: 8px;
+	max-width: 1200px;
+	margin: 0 auto;
+	width: 100%;
+	justify-content: center;
+}
+
+.nav-link {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 10px 20px;
+	border-radius: 10px;
+	text-decoration: none;
+	color: var(--ink);
+	font-weight: 500;
+	font-size: 0.95rem;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.nav-link:hover {
+	background: var(--card);
+	color: var(--accent);
+	box-shadow: var(--shadow-sm);
+}
+
+.nav-link.active {
+	background: var(--accent);
+	color: white;
+	box-shadow: var(--shadow-sm);
+}
+
+.nav-icon {
+	font-size: 1.2rem;
+}
+
+.nav-text {
+	font-size: 0.9rem;
+}
+
+/* Hide text on mobile to save space */
+@media (max-width: 767px) {
+	.nav-text {
+		display: none;
+	}
+	
+	.nav-link {
+		padding: 10px 16px;
+	}
+	
+	.nav-container {
+		gap: 4px;
+	}
+}
+
+@media (min-width: 768px) {
+	.nav-text {
+		display: inline;
+	}
+}
+
+/* ============================================
+   COPY BUTTON COMPONENT
+   ============================================ */
+
+.copy-btn {
+	padding: 8px 16px;
+	background: var(--card);
+	color: var(--muted);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 0.85rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.copy-btn:hover:not(:disabled) {
+	background: var(--accent);
+	color: white;
+	border-color: var(--accent);
+}
+
+.copy-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* ============================================
+   SUGGESTION BOX
+   ============================================ */
+
+.suggestion-box {
+	padding: 12px 16px;
+	margin-top: 12px;
+	background: #e8f5e8;
+	border: 1px solid #a8e6a8;
+	border-radius: 10px;
+	font-size: 0.9rem;
+	color: #2d6a2d;
+}
+
+.suggestion-box strong {
+	color: #1d5a1d;
+	margin-right: 8px;
+}
+
+.suggestion-box button {
+	margin-top: 8px;
+	padding: 6px 12px;
+	background: white;
+	color: var(--accent);
+	border: 1px solid var(--accent);
+	border-radius: 6px;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+
+.suggestion-box button:hover {
+	background: var(--accent);
+	color: white;
+}
+
+/* ============================================
+   EQUATION TEMPLATES
+   ============================================ */
+
+.template-btn {
+	padding: 8px 16px;
+	background: var(--card);
+	color: var(--ink);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 0.9rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.template-btn:hover {
+	background: #f6f8fc;
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+.template-dropdown {
+	position: absolute;
+	z-index: 200;
+	min-width: 280px;
+	max-width: 400px;
+	margin-top: 8px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	box-shadow: var(--shadow-card);
+	padding: 12px;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.template-item {
+	padding: 10px 12px;
+	margin: 4px 0;
+	background: transparent;
+	border: none;
+	border-radius: 8px;
+	text-align: left;
+	font-size: 0.9rem;
+	color: var(--ink);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	width: 100%;
+	text-decoration: none;
+}
+
+.template-item:hover {
+	background: #f6f8fc;
+	color: var(--accent);
+}
+
+.template-preview {
+	font-size: 0.85rem;
+	color: var(--muted);
+	font-family: monospace;
+	display: block;
+	margin-top: 2px;
+}
+
+/* ============================================
+   AUTOCORRECT STYLES
+   ============================================ */
+
+.autocomplete-suggestions {
+	position: absolute;
+	z-index: 200;
+	min-width: 200px;
+	margin-top: 4px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	box-shadow: var(--shadow-sm);
+	padding: 8px;
+	max-height: 200px;
+	overflow-y: auto;
+}
+
+.autocomplete-suggestion {
+	padding: 8px 12px;
+	margin: 2px 0;
+	background: transparent;
+	border: none;
+	border-radius: 6px;
+	text-align: left;
+	font-family: monospace;
+	font-size: 0.9rem;
+	color: var(--ink);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	width: 100%;
+}
+
+.autocomplete-suggestion:hover {
+	background: #f6f8fc;
+	color: var(--accent);
+}
+
+/* ============================================
+   PERIODIC TABLE
+   ============================================ */
+
+.periodic-table-btn {
+	padding: 8px 16px;
+	background: var(--card);
+	color: var(--ink);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 0.9rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.periodic-table-btn:hover {
+	background: #f6f8fc;
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+.periodic-table-modal {
+	position: fixed;
+	z-index: 300;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	overflow: auto;
+}
+
+.periodic-table-content {
+	background: var(--card);
+	border-radius: 16px;
+	box-shadow: var(--shadow-card);
+	max-width: 800px;
+	width: 100%;
+	max-height: 80vh;
+	overflow: auto;
+	padding: 24px;
+	position: relative;
+}
+
+.periodic-table-grid {
+	display: grid;
+	grid-template-columns: repeat(18, 1fr);
+	gap: 4px;
+}
+
+.element-card {
+	padding: 8px 4px;
+	background: #f6f8fc;
+	border-radius: 6px;
+	text-align: center;
+	font-size: 0.75rem;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	border: 1px solid transparent;
+}
+
+.element-card:hover {
+	background: var(--accent);
+	color: white;
+	border-color: var(--accent);
+}
+
+.element-card strong {
+	font-size: 1rem;
+	display: block;
+	margin-bottom: 2px;
+}
+
+.element-card small {
+	font-size: 0.7rem;
+	opacity: 0.7;
+}
+
+.element-name {
+	font-size: 0.65rem;
+	margin-top: 2px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.element-mass {
+	font-size: 0.65rem;
+	color: var(--muted);
+}
+
+.periodic-table-close {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	background: none;
+	border: none;
+	font-size: 1.5rem;
+	cursor: pointer;
+	color: var(--muted);
+	padding: 4px;
+}
+
+.periodic-table-close:hover {
+	color: var(--ink);
+}
+
+/* ============================================
+   COPY BUTTON STYLES (Already exists above)
+   ============================================ */
+
+/* ============================================
+   EQUATION TEMPLATES STYLES
+   ============================================ */
+
+.equation-templates-container {
+	margin-top: 16px;
+	padding: 16px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	width: 100%;
+}
+
+.templates-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 12px;
+}
+
+.templates-header h4 {
+	margin: 0;
+	font-size: 1rem;
+	color: var(--ink);
+}
+
+.templates-search {
+	padding: 8px 12px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 0.85rem;
+	width: 200px;
+}
+
+.templates-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.template-category {
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.category-header {
+	padding: 12px;
+	background: var(--bg);
+	cursor: pointer;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	transition: all 0.2s ease;
+}
+
+.category-header:hover {
+	background: #f6f8fc;
+}
+
+.category-name {
+	font-weight: 600;
+	font-size: 0.9rem;
+	color: var(--ink);
+}
+
+.category-toggle {
+	color: var(--muted);
+	font-size: 0.8rem;
+}
+
+.category-templates {
+	padding: 8px;
+	background: white;
+}
+
+.template-item {
+	padding: 8px 12px;
+	margin: 4px 0;
+	background: transparent;
+	border: 1px solid transparent;
+	border-radius: 6px;
+	text-align: left;
+	font-size: 0.85rem;
+	color: var(--ink);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	width: 100%;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.template-item:hover {
+	background: #f6f8fc;
+	border-color: var(--border);
+}
+
+.template-name {
+	color: var(--muted);
+	font-size: 0.8rem;
+}
+
+.template-equation {
+	font-family: monospace;
+	font-size: 0.85rem;
+}
+
+.templates-empty {
+	padding: 16px;
+	text-align: center;
+	color: var(--muted);
+	font-style: italic;
+}
+
+.templates-toggle {
+	margin-left: 12px;
+	padding: 4px 8px;
+	background: transparent;
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	font-size: 0.8rem;
+	color: var(--ink);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.templates-toggle:hover {
+	background: #f6f8fc;
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+/* ============================================
+   AUTOCOMPLETE STYLES
+   ============================================ */
+
+.autocomplete-wrapper {
+	position: relative;
+	width: 100%;
+}
+
+.autocomplete-input {
+	width: 100%;
+	padding: 12px 16px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 1rem;
+	font-family: monospace;
+	transition: all 0.2s ease;
+}
+
+.autocomplete-input:focus {
+	outline: none;
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.autocomplete-suggestions {
+	position: absolute;
+	z-index: 1000;
+	left: 0;
+	right: 0;
+	margin-top: 4px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	box-shadow: var(--shadow-lg);
+	padding: 8px;
+	max-height: 250px;
+	overflow-y: auto;
+	list-style: none;
+	margin: 0;
+}
+
+.suggestion-item {
+	padding: 8px 12px;
+	margin: 2px 0;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.suggestion-item:hover, .suggestion-item.active {
+	background: #f6f8fc;
+}
+
+.suggestion-type {
+	font-size: 0.7rem;
+	padding: 2px 6px;
+	border-radius: 4px;
+	background: var(--muted);
+	color: white;
+	text-transform: uppercase;
+}
+
+.suggestion-value {
+	font-family: monospace;
+	font-size: 0.9rem;
+}
+
+/* ============================================
+   PERIODIC TABLE STYLES (New Implementation)
+   ============================================ */
+
+.periodic-table-container {
+	margin-top: 16px;
+	padding: 16px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	width: 100%;
+}
+
+.periodic-table-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 16px;
+}
+
+.periodic-table-header h4 {
+	margin: 0;
+	font-size: 1rem;
+	color: var(--ink);
+}
+
+.periodic-table-controls {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+}
+
+.periodic-search {
+	padding: 8px 12px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 0.85rem;
+	width: 180px;
+}
+
+.category-select {
+	padding: 8px 12px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 0.85rem;
+	background: white;
+	cursor: pointer;
+}
+
+.periodic-table-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+	gap: 8px;
+}
+
+.periodic-element {
+	padding: 8px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: white;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 80px;
+}
+
+.periodic-element:hover {
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-md);
+	border-color: var(--accent);
+}
+
+.element-symbol {
+	font-size: 1.2rem;
+	font-weight: bold;
+	margin-bottom: 4px;
+}
+
+.element-number {
+	font-size: 0.7rem;
+	color: var(--muted);
+	margin-bottom: 4px;
+}
+
+.element-name {
+	font-size: 0.7rem;
+	color: var(--muted);
+	text-align: center;
+	line-height: 1.2;
+}
+
+.periodic-empty {
+	padding: 16px;
+	text-align: center;
+	color: var(--muted);
+	font-style: italic;
+	grid-column: 1 / -1;
+}
+
+.periodic-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid var(--border);
+}
+
+.legend-item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 0.8rem;
+}
+
+.legend-color {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	border-radius: 4px;
+	border: 1px solid var(--border);
+}
+
+.legend-label {
+	color: var(--muted);
+}
+
+/* ============================================
+   SIDE HEADER STYLES (For BalancedEquation)
+   ============================================ */
+
+.side-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 8px;
+}
+
+.copy-equation-btn {
+	margin-left: 12px;
+}
+
+.copy-side-btn, .copy-formula-btn, .copy-mw-btn {
+	margin-left: 8px;
+	padding: 4px 8px;
+	font-size: 0.75rem;
+}
+
+.steps-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 8px;
+}
+
+.copy-steps-btn {
+	padding: 4px 8px;
+	font-size: 0.75rem;
+}
+
+.steps-header h5 {
+	margin: 0;
+	font-size: 0.9rem;
+	color: var(--ink);
+}
+
+/* Geometry Visualizer Styles */
+.geometry-visualizer-container {
+	margin: 20px 0;
+}
+
+.geometry-predictor,
+.geometry-lookup,
+.geometry-reference {
+	padding: 20px 0;
+}
+
+.geometry-input {
+	flex: 1;
+	min-width: 250px;
+	margin-right: 12px;
+}
+
+.calculator-description {
+	color: var(--muted);
+	font-size: 0.9rem;
+	margin-bottom: 20px;
+}
+
+.geometry-examples {
+	margin: 24px 0;
+	padding: 16px;
+	background: var(--surface);
+	border-radius: 12px;
+	border: 1px solid var(--border);
+}
+
+.geometry-examples h4 {
+	margin: 0 0 16px 0;
+	font-size: 1rem;
+	color: var(--ink);
+}
+
+.example-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+.example-group {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.example-label {
+	font-weight: 600;
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+
+.example-btn {
+	padding: 6px 12px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	color: var(--accent);
+	font-size: 0.85rem;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.example-btn:hover {
+	background: var(--accent-light);
+	color: var(--accent-dark);
+	border-color: var(--accent);
+}
+
+.geometry-result {
+	margin-top: 24px;
+}
+
+.geometry-main-result {
+	display: grid;
+	gap: 12px;
+}
+
+.geometry-name {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 16px;
+	padding-bottom: 16px;
+	border-bottom: 2px solid var(--accent);
+}
+
+.geometry-name .label {
+	font-weight: 600;
+	color: var(--ink);
+}
+
+.geometry-name .value {
+	font-size: 1.3rem;
+	font-weight: 700;
+	color: var(--accent);
+}
+
+.geometry-property {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	background: var(--surface);
+	border-radius: 8px;
+	border: 1px solid var(--border);
+}
+
+.geometry-property .label {
+	font-weight: 600;
+	color: var(--muted);
+	min-width: 140px;
+}
+
+.geometry-property .value {
+	color: var(--ink);
+	font-weight: 500;
+}
+
+.geometry-description {
+	margin-top: 20px;
+	padding: 16px;
+	background: var(--surface);
+	border-radius: 12px;
+	border: 1px solid var(--border);
+}
+
+.geometry-description p {
+	margin: 0;
+	color: var(--ink);
+	line-height: 1.6;
+}
+
+.geometry-vsepr {
+	margin-top: 16px;
+	padding: 16px;
+	background: var(--card);
+	border-radius: 12px;
+	border-left: 4px solid var(--accent);
+}
+
+.geometry-vsepr p {
+	margin: 0;
+	color: var(--ink);
+	font-style: italic;
+}
+
+.geometry-visual {
+	margin-top: 24px;
+	padding: 16px;
+	background: var(--surface);
+	border-radius: 12px;
+	border: 1px solid var(--border);
+}
+
+.geometry-visual h5 {
+	margin: 0 0 12px 0;
+	color: var(--ink);
+	font-size: 0.95rem;
+}
+
+.structure-diagram {
+	background: var(--card);
+	border-radius: 8px;
+	padding: 16px;
+	text-align: center;
+	font-family: monospace;
+	font-size: 0.85rem;
+	line-height: 1.4;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+}
+
+.structure-ascii {
+	margin: 0;
+	color: var(--muted);
+}
+
+.number-select {
+	padding: 10px 12px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--card);
+	color: var(--ink);
+	font-size: 1rem;
+	cursor: pointer;
+	transition: border-color 0.2s ease;
+}
+
+.number-select:focus {
+	outline: none;
+	border-color: var(--accent);
+}
+
+.input-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 20px;
+	margin-bottom: 20px;
+}
+
+.input-item {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.input-item label {
+	font-weight: 600;
+	color: var(--ink);
+	font-size: 0.9rem;
+}
+
+.geometry-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin-top: 20px;
+	background: var(--card);
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.geometry-table th,
+.geometry-table td {
+	padding: 12px 16px;
+	text-align: left;
+	border-bottom: 1px solid var(--border);
+}
+
+.geometry-table th {
+	background: var(--surface);
+	font-weight: 700;
+	color: var(--ink);
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.geometry-table tr.even {
+	background: var(--card);
+}
+
+.geometry-table tr.odd {
+	background: var(--surface);
+}
+
+.geometry-table tr:hover {
+	background: var(--accent-light);
+}
+
+.geometry-legend {
+	margin-top: 32px;
+	padding: 20px;
+	background: var(--surface);
+	border-radius: 12px;
+	border: 1px solid var(--border);
+}
+
+.geometry-legend h4 {
+	margin: 0 0 16px 0;
+	color: var(--ink);
+	font-size: 1rem;
+}
+
+.legend-item {
+	padding: 12px 0;
+	border-bottom: 1px solid var(--border);
+	color: var(--ink);
+	line-height: 1.6;
+}
+
+.legend-item:last-child {
+	border-bottom: none;
+}
+
+.legend-item strong {
+	color: var(--accent);
+}
+
+.geometry-table td {
+	color: var(--ink);
+}
+
+.example-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+
+/* Enhanced Reaction Classifier Styles */
+.reaction-classifier-container {
+	margin: 20px 0;
+	padding: 16px;
+	background: var(--card);
+	border-radius: 12px;
+	border: 1px solid var(--border);
+}
+
+.reaction-classifier {
+	padding: 16px;
+	text-align: center;
+	color: var(--muted);
+}
+
+.reaction-hint {
+	font-size: 0.95rem;
+	margin-bottom: 8px;
+	color: var(--ink);
+}
+
+.reaction-examples-hint {
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+
+.loading-indicator {
+	padding: 16px;
+	color: var(--accent);
+	font-style: italic;
+}
+
+.reaction-type-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 16px;
+	background: var(--surface);
+	border-radius: 20px;
+	border: 2px solid;
+	margin-bottom: 16px;
+	font-weight: 600;
+	font-size: 0.95rem;
+}
+
+.reaction-icon {
+	font-size: 1.2rem;
+}
+
+.reaction-type-label {
+	color: var(--ink);
+}
+
+.reaction-description {
+	margin-bottom: 20px;
+	color: var(--ink);
+	line-height: 1.6;
+	padding: 12px;
+	background: var(--surface);
+	border-radius: 8px;
+}
+
+.confidence-indicator {
+	font-size: 0.85rem;
+	color: var(--muted);
+	font-style: italic;
+	margin-left: 8px;
+}
+
+.reaction-details {
+	margin-top: 16px;
+	padding: 16px;
+	background: var(--surface);
+	border-radius: 12px;
+	border: 1px solid var(--border);
+}
+
+.detail-section {
+	margin-bottom: 16px;
+}
+
+.detail-section h5 {
+	margin: 0 0 8px 0;
+	font-size: 0.9rem;
+	color: var(--ink);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.formula-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.formula-item {
+	padding: 4px 12px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 0.9rem;
+	color: var(--ink);
+}
+
+.formula-list.predicted {
+	border-color: var(--accent);
+	background: rgba(99, 102, 241, 0.05);
+}
+
+.reaction-characteristics {
+	margin-top: 16px;
+	padding: 12px;
+	background: var(--card);
+	border-radius: 8px;
+	border-left: 4px solid var(--accent);
+}
+
+.reaction-characteristics h5 {
+	margin: 0 0 8px 0;
+	font-size: 0.9rem;
+	color: var(--ink);
+}
+
+.reaction-characteristics ul {
+	margin: 0;
+	padding-left: 20px;
+	color: var(--ink);
+	font-size: 0.9rem;
+	line-height: 1.6;
+}
+
+.reaction-characteristics li {
+	margin-bottom: 4px;
+}
+
+.copy-reaction-btn {
+	margin-top: 16px;
+}
+
+.reaction-prediction {
+	margin-top: 20px;
+	padding: 20px;
+	background: var(--surface);
+	border-radius: 12px;
+	border: 2px dashed var(--accent);
+}
+
+.prediction-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 16px;
+}
+
+.prediction-header h4 {
+	margin: 0;
+	font-size: 1rem;
+	color: var(--ink);
+}
+
+.prediction-type {
+	padding: 4px 12px;
+	background: var(--accent-light);
+	border-radius: 16px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--accent-dark);
+}
+
+.predicted-equation {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin-bottom: 16px;
+	padding: 12px;
+	background: var(--card);
+	border-radius: 8px;
+	flex-wrap: wrap;
+}
+
+.equation-part {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.equation-part strong {
+	font-size: 0.85rem;
+	color: var(--muted);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.arrow {
+	font-size: 1.5rem;
+	color: var(--accent);
+	font-weight: bold;
+}
+
+.prediction-description {
+	margin-bottom: 16px;
+	color: var(--ink);
+	font-style: italic;
+	padding: 12px;
+	background: var(--card);
+	border-radius: 8px;
+	font-size: 0.9rem;
+}
+
+.prediction-actions {
+	display: flex;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-bottom: 16px;
+}
+
+.prediction-btn {
+	padding: 10px 20px;
+	border: none;
+	border-radius: 8px;
+	font-weight: 600;
+	font-size: 0.9rem;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.prediction-btn.apply-btn {
+	background: var(--accent);
+	color: white;
+}
+
+.prediction-btn.apply-btn:hover {
+	background: var(--accent-dark);
+	transform: translateY(-1px);
+}
+
+.prediction-btn.balance-btn {
+	background: var(--success);
+	color: white;
+}
+
+.prediction-btn.balance-btn:hover {
+	background: var(--success-dark);
+	transform: translateY(-1px);
+}
+
+.copy-prediction-btn {
+	flex-shrink: 0;
+}
+
+.reaction-examples {
+	margin-top: 16px;
+	padding: 12px;
+	background: var(--card);
+	border-radius: 8px;
+}
+
+.reaction-examples h5 {
+	margin: 0 0 8px 0;
+	font-size: 0.85rem;
+	color: var(--muted);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.example-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.example-btn {
+	padding: 6px 12px;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	font-size: 0.8rem;
+	color: var(--accent);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.example-btn:hover {
+	background: var(--accent-light);
+	color: var(--accent-dark);
+	border-color: var(--accent);
+}
+
+.no-prediction {
+	margin-top: 16px;
+	padding: 16px;
+	background: var(--surface);
+	border-radius: 8px;
+	border-left: 4px solid var(--warning);
+	color: var(--warning-dark);
+	font-size: 0.9rem;
+}
+
+.no-prediction p {
+	margin: 0;
+	line-height: 1.6;
+}
+
+.no-prediction p:first-child {
+	font-weight: 600;
+}
+
+.balanced-section {
+	margin-top: 16px;
+	padding: 12px;
+	text-align: center;
+}
+
+.balance-hint {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+
+/* Dashboard Styles */
+.chemistry-dashboard {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 40px 20px;
+}
+
+.dashboard-header {
+	text-align: center;
+	margin-bottom: 48px;
+}
+
+.dashboard-header h1 {
+	font-size: 2.5rem;
+	color: var(--ink);
+	margin-bottom: 12px;
+}
+
+.dashboard-subtitle {
+	font-size: 1.1rem;
+	color: var(--muted);
+	max-width: 600px;
+	margin: 0 auto;
+}
+
+.tools-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	gap: 24px;
+	margin-bottom: 64px;
+}
+
+.tool-card {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+	padding: 24px;
+	text-decoration: none;
+	color: inherit;
+	transition: all 0.3s ease;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.tool-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+	border-color: var(--accent);
+}
+
+.tool-icon {
+	font-size: 2rem;
+}
+
+.tool-name {
+	font-size: 1.1rem;
+	color: var(--ink);
+	margin: 0;
+}
+
+.tool-description {
+	font-size: 0.9rem;
+	color: var(--muted);
+	margin: 0;
+	line-height: 1.5;
+}
+
+/* Feature Highlights */
+.feature-highlights {
+	margin-bottom: 48px;
+}
+
+.feature-highlights h2 {
+	font-size: 1.5rem;
+	color: var(--ink);
+	margin-bottom: 24px;
+	text-align: center;
+}
+
+.highlights-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: 24px;
+}
+
+.highlight-card {
+	background: linear-gradient(135deg, var(--surface) 0%, var(--card) 100%);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+	padding: 24px;
+	text-align: center;
+}
+
+.highlight-icon {
+	font-size: 2.5rem;
+	margin-bottom: 16px;
+}
+
+.highlight-card h3 {
+	font-size: 1.1rem;
+	color: var(--ink);
+	margin: 0 0 12px 0;
+}
+
+.highlight-card p {
+	font-size: 0.9rem;
+	color: var(--muted);
+	margin: 0;
+	line-height: 1.6;
+}
+
+/* Chemistry Page Layout */
+.chemistry-page {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 40px 20px;
+}
+
+.page-header {
+	margin-bottom: 32px;
+}
+
+.page-header h1 {
+	font-size: 1.8rem;
+	color: var(--ink);
+	margin-bottom: 8px;
+}
+
+.page-header p {
+	color: var(--muted);
+	font-size: 1rem;
+	margin: 0;
+}
+
+.dashboard-footer {
+	margin-top: 64px;
+	padding-top: 24px;
+	border-top: 1px solid var(--border);
+	text-align: center;
+}
+
+.back-to-prooflab {
+	color: var(--accent);
+	text-decoration: none;
+	font-weight: 500;
+}
+
+.back-to-prooflab:hover {
+	text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	.tools-grid {
+		grid-template-columns: 1fr;
+	}
+	
+	.highlights-grid {
+		grid-template-columns: 1fr;
+	}
+	
+	.dashboard-header h1 {
+		font-size: 2rem;
+	}
+}
+
+/* ============================================
+   SHARED LAB NAVIGATION + THEME CONTINUITY
+   ============================================ */
+
+.main-navbar {
+	background: var(--header-bg);
+	backdrop-filter: blur(18px) saturate(140%);
+	border-bottom: 1px solid var(--border);
+	box-shadow: 0 10px 28px rgba(23, 32, 51, .06);
+	display: flex;
+	height: auto;
+	padding: 10px clamp(12px, 2.4vw, 30px);
+	position: sticky;
+	top: 0;
+	transition: background-color .3s ease, border-color .3s ease, box-shadow .3s ease;
+	z-index: 100;
+}
+
+.nav-shell {
+	align-items: center;
+	display: flex;
+	gap: clamp(10px, 1.8vw, 24px);
+	margin: 0 auto;
+	max-width: 1440px;
+	min-width: 0;
+	width: 100%;
+}
+
+.nav-brand {
+	align-items: center;
+	color: var(--ink);
+	display: inline-flex;
+	flex: 0 0 auto;
+	gap: 9px;
+	text-decoration: none;
+}
+
+.nav-brand-mark {
+	align-items: center;
+	background: linear-gradient(145deg, var(--accent), var(--accent-strong));
+	border-radius: 12px 7px 12px 7px;
+	box-shadow: 0 7px 18px var(--nav-glow);
+	color: #fff;
+	display: inline-flex;
+	font-size: 17px;
+	height: 34px;
+	justify-content: center;
+	transition: transform .25s cubic-bezier(.2,.9,.25,1.35), box-shadow .25s ease;
+	width: 34px;
+}
+
+.nav-brand:hover .nav-brand-mark { box-shadow: 0 10px 24px var(--nav-glow); transform: rotate(12deg) scale(1.06); }
+.nav-brand strong, .nav-brand small { display: block; }
+.nav-brand strong { font-size: 14px; letter-spacing: -.02em; line-height: 1.05; }
+.nav-brand small { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; margin-top: 3px; text-transform: uppercase; }
+
+.nav-container {
+	display: flex;
+	flex: 1 1 auto;
+	gap: 7px;
+	justify-content: center;
+	margin: 0;
+	overflow-x: auto;
+	padding: 3px;
+	scrollbar-width: none;
+	width: auto;
+}
+
+.nav-container::-webkit-scrollbar { display: none; }
+
+.nav-link {
+	align-items: center;
+	background: var(--surface-soft);
+	border: 1px solid var(--border);
+	border-radius: 14px;
+	box-shadow: 0 2px 5px rgba(23, 32, 51, .025);
+	color: var(--ink);
+	display: grid;
+	flex: 0 0 auto;
+	gap: 8px;
+	grid-template-columns: 28px minmax(0, 1fr) auto;
+	min-width: 128px;
+	overflow: hidden;
+	padding: 8px 10px;
+	position: relative;
+	text-decoration: none;
+	transition: background-color .24s ease, border-color .24s ease, box-shadow .24s ease, color .24s ease, transform .24s cubic-bezier(.2,.9,.25,1.3);
+	white-space: normal;
+}
+
+.nav-link::before {
+	background: linear-gradient(110deg, transparent 24%, rgba(255, 255, 255, .24) 50%, transparent 76%);
+	content: '';
+	inset: 0;
+	opacity: 0;
+	position: absolute;
+	transform: translateX(-110%);
+	transition: opacity .22s ease;
+}
+
+.nav-link:hover {
+	border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+	box-shadow: 0 9px 20px var(--nav-glow);
+	color: var(--accent);
+	transform: translateY(-2px);
+}
+
+.nav-link:hover::before { animation: nav-sheen 1s ease; opacity: 1; }
+.nav-link.active { background: linear-gradient(135deg, var(--accent), var(--accent-strong)); border-color: transparent; box-shadow: 0 9px 22px var(--nav-glow); color: #fff; }
+.nav-icon { align-items: center; background: var(--field); border-radius: 9px; display: inline-flex; font-size: 16px; height: 28px; justify-content: center; position: relative; width: 28px; }
+.nav-link.active .nav-icon { background: rgba(255, 255, 255, .18); }
+.nav-copy { display: grid; gap: 1px; min-width: 0; position: relative; }
+.nav-text { font-size: 12px; font-weight: 800; line-height: 1.1; }
+.nav-description { color: var(--muted); font-size: 9px; font-weight: 650; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-link.active .nav-description { color: rgba(255, 255, 255, .76); }
+.nav-active-dot { background: currentColor; border-radius: 50%; height: 5px; opacity: 0; position: relative; transform: scale(.3); transition: opacity .2s ease, transform .25s cubic-bezier(.2,.9,.25,1.35); width: 5px; }
+.nav-link.active .nav-active-dot { opacity: 1; transform: scale(1); }
+
+.nav-theme-toggle {
+	align-items: center;
+	background: var(--surface-soft);
+	border: 1px solid var(--border);
+	border-radius: 14px;
+	color: var(--ink);
+	display: inline-flex;
+	flex: 0 0 auto;
+	gap: 7px;
+	min-height: 42px;
+	padding: 7px 10px;
+	transition: background-color .24s ease, border-color .24s ease, box-shadow .24s ease, color .24s ease, transform .24s cubic-bezier(.2,.9,.25,1.3);
+}
+
+.nav-theme-toggle:hover { border-color: var(--accent); box-shadow: 0 8px 18px var(--nav-glow); color: var(--accent); transform: translateY(-2px); }
+.nav-theme-symbol { align-items: center; background: var(--accent-soft); border-radius: 9px; display: inline-flex; font-size: 18px; height: 26px; justify-content: center; line-height: 1; overflow: hidden; position: relative; transition: transform .32s cubic-bezier(.2,.9,.25,1.35); width: 26px; }
+.theme-sun, .theme-moon { position: absolute; transition: opacity .24s ease, transform .32s cubic-bezier(.2,.9,.25,1.35); }
+.theme-moon { opacity: 0; transform: translateY(8px) rotate(-24deg); }
+:root[data-theme="dark"] .theme-sun { opacity: 0; transform: translateY(-8px) rotate(24deg); }
+:root[data-theme="dark"] .theme-moon { opacity: 1; transform: translateY(0) rotate(0); }
+.nav-theme-toggle:hover .nav-theme-symbol { transform: rotate(18deg) scale(1.08); }
+.nav-theme-label { font-size: 11px; font-weight: 800; min-width: 32px; position: relative; }
+.nav-theme-label > span { transition: opacity .2s ease, transform .25s cubic-bezier(.2,.9,.25,1.35); }
+.theme-dark-label { left: 0; opacity: 0; position: absolute; transform: translateY(5px); }
+:root[data-theme="dark"] .theme-light-label { opacity: 0; transform: translateY(-5px); }
+:root[data-theme="dark"] .theme-dark-label { opacity: 1; transform: translateY(0); }
+
+@keyframes nav-sheen { from { transform: translateX(-110%); } to { transform: translateX(110%); } }
+
+.chemistry-dashboard, .chemistry-page, .bio-dashboard, .bio-page, .physics-dashboard, .physics-page {
+	background: radial-gradient(circle at 50% -16%, var(--accent-soft), transparent 32%);
+	color: var(--ink);
+	transition: background-color .3s ease, color .3s ease;
+}
+
+.chemistry-page :is(input, select, textarea, option) { background: var(--field); border-color: var(--border); color: var(--ink); }
+.chemistry-page :is(.steps-container, .molar-mass-result, .ph-option, .stoich-form, .formula-result-card, .viewer-controls, .result-card, .half-reaction, .compound-item, .element-card, .periodic-element) { background: var(--surface); border-color: var(--border); color: var(--ink); }
+.chemistry-page :is(.reaction-type-badge, .classify-btn, .ph-result, .stoich-result, .formula-column, .viewer-container, .molecule-viewer-canvas, .battery-table th, .battery-note, .reaction-summary, .cell-notation, .grid-header, .grid-row, .bond-item, .bond-tag, .compound-list-btn, .compound-list, .dilution-diagram, .result-item, .result-summary, .conversion-result, .acid-results, .base-results, .ph-classification, .direction-forward, .direction-at-equilibrium, .ascii-art, .geometry-tile, .hide-all-btn, .periodic-table-btn, .copy-formula-btn, .nernst-equation, .element-item, .category-templates, .category-select) { background: var(--field); border-color: var(--border); color: var(--ink); }
+.chemistry-page :is(.breakdown-table tr:hover, .battery-table tr:hover td) { background: var(--surface-raised); }
+.chemistry-page :is(.chemistry-link:hover, .example-btn:hover, .tab-btn:hover, .molecule-hint, .pdb-example-btn:hover, .template-btn:hover, .template-item:hover, .autocomplete-suggestion:hover, .periodic-table-btn:hover, .category-header:hover, .templates-toggle:hover, .suggestion-item:hover, .suggestion-item.active) { background: var(--surface-raised); }
+.chemistry-page .ph-classification { background: var(--surface-raised) !important; }
+.chemistry-page .result-item.highlight { background: var(--accent-soft) !important; border-color: var(--accent) !important; }
+html[data-theme="dark"] .chemistry-page :is(.error-message, .reaction-classifier, .molecule-error, .solution-calculator-container .error-message) { background: var(--evidence-bg); border-color: color-mix(in srgb, var(--invalid) 48%, var(--border)); color: var(--ink); }
+html[data-theme="dark"] .chemistry-page :is(.result-item.spontaneous, .direction-forward) { background: #173f37 !important; border-color: #2e705d !important; color: #a3e9c8; }
+html[data-theme="dark"] .chemistry-page :is(.result-item.nonspontaneous, .result-item.exothermic, .direction-reverse) { background: #412731 !important; border-color: #754452; }
+html[data-theme="dark"] .chemistry-page :is(.result-item.endothermic, .direction-at-equilibrium) { background: #2b2b58 !important; border-color: #5c5eb5 !important; color: #d8d9ff; }
+html[data-theme="dark"] .chemistry-page .suggestion-box { background: #183d35; border-color: #2a765f; color: #b9f0d5; }
+html[data-theme="dark"] .chemistry-page .suggestion-box strong { color: #b9f0d5; }
+
+@media (max-width: 1180px) {
+	.nav-brand small, .nav-description { display: none; }
+	.nav-link { min-width: 102px; }
+}
+
+@media (max-width: 760px) {
+	.main-navbar { padding: 8px 10px; }
+	.nav-shell { gap: 8px; }
+	.nav-brand > span:last-child { display: none; }
+	.nav-container { gap: 5px; justify-content: flex-start; padding: 2px; }
+	.nav-link { border-radius: 12px; gap: 5px; grid-template-columns: 27px minmax(0, 1fr) auto; min-width: 88px; padding: 7px 8px; }
+	.nav-text { display: block; font-size: 10px; }
+	.nav-theme-toggle { border-radius: 12px; min-height: 38px; padding: 5px; }
+	.nav-theme-label { display: none; }
+}

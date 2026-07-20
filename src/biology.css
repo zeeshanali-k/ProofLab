@@ -1,0 +1,1317 @@
+/* Biology Module Styles */
+
+.bio-dashboard {
+	min-height: 100vh;
+	padding: 40px 24px;
+	max-width: 1200px;
+	margin: 0 auto;
+}
+
+.bio-page {
+	min-height: 100vh;
+	padding: 40px 24px;
+	max-width: 1000px;
+	margin: 0 auto;
+}
+
+/* Card container */
+.bio-card {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+	padding: 28px;
+	margin-bottom: 24px;
+	box-shadow: var(--shadow-sm);
+}
+
+.bio-card-title {
+	font-size: 1.25rem;
+	color: var(--ink);
+	margin: 0 0 6px 0;
+}
+
+.bio-card-desc {
+	color: var(--muted);
+	font-size: 0.9rem;
+	margin: 0 0 20px 0;
+	line-height: 1.5;
+}
+
+/* Controls */
+.bio-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	margin-bottom: 20px;
+	align-items: flex-end;
+}
+
+.bio-control-group {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.bio-control-group label {
+	font-weight: 600;
+	color: var(--ink);
+	font-size: 0.88rem;
+}
+
+.bio-btn-group {
+	display: flex;
+	gap: 4px;
+}
+
+.bio-btn {
+	padding: 8px 16px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 0.88rem;
+	font-weight: 500;
+	color: var(--ink);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.bio-btn:hover {
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+.bio-btn.active {
+	background: var(--accent);
+	color: white;
+	border-color: var(--accent);
+}
+
+.bio-btn.primary {
+	background: var(--accent);
+	color: white;
+	border-color: var(--accent);
+}
+
+.bio-btn.primary:hover {
+	background: #4a4bc6;
+}
+
+/* Viewer container */
+.bio-viewer-container {
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: #fafbfc;
+	min-height: 400px;
+	overflow: hidden;
+	margin-bottom: 16px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.bio-chromosome-container {
+	min-height: 500px;
+}
+
+.bio-tree-container {
+	min-height: 500px;
+}
+
+/* Loading state */
+.bio-loading {
+	padding: 40px;
+	text-align: center;
+	color: var(--muted);
+	font-size: 0.95rem;
+}
+
+/* Result display */
+.bio-result {
+	margin-top: 12px;
+	padding: 12px 16px;
+	background: rgba(99, 102, 241, 0.06);
+	border: 1px solid rgba(99, 102, 241, 0.2);
+	border-radius: 10px;
+	font-size: 0.9rem;
+	color: var(--ink);
+}
+
+.bio-capitalize {
+	text-transform: capitalize;
+}
+
+/* Info note */
+.bio-info {
+	margin-top: 16px;
+	padding: 10px 16px;
+	background: white;
+	border-left: 4px solid var(--accent);
+	border-radius: 0 8px 8px 0;
+	font-size: 0.85rem;
+	color: var(--ink);
+	line-height: 1.6;
+}
+
+/* Anatomy layout */
+.bio-anatomy-layout {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 20px;
+	margin-bottom: 16px;
+}
+
+.bio-anatomy-svg-wrap {
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+}
+
+.bio-anatomy-svg {
+	width: 100%;
+	max-width: 350px;
+	height: auto;
+}
+
+.bio-anatomy-info {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.bio-info-card {
+	padding: 16px;
+	background: white;
+	border: 1px solid var(--border);
+	border-left: 4px solid var(--accent);
+	border-radius: 10px;
+}
+
+.bio-info-card h4 {
+	font-size: 1rem;
+	color: var(--ink);
+	margin: 0 0 6px 0;
+}
+
+.bio-info-card p {
+	font-size: 0.88rem;
+	color: var(--muted);
+	margin: 0;
+	line-height: 1.5;
+}
+
+.bio-info-placeholder {
+	text-align: center;
+	border-left-color: var(--border);
+}
+
+.bio-info-tag {
+	margin-top: 8px;
+	padding: 4px 10px;
+	background: rgba(99,102,241,0.08);
+	border-radius: 6px;
+	font-size: 0.82rem;
+	color: var(--accent);
+	font-weight: 500;
+	display: inline-block;
+}
+
+.bio-systems-list h4 {
+	font-size: 0.9rem;
+	color: var(--ink);
+	margin: 0 0 8px 0;
+}
+
+.bio-system-item {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 8px 10px;
+	border-left: 3px solid;
+	border-radius: 0 6px 6px 0;
+	background: white;
+	margin-bottom: 6px;
+}
+
+.bio-system-dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	flex-shrink: 0;
+	margin-top: 3px;
+}
+
+.bio-system-name {
+	font-weight: 600;
+	font-size: 0.85rem;
+	color: var(--ink);
+}
+
+.bio-system-desc {
+	font-size: 0.78rem;
+	color: var(--muted);
+	line-height: 1.4;
+}
+
+/* Pea simulator visuals */
+.bio-parent-visual {
+	display: flex;
+	justify-content: center;
+	padding: 12px;
+	background: #fafbfc;
+	border-radius: 8px;
+	margin-bottom: 12px;
+}
+
+.bio-pea-visual-row {
+	display: flex;
+	justify-content: center;
+	align-items: flex-end;
+	gap: 8px;
+	padding: 8px;
+	background: #fafbfc;
+	border-radius: 8px;
+	margin-bottom: 8px;
+}
+
+/* Cycle diagram */
+.bio-cycle-canvas {
+	margin-bottom: 20px;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	overflow: hidden;
+	background: white;
+}
+
+.bio-cycle-toolbar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 10px 16px;
+	background: var(--card);
+	border-bottom: 1px solid var(--border);
+}
+
+.bio-cycle-icon {
+	font-weight: 600;
+	font-size: 0.95rem;
+	color: var(--ink);
+}
+
+.bio-cycle-zoom {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.bio-zoom-btn {
+	padding: 4px 10px;
+	background: white;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	font-size: 0.85rem;
+	cursor: pointer;
+	color: var(--ink);
+	transition: all 0.15s ease;
+}
+
+.bio-zoom-btn:hover {
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+.bio-zoom-reset {
+	font-size: 0.78rem;
+	color: var(--muted);
+}
+
+.bio-zoom-label {
+	font-size: 0.82rem;
+	color: var(--muted);
+	font-family: monospace;
+	min-width: 36px;
+	text-align: center;
+}
+
+.bio-cycle-svg-container {
+	width: 100%;
+	height: 380px;
+	overflow: hidden;
+	position: relative;
+	user-select: none;
+}
+
+.bio-cycle-svg {
+	width: 100%;
+	height: 100%;
+	transition: transform 0.1s ease-out;
+}
+
+.bio-cycle-hint {
+	padding: 6px 16px;
+	text-align: center;
+	font-size: 0.78rem;
+	color: var(--muted);
+	background: var(--card);
+	border-top: 1px solid var(--border);
+}
+
+.bio-cycle-diagram-wrap {
+	display: none;
+}
+
+/* Tree SVG */
+.bio-tree-svg {
+	width: 100%;
+	max-width: 660px;
+	height: auto;
+}
+
+.bio-tree-legend {
+	margin-top: 16px;
+	padding: 14px 16px;
+	background: white;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+}
+
+.bio-tree-legend h4 {
+	font-size: 0.9rem;
+	color: var(--ink);
+	margin: 0 0 8px 0;
+}
+
+.bio-legend-items {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+.bio-legend-item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+
+/* Newick editor */
+.bio-newick-editor {
+	margin-bottom: 16px;
+}
+
+.bio-newick-editor label {
+	display: block;
+	font-weight: 600;
+	font-size: 0.88rem;
+	color: var(--ink);
+	margin-bottom: 6px;
+}
+
+.bio-newick-input {
+	width: 100%;
+	padding: 10px 14px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-family: monospace;
+	font-size: 0.88rem;
+	background: var(--card);
+	color: var(--ink);
+	resize: vertical;
+	box-sizing: border-box;
+}
+
+.bio-newick-input:focus {
+	outline: none;
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Chromosome viewer */
+.bio-chromosome-canvas {
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: white;
+	padding: 16px;
+	margin-bottom: 16px;
+	overflow-x: auto;
+}
+
+.bio-chromosome-svg {
+	width: 100%;
+	height: auto;
+	min-height: 250px;
+}
+
+.bio-chromosome-detail {
+	margin-bottom: 16px;
+}
+
+.bio-chromosome-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	padding: 12px 16px;
+	background: white;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	margin-bottom: 16px;
+}
+
+.bio-system-item-active {
+	background: rgba(99, 102, 241, 0.04) !important;
+}
+
+/* System Navigation */
+.bio-system-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding: 12px 0;
+	margin-bottom: 20px;
+}
+
+.bio-system-nav-btn {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 14px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	font-size: 0.85rem;
+	font-weight: 500;
+	color: var(--ink);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.bio-system-nav-btn:hover {
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+.bio-system-nav-btn.active {
+	color: white;
+	border-color: transparent;
+}
+
+.bio-system-nav-icon {
+	font-size: 1rem;
+}
+
+.bio-system-nav-label {
+	font-size: 0.82rem;
+}
+
+/* Systems Layout */
+.bio-systems-layout {
+	display: grid;
+	grid-template-columns: 320px 1fr;
+	gap: 24px;
+	align-items: start;
+}
+
+.bio-systems-diagram {
+	position: sticky;
+	top: 20px;
+}
+
+.bio-systems-page .bio-systems-layout {
+	margin-top: 0;
+}
+
+/* System Diagram */
+.bio-diagram-container {
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: white;
+	padding: 12px;
+}
+
+.bio-diagram-svg {
+	width: 100%;
+	height: auto;
+}
+
+/* 3D System Viewer — Preview Card */
+.bio-3d-preview {
+	position: relative;
+	width: 100%;
+	min-height: 280px;
+	max-height: 420px;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	overflow: hidden;
+	cursor: pointer;
+	background: #f8fafc;
+	transition: transform 0.2s, box-shadow 0.2s;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.bio-3d-preview:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.bio-3d-preview:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+.bio-3d-preview-img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	transition: opacity 0.3s;
+	display: block;
+	padding: 8px;
+}
+
+.bio-3d-preview-placeholder {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 2px dashed var(--border);
+	border-radius: 12px;
+}
+
+.bio-3d-preview-spinner {
+	width: 28px;
+	height: 28px;
+	border: 3px solid var(--border);
+	border-radius: 50%;
+	animation: bio-spin 0.8s linear infinite;
+}
+
+.bio-3d-preview-fallback {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 12px;
+	background: var(--surface);
+}
+
+.bio-3d-preview-fallback .bio-diagram-container {
+	border: none;
+	padding: 0;
+}
+
+.bio-3d-preview-overlay {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	padding: 16px 14px 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	pointer-events: none;
+}
+
+.bio-3d-preview-label {
+	font-weight: 700;
+	font-size: 0.95rem;
+	color: white;
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.bio-3d-preview-cta {
+	font-size: 0.78rem;
+	color: rgba(255, 255, 255, 0.9);
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 3D Fullscreen Modal */
+.bio-3d-modal-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 9999;
+	background: rgba(0, 0, 0, 0.7);
+	backdrop-filter: blur(4px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+	animation: bio-modal-fadein 0.2s ease-out;
+}
+
+@keyframes bio-modal-fadein {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+.bio-3d-modal {
+	width: 100%;
+	max-width: 1400px;
+	height: 90vh;
+	max-height: 900px;
+	display: flex;
+	flex-direction: column;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+	overflow: hidden;
+	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+	animation: bio-modal-slideup 0.25s ease-out;
+}
+
+@keyframes bio-modal-slideup {
+	from { transform: translateY(20px); opacity: 0; }
+	to { transform: translateY(0); opacity: 1; }
+}
+
+.bio-3d-modal-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 20px;
+	border-bottom: 2px solid var(--border);
+}
+
+.bio-3d-modal-header h2 {
+	margin: 0;
+	font-size: 1.15rem;
+	color: var(--ink);
+}
+
+.bio-3d-modal-close {
+	background: none;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	font-size: 1rem;
+	color: var(--muted);
+	transition: background 0.15s, color 0.15s;
+}
+
+.bio-3d-modal-close:hover {
+	background: var(--field);
+	color: var(--ink);
+}
+
+.bio-3d-modal-body {
+	flex: 1;
+	min-height: 0;
+	position: relative;
+	background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.bio-3d-modal-body canvas {
+	display: block;
+	width: 100% !important;
+	height: 100% !important;
+	min-height: 650px;
+}
+
+.bio-3d-modal-loading {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+
+.bio-3d-modal-error {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 20px;
+	text-align: center;
+	color: #92400e;
+	background: #fef3c7;
+	font-size: 0.9rem;
+}
+
+.bio-3d-modal-footer {
+	padding: 10px 20px;
+	text-align: center;
+	font-size: 0.78rem;
+	color: var(--muted);
+	border-top: 1px solid var(--border);
+	background: var(--surface);
+}
+
+.bio-3d-modal-footer kbd {
+	display: inline-block;
+	padding: 1px 6px;
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	background: var(--card);
+	font-family: inherit;
+	font-size: 0.75rem;
+}
+
+/* Shared spinner */
+.bio-3d-spinner {
+	width: 32px;
+	height: 32px;
+	border: 3px solid var(--border);
+	border-top-color: var(--accent);
+	border-radius: 50%;
+	animation: bio-spin 0.8s linear infinite;
+}
+
+@keyframes bio-spin {
+	to { transform: rotate(360deg); }
+}
+
+/* System Info Panel */
+.bio-system-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.bio-system-header {
+	display: flex;
+	align-items: flex-start;
+	gap: 16px;
+	padding: 20px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-left: 4px solid var(--accent);
+	border-radius: 12px;
+}
+
+.bio-system-header-icon {
+	font-size: 2.5rem;
+	flex-shrink: 0;
+}
+
+.bio-system-header-name {
+	font-size: 1.3rem;
+	color: var(--ink);
+	margin: 0 0 6px 0;
+}
+
+.bio-system-header-desc {
+	color: var(--muted);
+	font-size: 0.9rem;
+	margin: 0;
+	line-height: 1.5;
+}
+
+.bio-system-section {
+	padding: 20px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+}
+
+.bio-system-section h3 {
+	font-size: 1rem;
+	color: var(--ink);
+	margin: 0 0 12px 0;
+}
+
+.bio-system-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.bio-system-list li {
+	padding: 8px 12px;
+	background: white;
+	border: 1px solid #eef0f5;
+	border-radius: 8px;
+	font-size: 0.88rem;
+	color: var(--ink);
+	line-height: 1.4;
+}
+
+.bio-system-list li::before {
+	content: '→ ';
+	color: var(--accent);
+	font-weight: bold;
+}
+
+/* Organ Cards */
+.bio-organs-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 10px;
+}
+
+.bio-organ-card {
+	padding: 14px;
+	background: white;
+	border: 1px solid #eef0f5;
+	border-top: 3px solid var(--accent);
+	border-radius: 10px;
+}
+
+.bio-organ-name {
+	font-weight: 600;
+	font-size: 0.95rem;
+	color: var(--ink);
+	margin-bottom: 4px;
+}
+
+.bio-organ-detail {
+	font-size: 0.85rem;
+	color: var(--muted);
+	line-height: 1.4;
+	margin-bottom: 8px;
+}
+
+.bio-organ-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	font-size: 0.8rem;
+}
+
+.bio-organ-location,
+.bio-organ-fn {
+	color: var(--muted);
+}
+
+/* Structures */
+.bio-structures-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.bio-structure-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 12px;
+	background: white;
+	border: 1px solid #eef0f5;
+	border-radius: 8px;
+	font-size: 0.85rem;
+}
+
+.bio-structure-name {
+	font-weight: 600;
+	color: var(--ink);
+	min-width: 100px;
+}
+
+.bio-structure-type {
+	padding: 2px 8px;
+	background: rgba(99, 102, 241, 0.08);
+	color: var(--accent);
+	border-radius: 4px;
+	font-size: 0.75rem;
+	font-weight: 500;
+	text-transform: capitalize;
+}
+
+.bio-structure-desc {
+	color: var(--muted);
+	font-size: 0.82rem;
+}
+
+/* Conditions */
+.bio-condition-card {
+	padding: 14px;
+	background: #fff5f5;
+	border: 1px solid #fecaca;
+	border-radius: 10px;
+	margin-bottom: 8px;
+}
+
+.bio-condition-name {
+	font-weight: 600;
+	font-size: 0.92rem;
+	color: #dc2626;
+	margin-bottom: 4px;
+}
+
+.bio-condition-desc {
+	font-size: 0.85rem;
+	color: var(--ink);
+	margin-bottom: 6px;
+	line-height: 1.4;
+}
+
+.bio-condition-symptoms {
+	font-size: 0.82rem;
+	color: var(--muted);
+}
+
+/* Fun Fact */
+.bio-fun-fact {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 14px 16px;
+	background: #fefce8;
+	border: 1px solid #fde68a;
+	border-left: 4px solid;
+	border-radius: 10px;
+	font-size: 0.9rem;
+	color: #78350f;
+	line-height: 1.5;
+}
+
+.bio-fun-fact-icon {
+	font-size: 1.2rem;
+	flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+	.bio-systems-layout {
+		grid-template-columns: 1fr;
+	}
+	.bio-systems-diagram {
+		position: static;
+	}
+	.bio-3d-preview {
+		min-height: 220px;
+		max-height: 320px;
+	}
+	.bio-3d-modal {
+		max-width: 100%;
+		height: 92vh;
+		max-height: none;
+	}
+	.bio-3d-modal-body canvas {
+		min-height: 350px;
+	}
+	.bio-system-nav-btn {
+		padding: 6px 10px;
+		font-size: 0.78rem;
+	}
+	.bio-system-nav-label {
+		display: none;
+	}
+	.bio-organ-meta {
+		flex-direction: column;
+		gap: 4px;
+	}
+}
+
+/* Error display */
+.bio-errors {
+	margin-top: 12px;
+	padding: 14px 18px;
+	background: #fff1f0;
+	border: 1px solid #ffd4d2;
+	border-radius: 10px;
+}
+
+.bio-errors-title {
+	font-weight: 600;
+	color: var(--invalid);
+	font-size: 0.9rem;
+	margin-bottom: 8px;
+}
+
+.bio-error-item {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	font-size: 0.88rem;
+	color: var(--invalid);
+	margin-bottom: 4px;
+}
+
+.bio-error-bullet { margin-top: 2px; }
+.bio-error-field {
+	font-family: monospace;
+	background: rgba(239, 68, 68, 0.1);
+	padding: 1px 6px;
+	border-radius: 4px;
+	font-size: 0.82rem;
+}
+.bio-error-msg { margin-left: 4px; }
+
+/* Bug Simulator */
+.bio-parents-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+	margin-bottom: 20px;
+}
+
+.bio-parent-card {
+	padding: 16px;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: white;
+}
+
+.bio-parent-title {
+	font-size: 1rem;
+	color: var(--ink);
+	margin: 0 0 12px 0;
+}
+
+.bio-trait-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+	font-size: 0.88rem;
+}
+
+.bio-trait-name {
+	width: 110px;
+	color: var(--muted);
+	font-weight: 500;
+	flex-shrink: 0;
+}
+
+.bio-select {
+	flex: 1;
+	padding: 6px 10px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	font-size: 0.85rem;
+	background: var(--card);
+	color: var(--ink);
+	cursor: pointer;
+}
+
+.bio-breed-btn {
+	width: 100%;
+	padding: 14px;
+	background: #16a34a;
+	color: white;
+	border: none;
+	border-radius: 10px;
+	font-weight: 600;
+	font-size: 1rem;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.bio-breed-btn:hover {
+	background: #15803d;
+}
+
+.bio-offspring-section {
+	margin-top: 24px;
+}
+
+.bio-offspring-title {
+	font-size: 1.1rem;
+	color: var(--ink);
+	margin: 0 0 12px 0;
+}
+
+.bio-offspring-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.bio-offspring-card {
+	padding: 14px;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: white;
+}
+
+.bio-offspring-name {
+	font-weight: 600;
+	font-size: 0.9rem;
+	color: var(--ink);
+	margin-bottom: 8px;
+}
+
+.bio-bug-visual {
+	text-align: center;
+	padding: 8px;
+	background: #fafbfc;
+	border-radius: 8px;
+	margin-bottom: 8px;
+}
+
+.bio-bug-emoji {
+	font-size: 2rem;
+	margin-bottom: 4px;
+}
+
+.bio-bug-traits {
+	font-size: 0.78rem;
+	color: var(--muted);
+	line-height: 1.5;
+}
+
+.bio-offspring-genotype {
+	font-size: 0.75rem;
+	color: var(--muted);
+	line-height: 1.5;
+}
+
+.bio-copy-btn {
+	margin-top: 12px;
+	padding: 6px 14px;
+	font-size: 0.82rem;
+	background: white;
+	color: var(--muted);
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.bio-copy-btn:hover {
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+/* Ecology Cycles */
+.bio-cycle-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-bottom: 20px;
+}
+
+.bio-cycle-content {
+	padding: 20px;
+	background: white;
+	border: 1px solid #eef0f5;
+	border-radius: 12px;
+}
+
+.bio-cycle-name {
+	font-size: 1.2rem;
+	color: var(--ink);
+	margin: 0 0 8px 0;
+}
+
+.bio-cycle-desc {
+	color: var(--muted);
+	font-size: 0.9rem;
+	line-height: 1.5;
+	margin: 0 0 20px 0;
+}
+
+.bio-cycle-section {
+	margin-bottom: 20px;
+}
+
+.bio-cycle-section h5 {
+	font-size: 0.9rem;
+	color: var(--ink);
+	margin: 0 0 10px 0;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.bio-reservoirs-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	gap: 10px;
+}
+
+.bio-reservoir-card {
+	padding: 12px;
+	background: #fafbfc;
+	border: 1px solid #eef0f5;
+	border-radius: 8px;
+}
+
+.bio-reservoir-name {
+	font-weight: 600;
+	font-size: 0.88rem;
+	color: var(--ink);
+}
+
+.bio-reservoir-amount {
+	font-size: 0.82rem;
+	color: var(--muted);
+	font-family: monospace;
+	margin-top: 2px;
+}
+
+.bio-fluxes-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.bio-flux-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 0.88rem;
+	padding: 6px 10px;
+	background: #fafbfc;
+	border-radius: 6px;
+}
+
+.bio-flux-from { font-weight: 500; color: var(--ink); }
+.bio-flux-arrow { color: var(--accent); font-weight: bold; }
+.bio-flux-to { color: var(--ink); }
+.bio-flux-rate { color: var(--muted); font-family: monospace; font-size: 0.82rem; margin-left: auto; }
+
+.bio-human-impact {
+	padding: 14px 16px;
+	background: #fefce8;
+	border: 1px solid #fde68a;
+	border-radius: 10px;
+	margin-top: 16px;
+}
+
+.bio-human-impact h5 {
+	color: #92400e;
+	margin: 0 0 6px 0;
+	font-size: 0.9rem;
+}
+
+.bio-human-impact p {
+	color: #78350f;
+	font-size: 0.88rem;
+	margin: 0;
+	line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+	.bio-page, .bio-dashboard { padding: 24px 16px; }
+	.bio-parents-grid { grid-template-columns: 1fr; }
+	.bio-offspring-grid { grid-template-columns: 1fr 1fr; }
+	.bio-reservoirs-grid { grid-template-columns: 1fr; }
+	.tools-grid { grid-template-columns: 1fr; }
+	.highlights-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+	.bio-offspring-grid { grid-template-columns: 1fr; }
+	.page-header h1 { font-size: 1.5rem; }
+	.dashboard-header h1 { font-size: 1.75rem; }
+}
+
+/* Theme continuity for diagrams, controls, and information panels. */
+.bio-page :is(input, select, textarea, option) { background: var(--field); border-color: var(--border); color: var(--ink); }
+.bio-page :is(.bio-viewer-container, .bio-parent-visual, .bio-pea-visual-row, .bio-bug-visual, .bio-reservoir-card, .bio-flux-item) { background: var(--surface); border-color: var(--border); color: var(--ink); }
+.bio-page :is(.bio-info, .bio-info-card, .bio-system-item, .bio-cycle-canvas, .bio-zoom-btn, .bio-tree-legend, .bio-chromosome-canvas, .bio-chromosome-legend, .bio-diagram-container, .bio-system-list li, .bio-organ-card, .bio-structure-item, .bio-parent-card, .bio-offspring-card, .bio-copy-btn, .bio-cycle-content) { background: var(--field); border-color: var(--border); color: var(--ink); }
+.bio-page .bio-result { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 42%, var(--border)); color: var(--ink); }
+html[data-theme="dark"] .bio-page :is(.bio-condition-card, .bio-errors) { background: var(--evidence-bg); border-color: color-mix(in srgb, var(--invalid) 48%, var(--border)); }
+html[data-theme="dark"] .bio-page .bio-condition-name, html[data-theme="dark"] .bio-page .bio-errors-title, html[data-theme="dark"] .bio-page .bio-error-item { color: #ffb6b9; }
+html[data-theme="dark"] .bio-page :is(.bio-fun-fact, .bio-human-impact) { background: #42391d; border-color: #75652b; }
+html[data-theme="dark"] .bio-page :is(.bio-fun-fact, .bio-human-impact, .bio-human-impact h5, .bio-human-impact p) { color: #ffe69a; }
+.bio-page :is(.bio-card, .bio-info-card, .bio-system-item, .bio-organ-card, .bio-structure-item, .bio-parent-card, .bio-offspring-card) { transition: background-color .28s ease, border-color .28s ease, box-shadow .28s ease, transform .28s cubic-bezier(.2,.9,.25,1.2); }
+.bio-page :is(.bio-card, .bio-info-card, .bio-system-item, .bio-organ-card, .bio-structure-item, .bio-parent-card, .bio-offspring-card):hover { border-color: color-mix(in srgb, var(--accent) 48%, var(--border)); }

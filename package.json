@@ -13,12 +13,32 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "3dmol": "^2.5.5",
+    "@chemistry/formula": "^3.1.3",
     "@excalidraw/excalidraw": "^0.18.1",
+    "@google/model-viewer": "^4.3.1",
+    "@medhuelabs/openhuman-viewer": "^0.1.2",
+    "@nam088/chemical-balancer": "^1.2.0",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "@types/three": "^0.183.0",
+    "chart.js": "^4.5.1",
+    "fast-balance": "^1.0.7",
+    "hpo-react-visualizer": "^0.0.3",
+    "ideogram": "^1.53.0",
     "katex": "^0.17.0",
+    "mathjs": "^15.2.0",
     "mathlive": "^0.110.0",
     "next": "^16.2.10",
+    "novate-medviz": "^2.1.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-anatomy-picker": "^0.0.7",
+    "react-body-selector": "^1.0.2",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^19.2.7",
+    "react-katex": "^3.1.0",
+    "reactreejs": "^1.0.3",
+    "three": "^0.183.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

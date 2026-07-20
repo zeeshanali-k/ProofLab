@@ -11,7 +11,7 @@ import InequalityNumberLine from './components/InequalityNumberLine';
 import TeachingContent from './components/TeachingContent';
 import { CheckIcon, BrokenIcon, PlusIcon } from './components/Icons';
 import RoughWorkBoardModal from './components/RoughWorkBoardModal';
-import { ThemeToggle, WorkspaceTabs } from './components/WorkspaceNavigation';
+import { WorkspaceTabs } from './components/WorkspaceNavigation';
 import { proofBoardKey } from './lib/roughWorkStorage';
 
 const STATUS_COPY = {
@@ -360,8 +360,7 @@ export default function App() {
           <WorkspaceTabs current="learn" />
           <span className="breadcrumb">{['derivative', 'integral'].includes(data.problem.mode) ? 'Calculus Lab' : data.problem.mode === 'inequality' ? 'Inequality Lab' : data.problem.mode.startsWith('complex') ? 'Complex Lab' : 'Algebra Lab'} <span>/</span> {data.problem.category}</span>
         </div>
-        <div className="header-right">
-          <ThemeToggle />
+			<div className="header-right">
           <span className="save-status"><span className="save-dot" /> Saved locally</span>
           <button className="problem-toggle" onClick={() => setIsProblemOpen((open) => !open)}>Problem</button>
           <button className="icon-btn" ref={helpButtonRef} onClick={() => setIsGuideOpen(true)} aria-label="Open ProofLab guide" title="Open the ProofLab platform guide.">?</button>

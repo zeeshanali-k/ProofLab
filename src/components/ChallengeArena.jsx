@@ -8,7 +8,7 @@ import EquationField from './EquationField';
 import MathDisplay from './MathDisplay';
 import MathSimulationPanel from './MathSimulationPanel';
 import RoughWorkBoardModal from './RoughWorkBoardModal';
-import { ThemeToggle, WorkspaceTabs } from './WorkspaceNavigation';
+import { WorkspaceTabs } from './WorkspaceNavigation';
 import { leetMathBoardKey } from '../lib/roughWorkStorage';
 
 const storageKey = (challengeId) => `prooflab:leetmath:${challengeId}`;
@@ -30,7 +30,7 @@ function ArenaHeader({ challenge }) {
     <header className="arena-header">
       <Link href="/" className="wordmark" aria-label="Return to ProofLab learning workspace"><span aria-hidden="true">∞</span>ProofLab</Link>
       <WorkspaceTabs current="leetmath" />
-      <div className="arena-header-actions"><span className="arena-status">#{String(challenge.number).padStart(3, '0')} · {challenge.difficulty}</span><ThemeToggle /></div>
+      <div className="arena-header-actions"><span className="arena-status">#{String(challenge.number).padStart(3, '0')} · {challenge.difficulty}</span></div>
     </header>
   );
 }
