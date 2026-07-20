@@ -14,13 +14,16 @@ The product deliberately separates deterministic mathematical verification from 
 - Gives specific derivative-order coaching for repeated-derivative mistakes, such as submitting a second `f'(x)` instead of `f''(x)`, without immediately revealing the corrected derivative.
 - Tracks canonical completion for fixed-target inequalities, derivative, and complex-number tasks and can reveal a canonical final form without altering learner work.
 - Keeps algebra transformations, indefinite integration, and non-canonical inequality chains intentionally open-ended, with transition-by-transition checking only.
+- Includes a per-solution **Rough board**: an Excalidraw scratch canvas that opens as a modal without changing the current route or solution.
+- Persists each rough board locally by proof problem or LeetMath challenge, so drawings survive closing the modal, reloads, and answer-draft resets.
+- Adds **LeetMath**, a 30-challenge final-answer arena with topic filters, deterministic previews, visual replays for supported answers, and anonymous-session submission history.
 
 ## Tech stack
 
 | Area | Technology |
 | --- | --- |
 | Web application | Next.js 16, React 19, JavaScript/JSX |
-| Math input and rendering | MathLive and KaTeX |
+| Math input, rendering, and rough work | MathLive, KaTeX, and Excalidraw |
 | Verification API | Python 3.11+, FastAPI, Pydantic, Uvicorn |
 | Symbolic mathematics | SymPy with a restricted, custom LaTeX-like parser |
 | Teaching providers | Local deterministic fallback, Ollama, or any Chat Completions-compatible API |
@@ -34,11 +37,12 @@ The product deliberately separates deterministic mathematical verification from 
 The Next.js application is frontend-only. It calls one FastAPI service directly from the browser.
 
 ```text
-React + MathLive proof board
+React + MathLive proof board / LeetMath arena
         │
         ├── POST /verify ────────────────┐
         ├── POST /assess-completion ─────┼── FastAPI ── restricted parser ── SymPy
         ├── POST /reveal-final-form ─────┘
+        ├── GET/POST /challenges/* ────── challenge catalog, preview, and submission history
         │
         └── POST /explain ── Ollama | OpenAI-compatible API | local fallback
 ```
@@ -48,8 +52,8 @@ The verifier never evaluates arbitrary learner input. The parser only accepts th
 ## Repository layout
 
 ```text
-app/                         Next.js entry points and page shell
-src/                         React proof board, math components, API client, styling
+app/                         Next.js entry points, including /leetmath and /leetmath/[challengeId]
+src/                         React workspaces, Excalidraw rough board, math components, API clients, styling
 backend/prooflab_api/        FastAPI routes, contracts, parser, verifier, teaching providers
 backend/tests/               Pytest API and verifier coverage
 tests/unit/                  Vitest component and client coverage
@@ -104,6 +108,17 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+## Workspaces and rough work
+
+Use the workspace tabs to switch between the guided **ProofLab** reasoning board and the final-answer **LeetMath** challenge arena. LeetMath currently contains 30 deterministic challenges across Algebra, Inequalities, Calculus, and Complex numbers. Some answer types display a number-line or complex-plane replay as the answer is drafted or submitted.
+
+Both workspaces include a **Rough board** directly above the active work area. It opens a near-full-screen Excalidraw modal, so the URL, solution, draft answer, and visualizer state stay in place. The board supports Excalidraw's core selection, freehand, shapes, arrows, text, eraser, undo, and redo tools.
+
+- Each proof problem uses `prooflab:rough-work:v1:proof:<problemId>` in browser local storage; each LeetMath challenge uses `prooflab:rough-work:v1:leetmath:<challengeId>`.
+- The stored scene contains drawing elements and durable canvas preferences only. Viewport position, selections, dialogs, and cursors are not restored.
+- Use **Empty board** at the far right of the canvas to clear the current board. When it contains work, ProofLab asks for confirmation first.
+- Rough boards are private to the current browser and device. They are not uploaded, shared, or included in submission history.
 
 ## Environment configuration
 
@@ -162,6 +177,11 @@ FastAPI publishes the complete OpenAPI schema at `/openapi.json` and interactive
 | `POST /assess-completion` | Evaluates a full learner chain against a problem-defined canonical goal. Returns only `complete`, `in-progress`, `needs-correction`, or `not-applicable`. |
 | `POST /reveal-final-form` | Returns canonical LaTeX only for eligible tasks. Open-ended and unsupported modes are rejected. |
 | `POST /explain` | Requests an optional hint, explanation, or repair based on a verification result already decided by the verifier. |
+| `GET /challenges` | Returns the LeetMath challenge catalog. |
+| `GET /challenges/{challengeId}` | Returns the full prompt, constraints, answer shape, and visualizer configuration for one challenge. |
+| `POST /challenges/{challengeId}/preview` | Parses a draft final answer and returns its deterministic visual preview when supported. |
+| `POST /challenges/{challengeId}/submit` | Checks and records one final answer for the anonymous browser session. |
+| `GET /challenges/{challengeId}/submissions` | Returns submission history for the current browser session; requires `X-ProofLab-Session`. |
 
 All proof-step payloads contain an `id`, `latex`, and task-scoped `kind`. The supported modes are `algebra`, `inequality`, `derivative`, `integral`, `complex-simplify`, and `complex-solve`.
 
@@ -217,11 +237,12 @@ npm run build
 npm run test:e2e
 ```
 
-The test suite covers restricted parsing and verification, trigonometric and repeated derivatives, integration with `+ C`, canonical completion/reveal behavior, UI status and reveal rendering, and end-to-end learner flows including derivative-order coaching.
+The test suite covers restricted parsing and verification, trigonometric and repeated derivatives, integration with `+ C`, canonical completion/reveal behavior, local rough-board storage and malformed-data recovery, LeetMath challenge checks, UI status and reveal rendering, and end-to-end learner flows including drawing persistence across reloads and answer resets.
 
 ## Current product boundaries
 
 - **Choose a problem** loads the built-in algebra, inequality, calculus, and complex examples, including a negative-coefficient inequality sign-flip demo with a live number line.
 - **Start your own** currently creates an algebra-only problem with an equation in `x`; it does not parse arbitrary natural-language prompts.
+- Rough-board storage and LeetMath answer drafts are local to the browser; clearing browser storage removes them. LeetMath submission records are stored by the API and scoped to the anonymous browser session identifier.
 - API credentials are backend-only, and CORS is limited to `FRONTEND_ORIGIN`.
 - The verifier favors an explicit unsupported result over silently broadening the accepted mathematics.
