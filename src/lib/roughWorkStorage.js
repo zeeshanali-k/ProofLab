@@ -1,11 +1,12 @@
-export const ROUGH_WORK_STORAGE_VERSION = 1;
+export const ROUGH_WORK_STORAGE_VERSION = 2;
 export const ROUGH_WORK_STORAGE_PREFIX = `prooflab:rough-work:v${ROUGH_WORK_STORAGE_VERSION}`;
+const LEGACY_ROUGH_WORK_STORAGE_PREFIX = 'prooflab:rough-work:v1';
 
 const EMPTY_SCENE = Object.freeze({ elements: [], appState: {} });
 const PERSISTED_APP_STATE_KEYS = ['gridSize', 'theme', 'viewBackgroundColor'];
 
-export const proofBoardKey = (problemId) => `${ROUGH_WORK_STORAGE_PREFIX}:proof:${problemId}`;
-export const leetMathBoardKey = (challengeId) => `${ROUGH_WORK_STORAGE_PREFIX}:leetmath:${challengeId}`;
+export const proofBoardKey = (userId, problemId) => `${ROUGH_WORK_STORAGE_PREFIX}:${userId}:proof:${problemId}`;
+export const leetMathBoardKey = (userId, challengeId) => `${ROUGH_WORK_STORAGE_PREFIX}:${userId}:leetmath:${challengeId}`;
 
 export const emptyRoughWorkScene = () => ({ elements: [], appState: {} });
 
@@ -83,4 +84,45 @@ export function clearRoughWorkScene(boardKey, storage) {
 
 export function hasRoughWorkContent(scene = EMPTY_SCENE) {
   return scene.elements.some((element) => !element?.isDeleted);
+}
+
+export function hasLegacyRoughWork(storage) {
+  const target = availableStorage(storage);
+  if (!target) return false;
+  try {
+    for (let index = 0; index < target.length; index += 1) {
+      if (target.key(index)?.startsWith(`${LEGACY_ROUGH_WORK_STORAGE_PREFIX}:`)) return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+export function migrateLegacyRoughWork(userId, storage) {
+  const target = availableStorage(storage);
+  if (!target || !userId) return false;
+  try {
+    const legacyKeys = [];
+    for (let index = 0; index < target.length; index += 1) {
+      const key = target.key(index);
+      if (key?.startsWith(`${LEGACY_ROUGH_WORK_STORAGE_PREFIX}:`)) legacyKeys.push(key);
+    }
+    legacyKeys.forEach((legacyKey) => {
+      const parts = legacyKey.split(':');
+      const workspace = parts[3];
+      const itemId = parts.slice(4).join(':');
+      const accountKey = `${ROUGH_WORK_STORAGE_PREFIX}:${userId}:${workspace}:${itemId}`;
+      if (target.getItem(accountKey)) return;
+      const parsed = JSON.parse(target.getItem(legacyKey));
+      if (!isValidScene(parsed?.scene)) return;
+      target.setItem(accountKey, JSON.stringify({
+        version: ROUGH_WORK_STORAGE_VERSION,
+        scene: snapshotRoughWorkScene(parsed.scene.elements, parsed.scene.appState),
+      }));
+    });
+    return legacyKeys.length > 0;
+  } catch {
+    return false;
+  }
 }

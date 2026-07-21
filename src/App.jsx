@@ -12,6 +12,8 @@ import { CheckIcon, BrokenIcon, PlusIcon } from './components/Icons';
 import RoughWorkBoardModal from './components/RoughWorkBoardModal';
 import { WorkspaceTabs } from './components/WorkspaceNavigation';
 import { proofBoardKey } from './lib/roughWorkStorage';
+import { useAuth } from './auth/AuthProvider';
+import { AuthService } from './api/AuthService';
 
 const STATUS_COPY = {
   root: 'Given',
@@ -97,6 +99,7 @@ function PanelResizeHandle({ side, value, maximum, onPointerDown, onKeyDown }) {
 }
 
 export default function App() {
+  const { user } = useAuth();
   const [data, setData] = useState({ problem: null, steps: [], edges: [] });
   const [selectedEdgeId, setSelectedEdgeId] = useState('e1');
   const [composer, setComposer] = useState(null);
@@ -121,7 +124,10 @@ export default function App() {
   const workspaceRef = useRef(null);
 
   useEffect(() => {
-    ProofService.fetchInitialState().then(setData).catch((error) => setLoadError(error instanceof Error ? error.message : 'ProofLab could not load a problem.'));
+    ProofService.fetchInitialState().then((next) => {
+      setData(next);
+      AuthService.introduceActivity({ activityKind: 'guided', activityId: next.problem.id }).catch(() => {});
+    }).catch((error) => setLoadError(error instanceof Error ? error.message : 'ProofLab could not load a problem.'));
   }, []);
 
   useEffect(() => {
@@ -258,6 +264,7 @@ export default function App() {
     setLoadError('');
     try {
       const next = custom ? await ProofService.createCustomProblem(definition) : await ProofService.loadProblem(definition);
+      if (!custom) AuthService.introduceActivity({ activityKind: 'guided', activityId: next.problem.id }).catch(() => {});
       setBoardState(next);
       setAnnouncement(`${next.problem.title} is ready to explore.`);
       setIsProblemPickerOpen(false);
@@ -279,12 +286,12 @@ export default function App() {
   const applyVerification = async ({ previous, next, stepId, edgeId, addStep }) => {
     setIsChecking(true);
     try {
-      const result = await ProofService.verifyStep(previous, next, data.problem.mode);
+      const result = await ProofService.verifyStep(previous, next, data.problem.mode, data.problem.isCustom ? null : data.problem.id);
       const edge = { ...result, id: edgeId, from: previous.id, to: next.id };
       const nextSteps = addStep
         ? [...data.steps, { ...next, status: result.status, timestamp: 'Just checked' }]
         : data.steps.map((step) => (step.id === stepId ? { ...step, status: result.status, math: next.math } : step));
-      const completionStatus = await ProofService.assessCompletion(data.problem, nextSteps);
+      const completionStatus = await ProofService.assessCompletion(data.problem, nextSteps, true);
       setData((current) => ({
         ...current,
         steps: nextSteps,
@@ -329,7 +336,7 @@ export default function App() {
       for (let index = startIndex; index < workingSteps.length; index += 1) {
         const previous = workingSteps[index - 1];
         const next = workingSteps[index];
-        const result = await ProofService.verifyStep(previous, next, before.problem.mode);
+        const result = await ProofService.verifyStep(previous, next, before.problem.mode, before.problem.isCustom ? null : before.problem.id);
         const edgeIndex = workingEdges.findIndex((edge) => edge.to === next.id);
         const existingEdge = workingEdges[edgeIndex];
         const checkedEdge = { ...result, id: existingEdge?.id ?? nextClientId('e'), from: previous.id, to: next.id };
@@ -347,7 +354,7 @@ export default function App() {
           break;
         }
       }
-      const completionStatus = await ProofService.assessCompletion(before.problem, workingSteps);
+      const completionStatus = await ProofService.assessCompletion(before.problem, workingSteps, true);
       setData({ ...before, steps: workingSteps, edges: workingEdges, completionStatus });
       setSelectedEdgeId(selectedId);
       setInspectorMode('evidence');
@@ -618,7 +625,7 @@ export default function App() {
         </aside>
       </main>
       {isProblemPickerOpen && <ProblemPicker problems={ProofService.getProblemLibrary()} isLoading={isLoadingProblem} onClose={() => setIsProblemPickerOpen(false)} onSelect={(problem) => loadProblem(problem)} onCustom={(problem) => loadProblem(problem, true)} />}
-      <RoughWorkBoardModal open={isRoughWorkOpen} boardKey={proofBoardKey(data.problem.id)} title={data.problem.title} onClose={closeRoughWork} sharedTransitionName="rough-work-launcher" />
+      <RoughWorkBoardModal open={isRoughWorkOpen} boardKey={proofBoardKey(user.id, data.problem.id)} title={data.problem.title} onClose={closeRoughWork} sharedTransitionName="rough-work-launcher" />
       <div className="sr-only" aria-live="polite">{announcement}</div>
     </div>
   );

@@ -455,7 +455,7 @@ function GuideVisual({ kind }) {
 
 function getReturnDestination(value) {
   if (!value || !value.startsWith('/') || value.startsWith('//') || value.startsWith('/guide')) {
-    return { href: '/', label: 'Back to Math Lab' };
+    return { href: '/dashboard', label: 'Back to dashboard' };
   }
 
   const [lab] = value.split('/').filter(Boolean);
@@ -473,7 +473,7 @@ function getGuideTab(value) {
   return GUIDE_TABS.some((tab) => tab.id === lab) ? lab : 'math';
 }
 
-export default function GuideScreen({ initialTab }) {
+export default function GuideScreen({ initialTab = undefined }) {
   const titleRef = useRef(null);
   const searchParams = useSearchParams();
   const sourcePath = searchParams?.get('from');

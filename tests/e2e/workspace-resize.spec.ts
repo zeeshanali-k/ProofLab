@@ -1,9 +1,12 @@
 import { expect, test } from '@playwright/test';
+import { registerAccount } from './auth-helpers';
 
 test.describe('Math Learn workspace resizing', () => {
+  test.beforeEach(async ({ page }) => { await registerAccount(page); });
+
   test('resizes both side panels with a pointer and the keyboard', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/');
+    await page.goto('/math');
 
     const problemRail = page.locator('#problem-rail');
     const inspector = page.locator('#transition-inspector');

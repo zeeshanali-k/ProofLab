@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from uuid import uuid4
 
 from prooflab_api.config import load_backend_environment
 from prooflab_api.main import app
@@ -11,6 +12,15 @@ from prooflab_api.teaching import (
 
 
 client = TestClient(app)
+assert client.post(
+    "/auth/register",
+    json={
+        "email": f"verifier-{uuid4()}@example.test",
+        "password": "prooflab-password",
+        "goal": "understand-concepts",
+        "confidence": "new",
+    },
+).status_code == 201
 
 
 def step(identifier: str, latex: str, kind: str) -> dict[str, str]:

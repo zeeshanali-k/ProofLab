@@ -1,8 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { registerAccount } from './auth-helpers';
 
 test.describe('canonical calculus and complex tasks', () => {
+  test.beforeEach(async ({ page }) => { await registerAccount(page); });
+
   test('shows the inequality sign-flip number line, then completes after correction', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/math');
     await page.getByRole('button', { name: 'Choose a problem' }).click();
     await page.getByRole('button', { name: /Flip the inequality sign/ }).click();
 
@@ -28,7 +31,7 @@ test.describe('canonical calculus and complex tasks', () => {
   });
 
   test('coaches a repeated derivative notation mistake without revealing the answer', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/math');
     await page.getByRole('button', { name: 'Choose a problem' }).click();
     await page.getByRole('button', { name: /Differentiate a trig chain/ }).click();
     await page.getByRole('button', { name: 'Add next derivative' }).click();
@@ -51,7 +54,7 @@ test.describe('canonical calculus and complex tasks', () => {
   });
 
   test('typesets every formula in a sampled derivative comparison', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/math');
     await page.getByRole('button', { name: 'Choose a problem' }).click();
     await page.getByRole('button', { name: /Differentiate a trig chain/ }).click();
     await page.getByRole('button', { name: 'Delete STEP 2' }).click();
@@ -73,7 +76,7 @@ test.describe('canonical calculus and complex tasks', () => {
   });
 
   test('shows completion for a verified derivative task', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/math');
     await page.getByRole('button', { name: 'Choose a problem' }).click();
     await page.getByRole('button', { name: /Differentiate a polynomial/ }).click();
 
@@ -82,7 +85,7 @@ test.describe('canonical calculus and complex tasks', () => {
   });
 
   test('marks an incomplete complex solution set as needing correction', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/math');
     await page.getByRole('button', { name: 'Choose a problem' }).click();
     await page.getByRole('button', { name: /Find both imaginary roots/ }).click();
 
@@ -91,7 +94,7 @@ test.describe('canonical calculus and complex tasks', () => {
   });
 
   test('reveals a canonical final form without changing the reasoning path', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/math');
     await page.getByRole('button', { name: 'Choose a problem' }).click();
     await page.getByRole('button', { name: /Differentiate a polynomial/ }).click();
     await page.getByRole('button', { name: 'Reveal final form' }).click();
@@ -101,7 +104,7 @@ test.describe('canonical calculus and complex tasks', () => {
   });
 
   test('keeps indefinite integration open ended with no reveal control', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/math');
     await page.getByRole('button', { name: 'Choose a problem' }).click();
     await page.getByRole('button', { name: /Integrate polynomial and cosine/ }).click();
 

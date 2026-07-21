@@ -2,10 +2,139 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
+import re
 from typing import Annotated, Literal, Union
-from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+class LearningGoal(str, Enum):
+    UNDERSTAND_CONCEPTS = "understand-concepts"
+    PRACTICE_PROBLEMS = "practice-problems"
+    PREPARE_FOR_WORK = "prepare-for-work"
+
+
+class ConfidenceLevel(str, Enum):
+    NEW = "new"
+    DEVELOPING = "developing"
+    CONFIDENT = "confident"
+
+
+class LearnerTrack(str, Enum):
+    EXPLORER = "explorer"
+    LEARNER = "learner"
+    PROFESSIONAL = "professional"
+
+
+class CredentialRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=10, max_length=128)
+
+    @field_validator("email")
+    @classmethod
+    def valid_email(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", normalized):
+            raise ValueError("Enter a valid email address.")
+        return normalized
+
+
+class RegisterRequest(CredentialRequest):
+    model_config = ConfigDict(populate_by_name=True)
+
+    goal: LearningGoal
+    confidence: ConfidenceLevel
+    active_track: LearnerTrack | None = Field(default=None, alias="activeTrack")
+
+
+class LoginRequest(CredentialRequest):
+    pass
+
+
+class ProfileUpdateRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    goal: LearningGoal | None = None
+    confidence: ConfidenceLevel | None = None
+    active_track: LearnerTrack | None = Field(default=None, alias="activeTrack")
+    gamification_enabled: bool | None = Field(default=None, alias="gamificationEnabled")
+
+    @model_validator(mode="after")
+    def has_an_update(self) -> "ProfileUpdateRequest":
+        if not self.model_fields_set:
+            raise ValueError("Provide at least one profile change.")
+        return self
+
+
+class ProfilePayload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    goal: LearningGoal
+    confidence: ConfidenceLevel
+    active_track: LearnerTrack = Field(alias="activeTrack")
+    gamification_enabled: bool = Field(alias="gamificationEnabled")
+    onboarding_completed: bool = Field(alias="onboardingCompleted")
+
+
+class SafeUserPayload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    email: str
+    created_at: datetime = Field(alias="createdAt")
+
+
+class CurrentUserPayload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    user: SafeUserPayload
+    profile: ProfilePayload
+
+
+class ActivityAttemptPayload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    activity_kind: str = Field(alias="activityKind")
+    activity_id: str = Field(alias="activityId")
+    concept_id: str | None = Field(alias="conceptId")
+    outcome: str
+    attempt_ordinal: int = Field(alias="attemptOrdinal")
+    created_at: datetime = Field(alias="createdAt")
+
+
+class MasteryPayload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    concept_id: str = Field(alias="conceptId")
+    status: str
+    distinct_successes: int = Field(alias="distinctSuccesses")
+    first_try_successes: int = Field(alias="firstTrySuccesses")
+
+
+class AchievementPayload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    code: str
+    earned_at: datetime = Field(alias="earnedAt")
+
+
+class DashboardResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    total_xp: int = Field(alias="totalXp")
+    streak: int
+    mastery: list[MasteryPayload]
+    recent_activities: list[ActivityAttemptPayload] = Field(alias="recentActivities")
+    achievements: list[AchievementPayload]
+    recommendation: LearnerTrack
+
+
+class ActivityIntroductionRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    activity_kind: Literal["guided", "leetmath"] = Field(alias="activityKind")
+    activity_id: str = Field(alias="activityId", min_length=1, max_length=128)
 
 
 class ProblemMode(str, Enum):
@@ -83,9 +212,7 @@ class ChallengePreviewRequest(BaseModel):
 
 
 class ChallengeSubmitRequest(ChallengePreviewRequest):
-    model_config = ConfigDict(populate_by_name=True)
-
-    anonymous_session_id: UUID = Field(alias="anonymousSessionId")
+    pass
 
 
 class ChallengeVisualization(BaseModel):
@@ -109,6 +236,9 @@ class ChallengeSubmissionResponse(BaseModel):
     visualization: ChallengeVisualization
     submission_id: int | None = Field(default=None, alias="submissionId")
     attempt_count: int = Field(default=0, alias="attemptCount")
+    earned_xp: int = Field(default=0, alias="earnedXp")
+    total_xp: int = Field(default=0, alias="totalXp")
+    mastery_status: str | None = Field(default=None, alias="masteryStatus")
 
 
 class ChallengeSubmissionRecord(BaseModel):
@@ -119,6 +249,14 @@ class ChallengeSubmissionRecord(BaseModel):
     submitted_latex: str = Field(alias="submittedLatex")
     status: ChallengeSubmissionStatus
     created_at: datetime = Field(alias="createdAt")
+
+
+class ChallengeCatalogProgress(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    challenge_id: str = Field(alias="challengeId")
+    status: Literal["solved", "attempting"]
+    attempt_count: int = Field(alias="attemptCount")
 
 
 class VerificationStatus(str, Enum):
@@ -246,6 +384,7 @@ class VerifyRequest(BaseModel):
     mode: ProblemMode
     previous_step: ProofStep = Field(alias="previousStep")
     next_step: ProofStep = Field(alias="nextStep")
+    activity_id: str | None = Field(default=None, alias="activityId", min_length=1, max_length=128)
 
 
 class CanonicalGoalKind(str, Enum):
@@ -293,6 +432,7 @@ class AssessCompletionRequest(BaseModel):
     terminal_learner_step: ProofStep = Field(alias="terminalLearnerStep")
     learner_steps: list[ProofStep] = Field(default_factory=list, alias="learnerSteps", max_length=64)
     canonical_goal: CanonicalGoal | None = Field(default=None, alias="canonicalGoal")
+    activity_id: str | None = Field(default=None, alias="activityId", min_length=1, max_length=128)
 
 
 class RevealFinalFormRequest(BaseModel):

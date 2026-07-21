@@ -5,7 +5,7 @@ import Link from 'next/link';
 export function WorkspaceTabs({ current }) {
   return (
     <nav className="workspace-tabs" aria-label="Workspace navigation">
-      <Link href="/" className={`workspace-tab ${current === 'learn' ? 'is-active' : ''}`} aria-current={current === 'learn' ? 'page' : undefined}>
+      <Link href="/math" className={`workspace-tab ${current === 'learn' ? 'is-active' : ''}`} aria-current={current === 'learn' ? 'page' : undefined}>
         Learn
       </Link>
       <Link href="/leetmath" className={`workspace-tab ${current === 'leetmath' ? 'is-active' : ''}`} aria-current={current === 'leetmath' ? 'page' : undefined}>

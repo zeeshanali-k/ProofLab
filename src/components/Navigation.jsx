@@ -1,18 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useAuth } from '../auth/AuthProvider';
 
 export function Navigation() {
 	const pathname = usePathname();
+	const router = useRouter();
+	const { user, profile, updateProfile, logout } = useAuth();
+	const [profileOpen, setProfileOpen] = useState(false);
 	const isActive = (path) => {
-		if (path === '/') return pathname === '/' || pathname.startsWith('/leetmath');
+		if (path === '/math') return pathname.startsWith('/math') || pathname.startsWith('/leetmath');
 		return pathname.startsWith(path);
 	};
 	
 	const navItems = [
 		{
-			path: '/',
+			path: '/math',
 			icon: '🔢',
 			label: 'Math Lab',
 			description: 'Proof board'
@@ -50,11 +55,16 @@ export function Navigation() {
 	const guideHref = pathname === '/guide'
 		? '/guide'
 		: `/guide?from=${encodeURIComponent(pathname)}`;
+
+	const signOut = async () => {
+		await logout();
+		router.replace('/');
+	};
 	
 	return (
 		<nav className="main-navbar" role="navigation" aria-label="Main navigation">
 			<div className="nav-shell">
-				<Link href="/" className="nav-brand" aria-label="ProofLab home">
+				<Link href="/dashboard" className="nav-brand" aria-label="ProofLab dashboard">
 					<span className="nav-brand-mark" aria-hidden="true">✦</span>
 					<span>
 						<strong>ProofLab</strong>
@@ -106,6 +116,18 @@ export function Navigation() {
 						<span className="theme-dark-label">Night</span>
 					</span>
 				</button>
+
+				<div className="nav-profile">
+					<button type="button" className="nav-profile-trigger" onClick={() => setProfileOpen((open) => !open)} aria-expanded={profileOpen} aria-label="Open profile menu">
+						<span aria-hidden="true">{user?.email?.slice(0, 1).toUpperCase()}</span><small>{profile?.activeTrack}</small>
+					</button>
+					{profileOpen && <div className="nav-profile-menu">
+						<strong>{user?.email}</strong><span>Track: {profile?.activeTrack}</span>
+						<label><input type="checkbox" checked={Boolean(profile?.gamificationEnabled)} onChange={(event) => updateProfile({ gamificationEnabled: event.target.checked })} /> Show XP</label>
+						<Link href="/dashboard" onClick={() => setProfileOpen(false)}>Dashboard</Link>
+						<button type="button" onClick={signOut}>Sign out</button>
+					</div>}
+				</div>
 			</div>
 		</nav>
 	);

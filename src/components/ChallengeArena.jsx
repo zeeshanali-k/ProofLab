@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { getSubmissionSessionId, LeetMathService } from '../api/LeetMathService';
+import { LeetMathService } from '../api/LeetMathService';
 import EquationField from './EquationField';
 import MathDisplay from './MathDisplay';
 import MathSimulationPanel from './MathSimulationPanel';
@@ -11,25 +11,26 @@ import RoughWorkBoardModal from './RoughWorkBoardModal';
 import TeachingContent from './TeachingContent';
 import { WorkspaceTabs } from './WorkspaceNavigation';
 import { leetMathBoardKey } from '../lib/roughWorkStorage';
+import { useAuth } from '../auth/AuthProvider';
 
-const storageKey = (challengeId) => `prooflab:leetmath:${challengeId}`;
+const storageKey = (userId, challengeId) => `prooflab:leetmath:v2:${userId}:${challengeId}`;
 
-function readDraft(challengeId) {
+function readDraft(userId, challengeId) {
   try {
-    return JSON.parse(window.sessionStorage.getItem(storageKey(challengeId)) || '{}');
+    return JSON.parse(window.localStorage.getItem(storageKey(userId, challengeId)) || '{}');
   } catch {
     return {};
   }
 }
 
-function saveDraft(challengeId, state) {
-  window.sessionStorage.setItem(storageKey(challengeId), JSON.stringify(state));
+function saveDraft(userId, challengeId, state) {
+  window.localStorage.setItem(storageKey(userId, challengeId), JSON.stringify(state));
 }
 
 function ArenaHeader({ challenge }) {
   return (
     <header className="arena-header">
-      <Link href="/" className="wordmark" aria-label="Return to ProofLab learning workspace"><span aria-hidden="true">∞</span>ProofLab</Link>
+      <Link href="/dashboard" className="wordmark" aria-label="Return to ProofLab dashboard"><span aria-hidden="true">∞</span>ProofLab</Link>
       <WorkspaceTabs current="leetmath" />
       <div className="arena-header-actions"><span className="arena-status">#{String(challenge.number).padStart(3, '0')} · {challenge.difficulty}</span></div>
     </header>
@@ -37,12 +38,12 @@ function ArenaHeader({ challenge }) {
 }
 
 export default function ChallengeArena({ challengeId }) {
+  const { user } = useAuth();
   const [challenge, setChallenge] = useState(null);
   const [answer, setAnswer] = useState('');
   const [scratch, setScratch] = useState([]);
   const [preview, setPreview] = useState(null);
   const [result, setResult] = useState(null);
-  const [anonymousSessionId] = useState(() => getSubmissionSessionId());
   const [submissions, setSubmissions] = useState([]);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,7 +54,7 @@ export default function ChallengeArena({ challengeId }) {
     let active = true;
     LeetMathService.fetchChallenge(challengeId).then((detail) => {
       if (!active) return;
-      const saved = readDraft(challengeId);
+      const saved = readDraft(user.id, challengeId);
       setChallenge(detail);
       setAnswer(saved.answer ?? detail.starterDraft);
       setScratch(Array.isArray(saved.scratch) ? saved.scratch : []);
@@ -61,21 +62,21 @@ export default function ChallengeArena({ challengeId }) {
       setPreview(null);
     }).catch((reason) => active && setError(reason instanceof Error ? reason.message : 'This challenge could not load.'));
     return () => { active = false; };
-  }, [challengeId]);
+  }, [challengeId, user.id]);
 
   useEffect(() => {
     let active = true;
-    if (!challenge || !anonymousSessionId) return () => { active = false; };
-    LeetMathService.fetchSubmissions(challenge.id, anonymousSessionId)
+    if (!challenge) return () => { active = false; };
+    LeetMathService.fetchSubmissions(challenge.id)
       .then((records) => active && setSubmissions(records))
       .catch(() => active && setSubmissions([]));
     return () => { active = false; };
-  }, [anonymousSessionId, challenge]);
+  }, [challenge]);
 
   useEffect(() => {
     if (!challenge) return;
-    saveDraft(challengeId, { answer, scratch, result });
-  }, [answer, challenge, challengeId, result, scratch]);
+    saveDraft(user.id, challengeId, { answer, scratch, result });
+  }, [answer, challenge, challengeId, result, scratch, user.id]);
 
   useEffect(() => {
     if (!challenge || challenge.visualizerType === 'none' || !answer.trim()) return undefined;
@@ -104,7 +105,7 @@ export default function ChallengeArena({ challengeId }) {
 
   const reset = () => {
     if (!challenge) return;
-    window.sessionStorage.removeItem(storageKey(challengeId));
+    window.localStorage.removeItem(storageKey(user.id, challengeId));
     setAnswer(challenge.starterDraft);
     setScratch([]);
     setPreview(null);
@@ -131,9 +132,9 @@ export default function ChallengeArena({ challengeId }) {
     setIsSubmitting(true);
     setError('');
     try {
-      const nextResult = await LeetMathService.submit(challenge.id, answer, anonymousSessionId || getSubmissionSessionId());
+      const nextResult = await LeetMathService.submit(challenge.id, answer);
       setResult(nextResult);
-      setSubmissions(await LeetMathService.fetchSubmissions(challenge.id, anonymousSessionId || getSubmissionSessionId()));
+      setSubmissions(await LeetMathService.fetchSubmissions(challenge.id));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'LeetMath could not submit this answer.');
     } finally {
@@ -159,7 +160,7 @@ export default function ChallengeArena({ challengeId }) {
           <section><h2>Constraints</h2><ul>{challenge.constraints.map((constraint) => <li key={constraint}><TeachingContent content={constraint} inline /></li>)}</ul></section>
           <section><h2>Answer shape</h2><p>{challenge.answerKind.replaceAll('-', ' ')}</p></section>
           <section><h2>Format example</h2><MathDisplay math={challenge.publicExampleLatex} className="example-math" /><p><TeachingContent content={challenge.publicExampleText} inline /></p></section>
-          <section className="submission-history"><h2>Submission history</h2>{submissions.length === 0 ? <p>No submissions in this browser yet.</p> : <ol>{submissions.map((submission) => <li key={submission.id}><MathDisplay math={submission.submittedLatex} className="history-answer" /><span className={`history-status ${submission.status}`}>{submission.status.replaceAll('-', ' ')}</span></li>)}</ol>}</section>
+          <section className="submission-history"><h2>Submission history</h2>{submissions.length === 0 ? <p>No submissions in this account yet.</p> : <ol>{submissions.map((submission) => <li key={submission.id}><MathDisplay math={submission.submittedLatex} className="history-answer" /><span className={`history-status ${submission.status}`}>{submission.status.replaceAll('-', ' ')}</span></li>)}</ol>}</section>
           <p className="contract-note">Your answer is checked symbolically, not against memorized text.</p>
         </aside>
         <form className="challenge-workspace" onSubmit={submit}>
@@ -174,12 +175,12 @@ export default function ChallengeArena({ challengeId }) {
             {scratch.map((value, index) => <div className="scratch-row" key={index}><EquationField value={value} onChange={(nextValue) => updateScratch(index, nextValue)} ariaLabel={`Scratch step ${index + 1}`} /><button type="button" className="icon-btn" onClick={() => removeScratch(index)} aria-label={`Remove scratch step ${index + 1}`}>×</button></div>)}
           </section>
           {error && <p className="arena-error">{error}</p>}
-          {result && <section className={`submission-result ${result.status}`} aria-live="polite"><strong>{result.status === 'accepted' ? 'Mathematical contract satisfied' : result.status === 'incorrect' ? 'Not accepted yet' : result.status === 'format-error' ? 'Format error' : 'Unsupported'}</strong><p><TeachingContent content={result.summary} inline /></p>{result.attemptCount > 0 && <small>Attempt {result.attemptCount} recorded in this browser.</small>}{result.status === 'accepted' && result.rule && <small>{result.rule}</small>}</section>}
+          {result && <section className={`submission-result ${result.status}`} aria-live="polite"><strong>{result.status === 'accepted' ? 'Mathematical contract satisfied' : result.status === 'incorrect' ? 'Not accepted yet' : result.status === 'format-error' ? 'Format error' : 'Unsupported'}</strong><p><TeachingContent content={result.summary} inline /></p>{result.attemptCount > 0 && <small>Attempt {result.attemptCount} recorded in your account.</small>}{result.status === 'accepted' && result.earnedXp > 0 && <small>+{result.earnedXp} XP earned</small>}{result.status === 'accepted' && result.rule && <small>{result.rule}</small>}</section>}
           <div className="challenge-actions"><button type="button" className="btn-secondary" onClick={reset} disabled={isSubmitting}>Reset</button><button className="btn-primary" disabled={isSubmitting || !answer.trim()}>{isSubmitting ? 'Submitting…' : 'Submit answer'}</button></div>
         </form>
         <aside className="challenge-simulator"><MathSimulationPanel visualization={visualization} /></aside>
       </main>
-      <RoughWorkBoardModal open={isRoughWorkOpen} boardKey={leetMathBoardKey(challenge.id)} title={challenge.title} onClose={closeRoughWork} sharedTransitionName="rough-work-launcher" />
+      <RoughWorkBoardModal open={isRoughWorkOpen} boardKey={leetMathBoardKey(user.id, challenge.id)} title={challenge.title} onClose={closeRoughWork} sharedTransitionName="rough-work-launcher" />
     </div>
   );
 }

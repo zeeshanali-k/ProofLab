@@ -10,7 +10,7 @@ const FILTERS = ['All', 'Algebra', 'Inequalities', 'Calculus', 'Complex'];
 function ArenaHeader() {
   return (
     <header className="arena-header">
-      <Link href="/" className="wordmark" aria-label="Return to ProofLab learning workspace"><span aria-hidden="true">∞</span>ProofLab</Link>
+      <Link href="/dashboard" className="wordmark" aria-label="Return to ProofLab dashboard"><span aria-hidden="true">∞</span>ProofLab</Link>
       <WorkspaceTabs current="leetmath" />
       <div className="arena-header-actions"><span className="arena-status">30 deterministic challenges</span></div>
     </header>
@@ -19,11 +19,21 @@ function ArenaHeader() {
 
 export default function LeetMathCatalog() {
   const [catalog, setCatalog] = useState([]);
+  const [progressByChallenge, setProgressByChallenge] = useState({});
   const [filter, setFilter] = useState('All');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    LeetMathService.fetchCatalog().then(setCatalog).catch((reason) => setError(reason instanceof Error ? reason.message : 'LeetMath could not load the challenge catalog.'));
+    let active = true;
+    LeetMathService.fetchCatalog().then((items) => {
+      if (active) setCatalog(items);
+    }).catch((reason) => {
+      if (active) setError(reason instanceof Error ? reason.message : 'LeetMath could not load the challenge catalog.');
+    });
+    LeetMathService.fetchProgress().then((items) => {
+      if (active) setProgressByChallenge(Object.fromEntries(items.map((item) => [item.challengeId, item])));
+    }).catch(() => {});
+    return () => { active = false; };
   }, []);
 
   const visibleChallenges = useMemo(() => catalog.filter((challenge) => filter === 'All' || challenge.topic === filter), [catalog, filter]);
@@ -42,12 +52,19 @@ export default function LeetMathCatalog() {
         {error && <p className="arena-error">{error}</p>}
         {!error && !catalog.length && <p className="catalog-loading">Loading challenges…</p>}
         <section className="challenge-catalog" aria-label="LeetMath challenges">
-          {visibleChallenges.map((challenge) => <Link href={`/leetmath/${challenge.id}`} className="challenge-catalog-card" key={challenge.id}>
-            <div className="challenge-card-top"><span>#{String(challenge.number).padStart(3, '0')}</span><span className={`difficulty ${challenge.difficulty.toLowerCase()}`}>{challenge.difficulty}</span></div>
-            <h2>{challenge.title}</h2>
-            <p>{challenge.topic} · {challenge.answerKind.replaceAll('-', ' ')}</p>
-            <small>{challenge.simulationPreview}</small>
-          </Link>)}
+          {visibleChallenges.map((challenge) => {
+            const progress = progressByChallenge[challenge.id];
+            return <Link href={`/leetmath/${challenge.id}`} className="challenge-catalog-card" key={challenge.id}>
+              <div className="challenge-card-top">
+                <span>#{String(challenge.number).padStart(3, '0')}</span>
+                <span className={`difficulty ${challenge.difficulty.toLowerCase()}`}>{challenge.difficulty}</span>
+                {progress && <span className={`challenge-progress ${progress.status}`}>{progress.status === 'solved' ? 'Solved' : 'Attempting'}</span>}
+              </div>
+              <h2>{challenge.title}</h2>
+              <p>{challenge.topic} · {challenge.answerKind.replaceAll('-', ' ')}</p>
+              <small>{progress ? `${progress.attemptCount} ${progress.attemptCount === 1 ? 'attempt' : 'attempts'} · ${challenge.simulationPreview}` : challenge.simulationPreview}</small>
+            </Link>;
+          })}
         </section>
       </main>
     </div>

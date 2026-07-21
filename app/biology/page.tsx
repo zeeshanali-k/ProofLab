@@ -29,7 +29,7 @@ export default function BiologyDashboard() {
 			</div>
 
 			<div className="dashboard-footer">
-				<Link href="/" className="back-to-prooflab">← Back to ProofLab</Link>
+				<Link href="/dashboard" className="back-to-prooflab">← Back to ProofLab</Link>
 			</div>
 		</main>
 	);
