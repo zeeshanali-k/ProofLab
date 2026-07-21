@@ -1,11 +1,16 @@
 # ProofLab
 
-ProofLab is an interactive math-reasoning debugger for algebra, linear inequalities, introductory calculus, and complex numbers. Instead of only judging a final answer, it verifies each learner transition, identifies the first incorrect step, and presents concrete, bounded feedback.
+ProofLab is an interactive learning platform with focused Math, Chemistry, Physics, and Biology labs. Its Math Lab is a reasoning debugger for algebra, linear inequalities, introductory calculus, and complex numbers; it verifies each learner transition, identifies the first incorrect step, and presents concrete, bounded feedback.
 
 The product deliberately separates deterministic mathematical verification from optional AI teaching. SymPy-backed checks decide whether a transition is valid; a teaching provider can explain the already-verified result, offer a hint, or suggest a repair that ProofLab verifies again before applying.
 
 ## What it does
 
+- Offers four focused learning labs from one shared navigation bar: Math, Chemistry, Physics, and Biology.
+- Provides a platform Guide that explains each lab and returns learners to the module or nested tool they opened it from.
+- Includes Chemistry tools for equation balancing, molar mass, 3D molecules, stoichiometry, solutions, thermochemistry, equilibrium, electrochemistry, and molecular geometry.
+- Includes Physics formula exploration and simulations for kinematics, projectile motion, energy, vectors, simple harmonic motion, and circuits.
+- Includes Biology explorations for anatomy, body regions, organ systems, chromosomes, inheritance, evolution, and ecology.
 - Builds an editable, step-by-step reasoning path with MathLive equation inputs and KaTeX rendering.
 - Verifies algebra transformations, one-variable linear inequalities, polynomial/trigonometric derivatives, restricted indefinite integrals, complex simplification, and simple complex solution sets.
 - Rechecks each later transition after a learner edits an earlier step, stopping at the first transition that cannot be verified.
@@ -18,11 +23,22 @@ The product deliberately separates deterministic mathematical verification from 
 - Persists each rough board locally by proof problem or LeetMath challenge, so drawings survive closing the modal, reloads, and answer-draft resets.
 - Adds **LeetMath**, a 30-challenge final-answer arena with topic filters, deterministic previews, visual replays for supported answers, and anonymous-session submission history.
 
+## Learning labs
+
+| Lab | Route | What you can explore |
+| --- | --- | --- |
+| **Math Lab** | `/` | Checked algebra, inequality, calculus, and complex-number reasoning paths, plus LeetMath final-answer challenges. |
+| **Chemistry Lab** | `/chemistry` | Equation balancing, molar mass, 3D molecular viewing, stoichiometry, solution chemistry, thermochemistry, equilibrium, electrochemistry, and molecular geometry. |
+| **Physics Lab** | `/physics` | Formula visualizations and simulations for motion, energy, vectors, simple harmonic motion, and circuits. |
+| **Biology Lab** | `/biology` | Anatomy and body-region views, organ systems, chromosomes, inheritance, phylogeny, and ecology cycles. |
+
+The shared navigation provides the current lab, theme control, and **Guide** entry point on every screen. Nested lab tools include a Back link to their parent dashboard or parent section.
+
 ## Tech stack
 
 | Area | Technology |
 | --- | --- |
-| Web application | Next.js 16, React 19, JavaScript/JSX |
+| Web application | Next.js 16, React 19, JavaScript/JSX, and TypeScript/TSX |
 | Math input, rendering, and rough work | MathLive, KaTeX, and Excalidraw |
 | Verification API | Python 3.11+, FastAPI, Pydantic, Uvicorn |
 | Symbolic mathematics | SymPy with a restricted, custom LaTeX-like parser |
@@ -37,23 +53,27 @@ The product deliberately separates deterministic mathematical verification from 
 The Next.js application is frontend-only. It calls one FastAPI service directly from the browser.
 
 ```text
-React + MathLive proof board / LeetMath arena
+Next.js learning labs
         │
-        ├── POST /verify ────────────────┐
-        ├── POST /assess-completion ─────┼── FastAPI ── restricted parser ── SymPy
-        ├── POST /reveal-final-form ─────┘
-        ├── GET/POST /challenges/* ────── challenge catalog, preview, and submission history
-        │
-        └── POST /explain ── Ollama | OpenAI-compatible API | local fallback
+        ├── Math Lab + LeetMath ─────────┐
+        │   ├── POST /verify ────────────┤
+        │   ├── POST /assess-completion ─┼── FastAPI ── restricted parser ── SymPy
+        │   ├── POST /reveal-final-form ─┤
+        │   └── GET/POST /challenges/* ──┘
+        ├── Chemistry Lab ─────────────── browser-side calculators and visualizers
+        ├── Physics Lab ───────────────── browser-side simulations and charts
+        └── Biology Lab ───────────────── browser-side interactive explorers
 ```
+
+Math Lab also uses `POST /explain` with Ollama, an OpenAI-compatible API, or the local fallback for optional teaching content.
 
 The verifier never evaluates arbitrary learner input. The parser only accepts the published grammar for each task, then constructs safe SymPy expressions. Provider credentials and symbolic-engine access stay on the backend; the browser receives only verification results and teaching content.
 
 ## Repository layout
 
 ```text
-app/                         Next.js entry points, including /leetmath and /leetmath/[challengeId]
-src/                         React workspaces, Excalidraw rough board, math components, API clients, styling
+app/                         Next.js routes for Math, Chemistry, Physics, Biology, Guide, and LeetMath
+src/                         React workspaces, science visualizers, Excalidraw rough board, math components, API clients, styling
 backend/prooflab_api/        FastAPI routes, contracts, parser, verifier, teaching providers
 backend/tests/               Pytest API and verifier coverage
 tests/unit/                  Vitest component and client coverage
@@ -109,9 +129,9 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Workspaces and rough work
+## Labs, workspaces, and rough work
 
-Use the workspace tabs to switch between the guided **ProofLab** reasoning board and the final-answer **LeetMath** challenge arena. LeetMath currently contains 30 deterministic challenges across Algebra, Inequalities, Calculus, and Complex numbers. Some answer types display a number-line or complex-plane replay as the answer is drafted or submitted.
+Use the shared navigation to switch between **Math**, **Chemistry**, **Physics**, and **Biology**. The **Guide** button in that navigation explains the available tools and keeps a return link to the screen that opened it. In Math Lab, use the workspace tabs to switch between the guided **ProofLab** reasoning board and the final-answer **LeetMath** challenge arena. LeetMath currently contains 30 deterministic challenges across Algebra, Inequalities, Calculus, and Complex numbers. Some answer types display a number-line or complex-plane replay as the answer is drafted or submitted.
 
 Both workspaces include a **Rough board** directly above the active work area. It opens a near-full-screen Excalidraw modal, so the URL, solution, draft answer, and visualizer state stay in place. The board supports Excalidraw's core selection, freehand, shapes, arrows, text, eraser, undo, and redo tools.
 
@@ -243,6 +263,7 @@ The test suite covers restricted parsing and verification, trigonometric and rep
 
 - **Choose a problem** loads the built-in algebra, inequality, calculus, and complex examples, including a negative-coefficient inequality sign-flip demo with a live number line.
 - **Start your own** currently creates an algebra-only problem with an equation in `x`; it does not parse arbitrary natural-language prompts.
+- Chemistry, Physics, and Biology experiences are interactive visualizers and calculators; they are not connected to the Math verifier or teaching-provider API.
 - Rough-board storage and LeetMath answer drafts are local to the browser; clearing browser storage removes them. LeetMath submission records are stored by the API and scoped to the anonymous browser session identifier.
 - API credentials are backend-only, and CORS is limited to `FRONTEND_ORIGIN`.
 - The verifier favors an explicit unsupported result over silently broadening the accepted mathematics.

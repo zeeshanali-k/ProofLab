@@ -95,8 +95,8 @@ describe('problem library', () => {
     expect(await ProofService.assessCompletion(problem, steps)).toBe('complete');
     expect(await ProofService.revealFinalForm(problem, steps[0])).toEqual({ canonicalLatex: "f'(x) = 3x^2 + 2" });
     expect(fetchMock.mock.calls.map((call) => call[0])).toEqual([
-      'http://127.0.0.1:8000/assess-completion',
-      'http://127.0.0.1:8000/reveal-final-form',
+      'http://localhost:8000/assess-completion',
+      'http://localhost:8000/reveal-final-form',
     ]);
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ canonicalGoal: { terminalDerivativeOrder: 1 } });
   });

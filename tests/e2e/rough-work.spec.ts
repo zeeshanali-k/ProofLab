@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { registerAccount } from './auth-helpers';
 
 async function openRoughBoard(page) {
   await page.getByRole('button', { name: 'Open rough work board' }).click();
@@ -24,8 +25,10 @@ async function drawRectangle(page, board) {
 }
 
 test.describe('persistent rough-work canvas', () => {
+  test.beforeEach(async ({ page }) => { await registerAccount(page); });
+
   test('opens over the ProofLab solution and restores board work after reload', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/math');
     const startingUrl = page.url();
     let board = await openRoughBoard(page);
     await expect(page).toHaveURL(startingUrl);

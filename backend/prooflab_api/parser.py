@@ -343,7 +343,7 @@ def parse_integral(source: str) -> sp.Expr:
     normalized = normalize_latex(prepared)
     match = re.fullmatch(r"INT\s*(.+?)\s*d\s*x", normalized)
     if not match:
-        raise MathSyntaxError("Use integral notation like \\int x^2 \\, dx.")
+        raise MathSyntaxError("Use integral notation like $\\int x^2 \\, dx$.")
     integrand = parse_calculus_expression(match.group(1))
     validate_integrand(integrand)
     return integrand
@@ -353,12 +353,12 @@ def parse_antiderivative(source: str) -> tuple[sp.Expr, bool]:
     normalized = normalize_latex(source).replace(" ", "")
     match = re.fullmatch(r"F\(x\)=(.+)", normalized)
     if not match:
-        raise MathSyntaxError("Use antiderivative notation like F(x) = … + C.")
+        raise MathSyntaxError("Use antiderivative notation like $F(x) = \\dots + C$.")
     right = match.group(1)
     has_constant = right.endswith("+C")
     body = right[:-2] if has_constant else right
     if not body:
-        raise MathSyntaxError("An antiderivative needs an expression before + C.")
+        raise MathSyntaxError("An antiderivative needs an expression before $+ C$.")
     return parse_calculus_expression(body), has_constant
 
 

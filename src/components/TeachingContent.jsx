@@ -87,8 +87,10 @@ function renderBlock(block, index) {
 }
 
 /** Safely renders the limited Markdown and KaTeX syntax requested from teaching models. */
-export default function TeachingContent({ content, className = '' }) {
+export default function TeachingContent({ content, className = '', inline = false }) {
   if (!content) return null;
-  const blocks = String(content).replace(/\r\n/g, '\n').split(/\n\s*\n/);
+  const normalizedContent = String(content).replace(/\r\n/g, '\n');
+  if (inline) return <span className={`teaching-content ${className}`.trim()}>{renderInline(normalizedContent, 'inline')}</span>;
+  const blocks = normalizedContent.split(/\n\s*\n/);
   return <div className={`teaching-content ${className}`.trim()}>{blocks.map(renderBlock)}</div>;
 }

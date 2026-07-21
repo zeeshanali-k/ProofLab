@@ -2,8 +2,9 @@
 import { useEffect, useRef } from 'react';
 import katex from 'katex';
 
-export default function MathDisplay({ math, className = "math-display" }) {
+export default function MathDisplay({ math, className = "math-display", inline = false, style = undefined }) {
   const containerRef = useRef(null);
+  const Element = inline ? 'span' : 'div';
 
   useEffect(() => {
     if (containerRef.current) {
@@ -19,5 +20,5 @@ export default function MathDisplay({ math, className = "math-display" }) {
     }
   }, [math]);
 
-  return <div ref={containerRef} className={className} role="math" aria-label={`Equation: ${math}`} />;
+  return <Element ref={containerRef} className={className} style={style} role="math" aria-label={`Equation: ${math}`} />;
 }

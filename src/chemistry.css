@@ -3810,6 +3810,29 @@
 	transition: background-color .24s ease, border-color .24s ease, box-shadow .24s ease, color .24s ease, transform .24s cubic-bezier(.2,.9,.25,1.3);
 }
 
+.nav-guide-link {
+	align-items: center;
+	background: var(--surface-soft);
+	border: 1px solid var(--border);
+	border-radius: 14px;
+	color: var(--ink);
+	display: inline-flex;
+	flex: 0 0 auto;
+	font-size: 11px;
+	font-weight: 800;
+	gap: 7px;
+	min-height: 42px;
+	padding: 7px 10px;
+	text-decoration: none;
+	transition: background-color .24s ease, border-color .24s ease, box-shadow .24s ease, color .24s ease, transform .24s cubic-bezier(.2,.9,.25,1.3);
+}
+
+.nav-guide-link:hover, .nav-guide-link.active { border-color: var(--accent); box-shadow: 0 8px 18px var(--nav-glow); color: var(--accent); transform: translateY(-2px); }
+.nav-guide-link.active { background: var(--accent-soft); }
+.nav-guide-link:focus-visible { box-shadow: var(--focus); outline: none; }
+.nav-guide-symbol { align-items: center; background: var(--accent-soft); border-radius: 9px; color: var(--accent); display: inline-flex; font-size: 16px; height: 26px; justify-content: center; line-height: 1; width: 26px; }
+.nav-guide-link.active .nav-guide-symbol { background: var(--accent); color: #fff; }
+
 .nav-theme-toggle:hover { border-color: var(--accent); box-shadow: 0 8px 18px var(--nav-glow); color: var(--accent); transform: translateY(-2px); }
 .nav-theme-symbol { align-items: center; background: var(--accent-soft); border-radius: 9px; display: inline-flex; font-size: 18px; height: 26px; justify-content: center; line-height: 1; overflow: hidden; position: relative; transition: transform .32s cubic-bezier(.2,.9,.25,1.35); width: 26px; }
 .theme-sun, .theme-moon { position: absolute; transition: opacity .24s ease, transform .32s cubic-bezier(.2,.9,.25,1.35); }
@@ -3859,4 +3882,6 @@ html[data-theme="dark"] .chemistry-page .suggestion-box strong { color: #b9f0d5;
 	.nav-text { display: block; font-size: 10px; }
 	.nav-theme-toggle { border-radius: 12px; min-height: 38px; padding: 5px; }
 	.nav-theme-label { display: none; }
+	.nav-guide-link { border-radius: 12px; min-height: 38px; padding: 5px; }
+	.nav-guide-label { display: none; }
 }

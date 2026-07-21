@@ -38,7 +38,7 @@ export default function ChemistryDashboard() {
 			</div>
 			
 			<div className="dashboard-footer">
-				<Link href="/" className="back-to-prooflab">
+				<Link href="/dashboard" className="back-to-prooflab">
 					← Back to ProofLab
 				</Link>
 			</div>

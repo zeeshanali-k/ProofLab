@@ -1,5 +1,5 @@
-import ProofLab from '../src/App';
+import AuthLanding from '../src/components/AuthLanding';
 
 export default function HomePage() {
-  return <ProofLab />;
+  return <AuthLanding />;
 }

@@ -2,7 +2,7 @@
 // symbolic-engine or teaching-provider credentials.
 export const ENV_MODE = 'Python API';
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_PROOFLAB_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '');
+const API_BASE_URL = (process.env.NEXT_PUBLIC_PROOFLAB_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
 const PROBLEM_LIBRARY = [
   {
@@ -232,6 +232,7 @@ async function requestJson(path, payload) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(payload),
   });
   const body = await response.json().catch(() => ({}));
@@ -289,16 +290,17 @@ export const ProofService = {
     });
   },
 
-  async verifyStep(previousStep, nextStep, mode) {
+  async verifyStep(previousStep, nextStep, mode, activityId = null) {
     const result = await requestJson('/verify', {
       mode,
       previousStep: { id: previousStep.id, latex: previousStep.math, kind: previousStep.kind },
       nextStep: { id: nextStep.id, latex: nextStep.math, kind: nextStep.kind },
+      ...(activityId ? { activityId } : {}),
     });
     return edgeFromResult(result, previousStep, nextStep);
   },
 
-  async assessCompletion(problem, steps) {
+  async assessCompletion(problem, steps, recordProgress = false) {
     if (!problem.canonicalGoal) return 'not-applicable';
     const learnerSteps = steps.slice(1);
     if (!learnerSteps.length) return 'in-progress';
@@ -308,6 +310,7 @@ export const ProofService = {
       terminalLearnerStep: { id: learnerSteps.at(-1).id, latex: learnerSteps.at(-1).math, kind: learnerSteps.at(-1).kind },
       learnerSteps: learnerSteps.map((step) => ({ id: step.id, latex: step.math, kind: step.kind })),
       canonicalGoal: problem.canonicalGoal,
+      ...(recordProgress && !problem.isCustom ? { activityId: problem.id } : {}),
     });
     return result.status;
   },

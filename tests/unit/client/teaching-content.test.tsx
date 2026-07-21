@@ -19,4 +19,10 @@ describe('TeachingContent', () => {
     expect(html).toContain('<ul>');
     expect(html).toContain('<li>Expand the brackets</li>');
   });
+
+  it('renders inline formula-bearing guidance without adding a block wrapper', () => {
+    const html = renderToStaticMarkup(<TeachingContent inline content={'Use $F(x) = \\dots + C$.'} />);
+    expect(html).toMatch(/^<span/);
+    expect(html).not.toContain('$F(x) = \\dots + C$');
+  });
 });

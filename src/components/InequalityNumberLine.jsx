@@ -47,12 +47,12 @@ export default function InequalityNumberLine({ evidence, isValid }) {
         <circle className="test-value-dot" cx={line.testValuePosition} cy="36" r="3" />
       </svg>
       <div className="number-line-regions">
-        {!isValid && <div><span className="region-key valid" /> Correct region <MathDisplay math={previousLatex} className="inline-evidence-math" /></div>}
-        <div><span className={`region-key ${isValid ? 'valid' : 'invalid'}`} /> {isValid ? 'Verified region' : 'Your region'} <MathDisplay math={submittedLatex} className="inline-evidence-math" /></div>
+        {!isValid && <div><span className="region-key valid" /> Correct region <MathDisplay math={previousLatex} className="inline-evidence-math" inline /></div>}
+        <div><span className={`region-key ${isValid ? 'valid' : 'invalid'}`} /> {isValid ? 'Verified region' : 'Your region'} <MathDisplay math={submittedLatex} className="inline-evidence-math" inline /></div>
       </div>
       <div className="number-line-reality-check">
         <strong>Reality check:</strong>
-        <MathDisplay math={`x = ${evidence.testValueLatex}`} className="inline-evidence-math" />
+        <MathDisplay math={`x = ${evidence.testValueLatex}`} className="inline-evidence-math" inline />
         {isValid
           ? <span>This region {submittedMembership} this value.</span>
           : <span>The correct region {previousMembership} it; your region {submittedMembership} it.</span>}
