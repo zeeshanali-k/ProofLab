@@ -9,21 +9,36 @@ const MATH_GUIDE_SECTIONS = [
     id: 'what-prooflab-does',
     navigationLabel: 'Overview',
     eyebrow: 'START HERE',
-    title: 'What ProofLab does',
-    description: 'ProofLab is a visual reasoning workspace. You build a path one step at a time, and the verifier checks each transition before optional coaching explains the result.',
+    title: 'Use Math Lab in three ways',
+    description: 'Math Lab combines visual Foundations practice, a guided ProofLab reasoning workspace, and LeetMath final-answer challenges. Each surface uses deterministic checks and keeps its feedback focused on the current task.',
     items: [
-      'Verification decides whether a supported transition is valid; coaching never decides mathematical correctness.',
-      'The guide explains how to use the workspace. It does not provide worked answers or solve problems for you.',
+      'Math Foundations builds number sense with visual manipulatives and short quantity problems.',
+      'Guided ProofLab checks one symbolic reasoning transition at a time; optional coaching never decides mathematical correctness.',
+      'LeetMath checks a final answer for a bounded challenge and can replay supported answers on a visualizer.',
+    ],
+    visual: 'math-surfaces',
+  },
+  {
+    id: 'math-foundations',
+    navigationLabel: 'Foundations',
+    eyebrow: 'VISUAL-FIRST PRACTICE',
+    title: 'Build Math Foundations with visual practice',
+    description: 'Open Math Foundations from the dashboard or the Math workspace tabs, choose a module, then complete its guided visual mission and seeded practice activity.',
+    items: [
+      'The 10 modules cover counting and place value, integers, fractions, decimals, percentages, ratios, units, estimation, and everyday USD money math.',
+      'Use number lines, place-value blocks, fraction bars, and ratio tables to model the quantity before you enter or select an answer.',
+      'Check model gives deterministic feedback without recording completion. Submit answer records the attempt; an incorrect answer stays active so you can revise it.',
+      'Complete both distinct activities in a module to master it. Start fresh creates a new practice instance for additional practice without repeating XP or mastery credit.',
     ],
   },
   {
     id: 'choose-and-reset',
-    navigationLabel: 'Choose a problem',
-    eyebrow: 'SET UP YOUR WORK',
+    navigationLabel: 'Guided ProofLab',
+    eyebrow: 'SYMBOLIC REASONING',
     title: 'Choose, start, or reset a problem',
-    description: 'Use the current-problem panel to control the board before you begin a reasoning path.',
+    description: 'Use the Guided ProofLab current-problem panel to control the symbolic reasoning board before you begin a path.',
     items: [
-      'Choose a problem opens the built-in library. Select a card to load that problem and its prepared starting state.',
+      'Choose a new problem opens the built-in library. Select a card to load that problem and its prepared starting state.',
       'Start your own creates an algebra-only board from an equation in x. Give it a name and goal to make it easy to recognize.',
       'Reset example or Reset my problem returns the current board to its starting state and removes work added in this session.',
     ],
@@ -104,14 +119,14 @@ const MATH_GUIDE_SECTIONS = [
   },
   {
     id: 'boundaries-and-session',
-    navigationLabel: 'Limits and session',
+    navigationLabel: 'Limits and progress',
     eyebrow: 'KNOW THE BOUNDARIES',
-    title: 'Know what ProofLab can check',
-    description: 'ProofLab deliberately supports a focused set of problem types and notation so that its feedback stays specific and trustworthy.',
+    title: 'Know what Math Lab can check and save',
+    description: 'Math Lab deliberately supports focused problem types and notation so its feedback stays specific and trustworthy. Your signed-in account keeps durable progress for supported activities.',
     items: [
-      'The platform checks published algebra, inequality, calculus, and complex-number scopes. It is not a general natural-language question-answering tool.',
+      'The platform checks published quantity, algebra, inequality, calculus, and complex-number scopes. It is not a general natural-language question-answering tool.',
       'An unsupported result means the current expression or transition is outside that scope; it does not label your reasoning incorrect.',
-      'Your board is held in the current browser session. ProofLab has no account system, cloud sync, or durable saved-work history.',
+      'Foundation practice instances, XP, streaks, and mastery belong to your account. Rough-board sketches and LeetMath draft answers remain local to this browser.',
     ],
   },
 ];
@@ -421,6 +436,11 @@ function GuideVisual({ kind }) {
   }
 
   const visualContent = {
+    'math-surfaces': [
+      ['1', 'Math Foundations', 'Use visual manipulatives and deterministic quantity checks to build number sense.'],
+      ['2', 'Guided ProofLab', 'Build a symbolic reasoning path and inspect each checked transition.'],
+      ['3', 'LeetMath', 'Submit one bounded final answer and review the deterministic result.'],
+    ],
     'chemistry-flow': [
       ['1', 'Write the chemistry', 'Enter a formula or equation and confirm the chemical notation.'],
       ['2', 'Choose a relationship', 'Use a calculator or classification tool for the quantity you want to compare.'],

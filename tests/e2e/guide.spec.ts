@@ -8,8 +8,10 @@ test.describe('platform guide', () => {
     await page.goto('/math');
     await page.getByRole('link', { name: 'Open the ProofLab platform guide' }).click();
     await expect(page).toHaveURL(/\/guide\?from=%2Fmath/);
-    await expect(page.getByRole('heading', { name: 'Use the ProofLab visualizer with confidence.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Use Math Lab in three ways' })).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Math Lab guide sections' })).toBeVisible();
+    await page.getByRole('link', { name: 'Foundations' }).click();
+    await expect(page.getByRole('heading', { name: 'Build Math Foundations with visual practice' })).toBeVisible();
     await page.getByRole('link', { name: 'Back to Math Lab' }).click();
     await expect(page).toHaveURL('/math');
   });

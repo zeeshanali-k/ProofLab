@@ -1,12 +1,35 @@
 # ProofLab
 
-ProofLab is an interactive learning platform with focused Math, Chemistry, Physics, and Biology labs. Its Math Lab is a reasoning debugger for algebra, linear inequalities, introductory calculus, and complex numbers; it verifies each learner transition, identifies the first incorrect step, and presents concrete, bounded feedback.
+**Live demo:** [prooflab.devscion.com](https://prooflab.devscion.com) · **Code repository:** [github.com/zeeshanali-k/ProofLab](https://github.com/zeeshanali-k/ProofLab)
+
+ProofLab is an interactive learning platform with focused Math, Chemistry, Physics, and Biology labs. Math includes a visual-first Foundations lab for number and quantity practice, Guided ProofLab for symbolic reasoning, and LeetMath for deterministic final-answer challenges.
 
 The product deliberately separates deterministic mathematical verification from optional AI teaching. SymPy-backed checks decide whether a transition is valid; a teaching provider can explain the already-verified result, offer a hint, or suggest a repair that ProofLab verifies again before applying.
+
+## Contents
+
+- [What it does](#what-it-does)
+- [OpenAI and Codex](#openai-and-codex)
+- [Learning labs](#learning-labs)
+- [Tech stack](#tech-stack)
+- [Architecture](#architecture)
+- [Repository layout](#repository-layout)
+- [Quick start](#quick-start)
+- [Labs, workspaces, and rough work](#labs-workspaces-and-rough-work)
+- [Environment configuration](#environment-configuration)
+- [Learning modes and verifier scope](#learning-modes-and-verifier-scope)
+- [Canonical completion and final-form reveal](#canonical-completion-and-final-form-reveal)
+- [API overview](#api-overview)
+- [Teaching providers](#teaching-providers)
+- [Testing and quality checks](#testing-and-quality-checks)
+- [Current product boundaries](#current-product-boundaries)
 
 ## What it does
 
 - Offers four focused learning labs from one shared navigation bar: Math, Chemistry, Physics, and Biology.
+- Includes **Math Foundations**: 10 modules and 20 activities covering place value, integers, fractions, decimals, percentages, ratios, units, estimation, and everyday USD money math.
+- Uses interactive number lines, place-value blocks, fraction bars, and ratio tables before a learner submits a deterministic quantity answer.
+- Requires an account for Math progress and keeps account-owned XP, streaks, mastery, and resumable Foundation practice instances.
 - Provides a platform Guide that explains each lab and returns learners to the module or nested tool they opened it from.
 - Includes Chemistry tools for equation balancing, molar mass, 3D molecules, stoichiometry, solutions, thermochemistry, equilibrium, electrochemistry, and molecular geometry.
 - Includes Physics formula exploration and simulations for kinematics, projectile motion, energy, vectors, simple harmonic motion, and circuits.
@@ -21,13 +44,31 @@ The product deliberately separates deterministic mathematical verification from 
 - Keeps algebra transformations, indefinite integration, and non-canonical inequality chains intentionally open-ended, with transition-by-transition checking only.
 - Includes a per-solution **Rough board**: an Excalidraw scratch canvas that opens as a modal without changing the current route or solution.
 - Persists each rough board locally by proof problem or LeetMath challenge, so drawings survive closing the modal, reloads, and answer-draft resets.
-- Adds **LeetMath**, a 30-challenge final-answer arena with topic filters, deterministic previews, visual replays for supported answers, and anonymous-session submission history.
+- Adds **LeetMath**, a 30-challenge final-answer arena with topic filters, deterministic previews, visual replays for supported answers, and account-owned submission history.
+
+## OpenAI and Codex
+
+### GPT-5.6: grounded teaching, not mathematical authority
+
+ProofLab uses **GPT-5.6** through its OpenAI-compatible teaching-provider integration for the explanatory layer of Guided ProofLab. The model receives a learner's current work plus the verifier's already-determined result and can:
+
+- explain the verified feedback in learner-friendly language;
+- provide a next-step hint or question; and
+- draft a repair that ProofLab re-verifies before it can be applied.
+
+GPT-5.6 does **not** decide whether mathematics is correct, generate hidden challenge answers, or override unsupported notation. SymPy and the restricted parser remain the deterministic source of truth, which prevents a fluent AI response from being mistaken for a mathematical verdict.
+
+### Codex: accelerated product development
+
+We used **Codex** throughout the build to accelerate full-stack implementation and iteration: structuring the Next.js and FastAPI integration, evolving the typed verification contracts, building visual learning interfaces, expanding tests, and refining the developer documentation and product flow. Codex helped us move quickly while keeping the symbolic verifier, AI teaching layer, and learner-facing UI as clearly separated responsibilities.
 
 ## Learning labs
 
 | Lab | Route | What you can explore |
 | --- | --- | --- |
-| **Math Lab** | `/` | Checked algebra, inequality, calculus, and complex-number reasoning paths, plus LeetMath final-answer challenges. |
+| **Math Foundations** | `/math/foundations` | Visual-first number and quantity practice. Each of the 10 modules has a guided visual mission and a seeded practice activity. |
+| **Guided ProofLab** | `/math` | Checked algebra, inequality, calculus, and complex-number reasoning paths. |
+| **LeetMath** | `/leetmath` | Deterministic final-answer challenges with supported visual replays. |
 | **Chemistry Lab** | `/chemistry` | Equation balancing, molar mass, 3D molecular viewing, stoichiometry, solution chemistry, thermochemistry, equilibrium, electrochemistry, and molecular geometry. |
 | **Physics Lab** | `/physics` | Formula visualizations and simulations for motion, energy, vectors, simple harmonic motion, and circuits. |
 | **Biology Lab** | `/biology` | Anatomy and body-region views, organ systems, chromosomes, inheritance, phylogeny, and ecology cycles. |
@@ -42,7 +83,7 @@ The shared navigation provides the current lab, theme control, and **Guide** ent
 | Math input, rendering, and rough work | MathLive, KaTeX, and Excalidraw |
 | Verification API | Python 3.11+, FastAPI, Pydantic, Uvicorn |
 | Symbolic mathematics | SymPy with a restricted, custom LaTeX-like parser |
-| Teaching providers | Local deterministic fallback, Ollama, or any Chat Completions-compatible API |
+| Teaching providers | Local deterministic fallback, Ollama, or GPT-5.6 through an OpenAI-compatible Chat Completions API |
 | Python dependency management | uv |
 | Frontend quality checks | ESLint and Vitest |
 | End-to-end tests | Playwright |
@@ -55,7 +96,11 @@ The Next.js application is frontend-only. It calls one FastAPI service directly 
 ```text
 Next.js learning labs
         │
-        ├── Math Lab + LeetMath ─────────┐
+        ├── Math Foundations ─────────────┐
+        │   ├── GET /curriculum ──────────┤
+        │   ├── GET/POST /practice/* ─────┤
+        │   └── account progress ─────────┤
+        ├── Guided ProofLab + LeetMath ───┤
         │   ├── POST /verify ────────────┤
         │   ├── POST /assess-completion ─┼── FastAPI ── restricted parser ── SymPy
         │   ├── POST /reveal-final-form ─┤
@@ -65,16 +110,16 @@ Next.js learning labs
         └── Biology Lab ───────────────── browser-side interactive explorers
 ```
 
-Math Lab also uses `POST /explain` with Ollama, an OpenAI-compatible API, or the local fallback for optional teaching content.
+The FastAPI service owns authentication, curriculum metadata, generated practice seeds, private answer comparators, submissions, and progress. The browser receives learner-safe practice prompts and feedback only; it never receives the seed or canonical answer. Math Lab also uses `POST /explain` with Ollama, an OpenAI-compatible API, or the local fallback for optional teaching content.
 
 The verifier never evaluates arbitrary learner input. The parser only accepts the published grammar for each task, then constructs safe SymPy expressions. Provider credentials and symbolic-engine access stay on the backend; the browser receives only verification results and teaching content.
 
 ## Repository layout
 
 ```text
-app/                         Next.js routes for Math, Chemistry, Physics, Biology, Guide, and LeetMath
-src/                         React workspaces, science visualizers, Excalidraw rough board, math components, API clients, styling
-backend/prooflab_api/        FastAPI routes, contracts, parser, verifier, teaching providers
+app/                         Next.js routes for Math Foundations, Guided ProofLab, Chemistry, Physics, Biology, Guide, and LeetMath
+src/                         React workspaces, Foundations visualizers, science visualizers, Excalidraw rough board, API clients, styling
+backend/prooflab_api/        FastAPI routes, authentication, curriculum, seeded practice engine, progress, parser, verifier, teaching providers
 backend/tests/               Pytest API and verifier coverage
 tests/unit/                  Vitest component and client coverage
 tests/e2e/                   Playwright learner flows
@@ -131,7 +176,11 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Labs, workspaces, and rough work
 
-Use the shared navigation to switch between **Math**, **Chemistry**, **Physics**, and **Biology**. The **Guide** button in that navigation explains the available tools and keeps a return link to the screen that opened it. In Math Lab, use the workspace tabs to switch between the guided **ProofLab** reasoning board and the final-answer **LeetMath** challenge arena. LeetMath currently contains 30 deterministic challenges across Algebra, Inequalities, Calculus, and Complex numbers. Some answer types display a number-line or complex-plane replay as the answer is drafted or submitted.
+Use the shared navigation to switch between **Math**, **Chemistry**, **Physics**, and **Biology**. The **Guide** button explains the available tools and keeps a return link to the screen that opened it. In Math, use the workspace tabs to switch between **Foundations**, the guided **ProofLab** reasoning board, and the final-answer **LeetMath** arena.
+
+Math Foundations has 10 modules and 20 activities. Select a module, then choose its guided visual mission or seeded practice activity. Number lines, place-value blocks, fraction bars, and ratio tables help you model the problem before you enter or select an answer. **Check model** provides deterministic feedback without recording completion; **Submit answer** records the attempt. A completed template may be restarted for extra practice, but XP and mastery credit are awarded once per template. Completing both activities masters a Foundations module.
+
+LeetMath currently contains 30 deterministic challenges across Algebra, Inequalities, Calculus, and Complex numbers. Some answer types display a number-line or complex-plane replay as the answer is drafted or submitted.
 
 Both workspaces include a **Rough board** directly above the active work area. It opens a near-full-screen Excalidraw modal, so the URL, solution, draft answer, and visualizer state stay in place. The board supports Excalidraw's core selection, freehand, shapes, arrows, text, eraser, undo, and redo tools.
 
@@ -148,6 +197,7 @@ The backend reads environment files in this order: repository `.env`, `backend/.
 | --- | --- | --- |
 | `NEXT_PUBLIC_PROOFLAB_API_URL` | Browser-visible FastAPI base URL | `http://127.0.0.1:8000` |
 | `FRONTEND_ORIGIN` | Comma-separated CORS allowlist | `http://localhost:3000` |
+| `PROOFLAB_DATABASE_PATH` | SQLite database path for accounts, progress, and practice instances | `backend/data/prooflab.db` |
 | `AI_PROVIDER` | `local`, `ollama`, or `openai-compatible` | `ollama` locally; `local` in Docker Compose |
 | `AI_TIMEOUT_MS` | Teaching-provider request timeout | `20000` |
 | `OLLAMA_BASE_URL` / `OLLAMA_MODEL` | Ollama endpoint and model | `http://127.0.0.1:11434` / `llama3.2:3b` |
@@ -197,11 +247,18 @@ FastAPI publishes the complete OpenAPI schema at `/openapi.json` and interactive
 | `POST /assess-completion` | Evaluates a full learner chain against a problem-defined canonical goal. Returns only `complete`, `in-progress`, `needs-correction`, or `not-applicable`. |
 | `POST /reveal-final-form` | Returns canonical LaTeX only for eligible tasks. Open-ended and unsupported modes are rejected. |
 | `POST /explain` | Requests an optional hint, explanation, or repair based on a verification result already decided by the verifier. |
+| `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` | Creates, starts, or ends an authenticated account session. |
+| `GET /me/dashboard` | Returns account XP, streak, mastery, recent activities, and achievements. |
+| `GET /curriculum`, `GET /curriculum/{nodeId}` | Returns learner-safe curriculum modules, activities, and guided missions. |
+| `POST /practice/next` | Creates or restores the one active seeded Foundations instance for a template; `restart` creates a fresh instance. |
+| `GET /practice/{instanceId}` | Restores an owned, learner-safe practice instance. |
+| `POST /practice/{instanceId}/verify` | Checks a draft Foundations response without recording completion. |
+| `POST /practice/{instanceId}/submit` | Records a Foundations response and awards eligible XP/mastery on success. |
 | `GET /challenges` | Returns the LeetMath challenge catalog. |
 | `GET /challenges/{challengeId}` | Returns the full prompt, constraints, answer shape, and visualizer configuration for one challenge. |
 | `POST /challenges/{challengeId}/preview` | Parses a draft final answer and returns its deterministic visual preview when supported. |
-| `POST /challenges/{challengeId}/submit` | Checks and records one final answer for the anonymous browser session. |
-| `GET /challenges/{challengeId}/submissions` | Returns submission history for the current browser session; requires `X-ProofLab-Session`. |
+| `POST /challenges/{challengeId}/submit` | Checks and records one final answer for the signed-in learner. |
+| `GET /challenges/{challengeId}/submissions` | Returns the signed-in learner's submission history. |
 
 All proof-step payloads contain an `id`, `latex`, and task-scoped `kind`. The supported modes are `algebra`, `inequality`, `derivative`, `integral`, `complex-simplify`, and `complex-solve`.
 
@@ -236,6 +293,8 @@ OPENAI_COMPATIBLE_MODEL=your-model-id
 OPENAI_COMPATIBLE_API_KEY=server-only-secret
 ```
 
+For the GPT-5.6 teaching experience, configure the compatible endpoint and set `OPENAI_COMPATIBLE_MODEL` to the GPT-5.6 model ID available to your account. The API key remains server-side.
+
 Repairs remain drafts: ProofLab re-verifies them before any learner step is replaced.
 
 ## Testing and quality checks
@@ -257,13 +316,14 @@ npm run build
 npm run test:e2e
 ```
 
-The test suite covers restricted parsing and verification, trigonometric and repeated derivatives, integration with `+ C`, canonical completion/reveal behavior, local rough-board storage and malformed-data recovery, LeetMath challenge checks, UI status and reveal rendering, and end-to-end learner flows including drawing persistence across reloads and answer resets.
+The test suite covers authentication, curriculum metadata, all 20 seeded Foundations templates, private-answer boundaries, resume/restart behavior, XP/mastery rules, restricted parsing and verification, trigonometric and repeated derivatives, integration with `+ C`, canonical completion/reveal behavior, local rough-board storage and malformed-data recovery, LeetMath challenge checks, UI status and reveal rendering, and end-to-end learner flows including Foundations practice and drawing persistence across reloads.
 
 ## Current product boundaries
 
-- **Choose a problem** loads the built-in algebra, inequality, calculus, and complex examples, including a negative-coefficient inequality sign-flip demo with a live number line.
+- **Math Foundations** deliberately covers its published quantity and money scenarios only. It provides deterministic feedback, not AI-generated tutoring or proof narration.
+- **Choose a new problem** loads the built-in algebra, inequality, calculus, and complex examples, including a negative-coefficient inequality sign-flip demo with a live number line.
 - **Start your own** currently creates an algebra-only problem with an equation in `x`; it does not parse arbitrary natural-language prompts.
 - Chemistry, Physics, and Biology experiences are interactive visualizers and calculators; they are not connected to the Math verifier or teaching-provider API.
-- Rough-board storage and LeetMath answer drafts are local to the browser; clearing browser storage removes them. LeetMath submission records are stored by the API and scoped to the anonymous browser session identifier.
+- Foundation practice instances, curriculum progress, and LeetMath submission records are private to the signed-in account. Rough-board storage and LeetMath answer drafts are still local to the browser; clearing browser storage removes them.
 - API credentials are backend-only, and CORS is limited to `FRONTEND_ORIGIN`.
 - The verifier favors an explicit unsupported result over silently broadening the accepted mathematics.
