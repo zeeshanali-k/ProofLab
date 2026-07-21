@@ -9,8 +9,8 @@ describe('GuideScreen', () => {
   const biologyHtml = renderToStaticMarkup(<GuideScreen initialTab="biology" />);
 
   it('restores the comprehensive Math Lab guide inside a dedicated tab', () => {
-    expect(mathHtml).toContain('Use the ProofLab visualizer with confidence.');
-    expect(mathHtml).toContain('What ProofLab does');
+    expect(mathHtml).toContain('Use Math Lab in three ways');
+    expect(mathHtml).toContain('Build Math Foundations with visual practice');
     expect(mathHtml).toContain('Choose, start, or reset a problem');
     expect(mathHtml).toContain('Read the visualizer from left to right');
     expect(mathHtml).toContain('Add, check, edit, and remove steps');
@@ -18,7 +18,8 @@ describe('GuideScreen', () => {
     expect(mathHtml).toContain('Use coaching after you inspect evidence');
     expect(mathHtml).toContain('Track progress and canonical completion');
     expect(mathHtml).toContain('Use the action that matches the current mode');
-    expect(mathHtml).toContain('Know what ProofLab can check');
+    expect(mathHtml).toContain('Know what Math Lab can check and save');
+    expect(mathHtml).toContain('Math Foundations');
     expect(mathHtml).toContain('Add equivalent step / Submit solution set');
     expect(mathHtml).toContain('aria-current="location"');
     expect(mathHtml).toContain('class="is-active"');
