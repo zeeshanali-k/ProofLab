@@ -10,25 +10,23 @@ from sqlalchemy import distinct, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from .curriculum import concept_for_challenge as curriculum_concept_for_challenge
+from .curriculum import concept_for_guided_mission
+from .curriculum import mastery_threshold_for_concept
+from .curriculum import requires_first_try_for_concept
 from .database import ActivityAttempt, ConceptMastery, EarnedAchievement, XpLedger, utc_now
 
 
 GUIDED_CONCEPTS = {
-    "missing-middle-term": "algebra.linear-equations",
-    "linear-balance": "algebra.linear-equations",
-    "inequality-sign-flip": "algebra.inequalities",
-    "negative-square": "algebra.linear-equations",
-    "quadratic-solution-check": "algebra.linear-equations",
-    "factor-then-solve": "algebra.linear-equations",
-    "polynomial-derivative": "calculus.derivatives",
-    "trig-chain-derivative": "calculus.derivatives",
-    "product-rule-derivative": "calculus.derivatives",
-    "repeated-derivative": "calculus.derivatives",
-    "indefinite-integral": "calculus.integrals",
-    "missing-integration-constant": "calculus.integrals",
-    "complex-product": "complex-numbers.simplification",
-    "complex-roots": "complex-numbers.solutions",
-    "complex-complete-roots": "complex-numbers.solutions",
+    mission_id: concept
+    for mission_id in (
+        "missing-middle-term", "linear-balance", "inequality-sign-flip", "negative-square",
+        "quadratic-solution-check", "factor-then-solve", "polynomial-derivative",
+        "trig-chain-derivative", "product-rule-derivative", "repeated-derivative",
+        "indefinite-integral", "missing-integration-constant", "complex-product",
+        "complex-roots", "complex-complete-roots",
+    )
+    if (concept := concept_for_guided_mission(mission_id))
 }
 
 KNOWN_CONCEPTS_BY_STRAND = {
@@ -37,20 +35,14 @@ KNOWN_CONCEPTS_BY_STRAND = {
     "complex-numbers": {"complex-numbers.simplification", "complex-numbers.solutions"},
 }
 
+MASTERY_ACTIVITY_KINDS = ("guided-problem", "leetmath-challenge", "foundation-practice")
+
 
 def concept_for_challenge(challenge_id: str) -> str:
-    number = int(challenge_id)
-    if number in {1, 2, 6, 7, 8, 9, 10, 11}:
-        return "algebra.linear-equations"
-    if number in {3, 12, 13, 14, 15, 16}:
-        return "algebra.inequalities"
-    if number in {4, 17, 18, 19, 20, 21}:
-        return "calculus.derivatives"
-    if number in {22, 23, 24}:
-        return "calculus.integrals"
-    if number in {5, 30}:
-        return "complex-numbers.solutions"
-    return "complex-numbers.simplification"
+    concept = curriculum_concept_for_challenge(challenge_id)
+    if concept is None:
+        raise ValueError(f"Challenge {challenge_id} is missing a curriculum concept mapping.")
+    return concept
 
 
 @dataclass(frozen=True)
@@ -155,7 +147,7 @@ class ProgressRepository:
             ActivityAttempt.user_id == user_id,
             ActivityAttempt.concept_id == concept_id,
             ActivityAttempt.outcome == "accepted",
-            ActivityAttempt.activity_kind.in_(("guided-problem", "leetmath-challenge")),
+            ActivityAttempt.activity_kind.in_(MASTERY_ACTIVITY_KINDS),
         )
         distinct_successes = int(db.scalar(select(func.count(distinct(ActivityAttempt.activity_id))).where(*successful)) or 0)
         first_try_successes = int(
@@ -167,7 +159,8 @@ class ProgressRepository:
         previous_status = mastery.status
         mastery.distinct_successes = distinct_successes
         mastery.first_try_successes = first_try_successes
-        mastery.status = "mastered" if distinct_successes >= 3 and first_try_successes >= 1 else "practicing"
+        has_required_first_try = first_try_successes >= 1 or not requires_first_try_for_concept(concept_id)
+        mastery.status = "mastered" if distinct_successes >= mastery_threshold_for_concept(concept_id) and has_required_first_try else "practicing"
         mastery.updated_at = utc_now()
         return mastery.status, previous_status != "mastered" and mastery.status == "mastered"
 
@@ -178,7 +171,7 @@ class ProgressRepository:
                 select(ActivityAttempt.created_at).where(
                     ActivityAttempt.user_id == user_id,
                     ActivityAttempt.outcome == "accepted",
-                    ActivityAttempt.activity_kind.in_(("guided-problem", "leetmath-challenge")),
+                    ActivityAttempt.activity_kind.in_(MASTERY_ACTIVITY_KINDS),
                 )
             )
         }
@@ -342,6 +335,56 @@ class ProgressRepository:
                 achievements.append("concept-mastered")
             if newly_mastered and self._strand_complete(db, user_id=user_id, concept_id=concept_id) and self._earn_achievement(db, user_id=user_id, code="math-strand-complete"):
                 achievements.append("math-strand-complete")
+            if self._streak(db, user_id) >= 7 and self._earn_achievement(db, user_id=user_id, code="seven-day-streak"):
+                achievements.append("seven-day-streak")
+        db.flush()
+        return ProgressUpdate(earned_xp=earned, total_xp=self._total_xp(db, user_id), newly_earned_achievements=tuple(achievements), mastery_status=status)
+
+    def record_foundation_completion(
+        self,
+        db: Session,
+        *,
+        user_id: str,
+        template_id: str,
+        concept_id: str,
+        completed: bool,
+    ) -> ProgressUpdate:
+        """Record an authored template, not a generated instance, for mastery."""
+        self.introduce(db, user_id=user_id, concept_id=concept_id)
+        attempt = self.record_attempt(
+            db,
+            user_id=user_id,
+            activity_kind="foundation-practice",
+            activity_id=template_id,
+            concept_id=concept_id,
+            outcome="accepted" if completed else "incorrect",
+        )
+        earned = 0
+        achievements: list[str] = []
+        status = None
+        if completed:
+            earned += self._award_xp(
+                db,
+                user_id=user_id,
+                amount=25,
+                reason="completed-foundation-practice",
+                source_kind="foundation-practice",
+                source_id=template_id,
+            )
+            if attempt.attempt_ordinal == 1:
+                earned += self._award_xp(
+                    db,
+                    user_id=user_id,
+                    amount=10,
+                    reason="first-attempt-foundation-answer",
+                    source_kind="foundation-practice",
+                    source_id=template_id,
+                )
+            if self._earn_achievement(db, user_id=user_id, code="first-completed-problem"):
+                achievements.append("first-completed-problem")
+            status, newly_mastered = self._refresh_mastery(db, user_id=user_id, concept_id=concept_id)
+            if newly_mastered and self._earn_achievement(db, user_id=user_id, code="concept-mastered"):
+                achievements.append("concept-mastered")
             if self._streak(db, user_id) >= 7 and self._earn_achievement(db, user_id=user_id, code="seven-day-streak"):
                 achievements.append("seven-day-streak")
         db.flush()

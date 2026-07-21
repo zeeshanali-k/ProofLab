@@ -101,6 +101,7 @@ function PanelResizeHandle({ side, value, maximum, onPointerDown, onKeyDown }) {
 export default function App() {
   const { user } = useAuth();
   const [data, setData] = useState({ problem: null, steps: [], edges: [] });
+  const [problemLibrary, setProblemLibrary] = useState([]);
   const [selectedEdgeId, setSelectedEdgeId] = useState('e1');
   const [composer, setComposer] = useState(null);
   const [isChecking, setIsChecking] = useState(false);
@@ -124,10 +125,16 @@ export default function App() {
   const workspaceRef = useRef(null);
 
   useEffect(() => {
+    let active = true;
     ProofService.fetchInitialState().then((next) => {
+      if (!active) return;
       setData(next);
+      setProblemLibrary(next.problemLibrary);
       AuthService.introduceActivity({ activityKind: 'guided', activityId: next.problem.id }).catch(() => {});
-    }).catch((error) => setLoadError(error instanceof Error ? error.message : 'ProofLab could not load a problem.'));
+    }).catch((error) => {
+      if (active) setLoadError(error instanceof Error ? error.message : 'ProofLab could not load a problem.');
+    });
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -497,6 +504,10 @@ export default function App() {
         style={{ '--problem-panel-width': `${panelWidths.problem}px`, '--inspector-panel-width': `${panelWidths.inspector}px` }}
       >
         <aside id="problem-rail" className={`problem-rail ${isProblemOpen ? 'is-open' : ''}`}>
+          <button className="problem-library-launcher" onClick={() => setIsProblemPickerOpen(true)} disabled={isLoadingProblem || !problemLibrary.length}>
+            <span className="problem-library-launcher-copy"><span className="panel-eyebrow">PROBLEM LIBRARY</span><strong>Choose a new problem</strong></span>
+            <span className="problem-library-launcher-glyph" aria-hidden="true">→</span>
+          </button>
           <div className="rail-eyebrow">CURRENT PROBLEM</div>
           <h1 className="problem-title">{data.problem.title}</h1>
           <div className="prompt-card">
@@ -512,7 +523,6 @@ export default function App() {
             <CanonicalProgress status={data.completionStatus} onReveal={revealFinalForm} isRevealing={isRevealingFinalForm} revealedFinalForm={revealedFinalForm} />
           )}
           <div className="problem-actions">
-            <button className="choose-problem" onClick={() => setIsProblemPickerOpen(true)} disabled={isLoadingProblem}>Choose a problem</button>
             <button className="reset-example" onClick={resetExample} disabled={isLoadingProblem}>Reset {data.problem.isCustom ? 'my problem' : 'example'}</button>
           </div>
         </aside>
@@ -624,7 +634,7 @@ export default function App() {
           ) : <div className="inspector-empty"><p>Select a transition to inspect its evidence.</p></div>}
         </aside>
       </main>
-      {isProblemPickerOpen && <ProblemPicker problems={ProofService.getProblemLibrary()} isLoading={isLoadingProblem} onClose={() => setIsProblemPickerOpen(false)} onSelect={(problem) => loadProblem(problem)} onCustom={(problem) => loadProblem(problem, true)} />}
+      {isProblemPickerOpen && <ProblemPicker problems={problemLibrary} isLoading={isLoadingProblem || !problemLibrary.length} onClose={() => setIsProblemPickerOpen(false)} onSelect={(problem) => loadProblem(problem)} onCustom={(problem) => loadProblem(problem, true)} />}
       <RoughWorkBoardModal open={isRoughWorkOpen} boardKey={proofBoardKey(user.id, data.problem.id)} title={data.problem.title} onClose={closeRoughWork} sharedTransitionName="rough-work-launcher" />
       <div className="sr-only" aria-live="polite">{announcement}</div>
     </div>
@@ -720,17 +730,19 @@ function ProblemPicker({ problems, isLoading, onClose, onSelect, onCustom }) {
     <div className="problem-picker-backdrop" role="presentation" onMouseDown={onClose}>
       <section className="problem-picker" role="dialog" aria-modal="true" aria-labelledby="problem-picker-title" onMouseDown={(event) => event.stopPropagation()}>
         <div className="picker-header"><div><span className="panel-eyebrow">PROBLEM LIBRARY</span><h2 id="problem-picker-title">Choose a starting point</h2></div><button className="icon-btn" onClick={onClose} aria-label="Close problem picker">×</button></div>
-        <div className="example-grid">
-          {problems.map((problem) => <button className="example-card" key={problem.id} onClick={() => onSelect(problem)} disabled={isLoading}><span>{problem.category}</span><strong>{problem.title}</strong><MathDisplay math={problem.prompt} /><small>{problem.goal}</small></button>)}
+        <div className="picker-content">
+          <div className="example-grid">
+            {problems.map((problem) => <button className="example-card" key={problem.id} onClick={() => onSelect(problem)} disabled={isLoading}><span>{problem.category}</span><strong>{problem.title}</strong><MathDisplay math={problem.prompt} /><small>{problem.goal}</small></button>)}
+          </div>
+          <form className="custom-problem-form" onSubmit={submitCustom}>
+            <span className="panel-eyebrow">START YOUR OWN</span>
+            <label>Problem name<input value={custom.title} onChange={(event) => setCustom((current) => ({ ...current, title: event.target.value }))} placeholder="e.g. My homework question" /></label>
+            <label>Starting equation<EquationField value={custom.prompt} onChange={(value) => setCustom((current) => ({ ...current, prompt: value }))} ariaLabel="Starting equation" /></label>
+            <label>What are you trying to do?<input value={custom.goal} onChange={(event) => setCustom((current) => ({ ...current, goal: event.target.value }))} placeholder="e.g. Find every value of x" /></label>
+            {error && <p className="form-error">{error}</p>}
+            <div className="picker-actions"><button type="button" className="btn-text" onClick={onClose}>Cancel</button><button className="btn-primary" disabled={isLoading}>{isLoading ? 'Loading…' : 'Start problem'}</button></div>
+          </form>
         </div>
-        <form className="custom-problem-form" onSubmit={submitCustom}>
-          <span className="panel-eyebrow">START YOUR OWN</span>
-          <label>Problem name<input value={custom.title} onChange={(event) => setCustom((current) => ({ ...current, title: event.target.value }))} placeholder="e.g. My homework question" /></label>
-          <label>Starting equation<EquationField value={custom.prompt} onChange={(value) => setCustom((current) => ({ ...current, prompt: value }))} ariaLabel="Starting equation" /></label>
-          <label>What are you trying to do?<input value={custom.goal} onChange={(event) => setCustom((current) => ({ ...current, goal: event.target.value }))} placeholder="e.g. Find every value of x" /></label>
-          {error && <p className="form-error">{error}</p>}
-          <div className="picker-actions"><button type="button" className="btn-text" onClick={onClose}>Cancel</button><button className="btn-primary" disabled={isLoading}>{isLoading ? 'Loading…' : 'Start problem'}</button></div>
-        </form>
       </section>
     </div>
   );

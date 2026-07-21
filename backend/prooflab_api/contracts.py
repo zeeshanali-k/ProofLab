@@ -169,6 +169,15 @@ class VisualizerType(str, Enum):
     NONE = "none"
     NUMBER_LINE = "number-line"
     COMPLEX_PLANE = "complex-plane"
+    PLACE_VALUE_BLOCKS = "place-value-blocks"
+    FRACTION_BARS = "fraction-bars"
+    RATIO_TABLE = "ratio-table"
+
+
+class CurriculumExperience(str, Enum):
+    GUIDED_PROOFLAB = "guided-prooflab"
+    VISUAL_MATH_LAB = "visual-math-lab"
+    LEETMATH = "leetmath"
 
 
 class VisualizationPhase(str, Enum):
@@ -196,6 +205,8 @@ class ChallengeCatalogItem(BaseModel):
     answer_kind: ChallengeAnswerKind = Field(alias="answerKind")
     visualizer_type: VisualizerType = Field(alias="visualizerType")
     simulation_preview: str = Field(alias="simulationPreview")
+    curriculum_node_id: str | None = Field(default=None, alias="curriculumNodeId")
+    strand: str | None = None
 
 
 class ChallengeDetail(ChallengeCatalogItem):
@@ -257,6 +268,125 @@ class ChallengeCatalogProgress(BaseModel):
     challenge_id: str = Field(alias="challengeId")
     status: Literal["solved", "attempting"]
     attempt_count: int = Field(alias="attemptCount")
+
+
+class CurriculumNodePayload(BaseModel):
+    """Learner-safe authored curriculum metadata.
+
+    This is deliberately content metadata only: no template seed, comparator,
+    canonical answer, or private solution path is exposed here.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    parent_id: str | None = Field(default=None, alias="parentId")
+    strand: str
+    title: str
+    summary: str
+    prerequisites: list[str]
+    recommended_tracks: list[LearnerTrack] = Field(alias="recommendedTracks")
+    objectives: list[str]
+    interaction_kinds: list[CurriculumExperience] = Field(alias="interactionKinds")
+    visualizer_type: VisualizerType = Field(alias="visualizerType")
+    concept_ids: list[str] = Field(alias="conceptIds")
+    mission_ids: list[str] = Field(alias="missionIds")
+    template_ids: list[str] = Field(alias="templateIds")
+    leet_math_challenge_ids: list[str] = Field(alias="leetMathChallengeIds")
+    mastery_threshold: int = Field(alias="masteryThreshold", ge=1)
+
+
+class PracticeNextRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    template_id: str = Field(alias="templateId", min_length=1, max_length=128)
+    restart: bool = False
+
+
+class PracticeAnswerRequest(BaseModel):
+    """The learner's public response.  Adapters normalize it on the server."""
+
+    response: str = Field(min_length=1, max_length=256)
+
+
+class PracticeInstancePayload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    instance_id: str = Field(alias="instanceId")
+    template_id: str = Field(alias="templateId")
+    node_id: str = Field(alias="nodeId")
+    concept_id: str = Field(alias="conceptId")
+    title: str
+    prompt: str
+    instructions: str
+    visualizer_type: VisualizerType = Field(alias="visualizerType")
+    visualization: dict[str, object]
+    status: Literal["active", "completed"]
+    is_guided: bool = Field(alias="isGuided")
+
+
+class PracticeCheckResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    status: Literal["valid", "invalid"]
+    feedback: str
+    normalized_response: str | None = Field(default=None, alias="normalizedResponse")
+    instance: PracticeInstancePayload
+    earned_xp: int = Field(default=0, alias="earnedXp")
+    total_xp: int = Field(default=0, alias="totalXp")
+    mastery_status: str | None = Field(default=None, alias="masteryStatus")
+
+
+class GuidedMissionSeedStep(BaseModel):
+    math: str
+    kind: ClaimKind
+
+
+class GuidedMissionPayload(BaseModel):
+    """Public migration shape used by the existing Guided ProofLab client."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    title: str
+    category: str
+    mode: ProblemMode
+    root_kind: ClaimKind = Field(alias="rootKind")
+    prompt: str
+    goal: str
+    seed_steps: list[GuidedMissionSeedStep] = Field(alias="seedSteps")
+    canonical_goal: CanonicalGoal | None = Field(default=None, alias="canonicalGoal")
+    curriculum_node_id: str = Field(alias="curriculumNodeId")
+    allowed_experiences: list[CurriculumExperience] = Field(alias="allowedExperiences")
+
+
+class CurriculumRecommendationPayload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    node_id: str = Field(alias="nodeId")
+    reason: str
+    catch_up_node_id: str | None = Field(default=None, alias="catchUpNodeId")
+
+
+class CurriculumProgressSummary(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    introduced_concept_ids: list[str] = Field(alias="introducedConceptIds")
+    mastered_concept_ids: list[str] = Field(alias="masteredConceptIds")
+    recommended_track: LearnerTrack = Field(alias="recommendedTrack")
+
+
+class CurriculumCatalogResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    nodes: list[CurriculumNodePayload]
+    recommendations: list[CurriculumRecommendationPayload]
+    progress_summary: CurriculumProgressSummary = Field(alias="progressSummary")
+
+
+class CurriculumNodeDetailResponse(CurriculumNodePayload):
+    missions: list[GuidedMissionPayload]
+    allowed_experiences: list[CurriculumExperience] = Field(alias="allowedExperiences")
 
 
 class VerificationStatus(str, Enum):

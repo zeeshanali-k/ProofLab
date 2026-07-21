@@ -41,7 +41,10 @@ def test_migrates_legacy_anonymous_submissions_without_attaching_them_to_new_use
             ).fetchone()
             versions = {row[0] for row in connection.execute("SELECT version FROM schema_migrations")}
         assert migrated == (None, "legacy-browser", "003", "x < -2")
-        assert versions == {1, 2, 3}
+        assert versions == {1, 2, 3, 4}
+        with sqlite3.connect(legacy_path) as connection:
+            assert connection.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'practice_instances'").fetchone()
+            assert connection.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'practice_submissions'").fetchone()
     finally:
         if database._engine is not None:
             database._engine.dispose()

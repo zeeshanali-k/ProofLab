@@ -153,6 +153,35 @@ class EarnedAchievement(Base):
     earned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class PracticeInstance(Base):
+    __tablename__ = "practice_instances"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    template_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    template_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    node_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    concept_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    seed: Mapped[int] = mapped_column(Integer, nullable=False)
+    public_payload: Mapped[str] = mapped_column(Text, nullable=False)
+    private_payload: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class PracticeSubmission(Base):
+    __tablename__ = "practice_submissions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    instance_id: Mapped[str] = mapped_column(ForeignKey("practice_instances.id", ondelete="CASCADE"), index=True, nullable=False)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    response: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 def _table_exists(connection: Connection, table: str) -> bool:
     return connection.exec_driver_sql(
         "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (table,)
@@ -307,7 +336,47 @@ def _migration_3_progress(connection: Connection) -> None:
     )
 
 
-MIGRATIONS = ((1, _migration_1_identity), (2, _migration_2_challenge_ownership), (3, _migration_3_progress))
+def _migration_4_practice_instances(connection: Connection) -> None:
+    connection.exec_driver_sql(
+        """
+        CREATE TABLE IF NOT EXISTS practice_instances (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            template_id TEXT NOT NULL,
+            template_version INTEGER NOT NULL,
+            node_id TEXT NOT NULL,
+            concept_id TEXT NOT NULL,
+            status TEXT NOT NULL,
+            seed INTEGER NOT NULL,
+            public_payload TEXT NOT NULL,
+            private_payload TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            completed_at TEXT
+        )
+        """
+    )
+    connection.exec_driver_sql(
+        "CREATE INDEX IF NOT EXISTS practice_instances_active_lookup ON practice_instances (user_id, template_id, status, updated_at DESC)"
+    )
+    connection.exec_driver_sql(
+        """
+        CREATE TABLE IF NOT EXISTS practice_submissions (
+            id TEXT PRIMARY KEY,
+            instance_id TEXT NOT NULL REFERENCES practice_instances(id) ON DELETE CASCADE,
+            user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            response TEXT NOT NULL,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+    connection.exec_driver_sql(
+        "CREATE INDEX IF NOT EXISTS practice_submissions_instance_lookup ON practice_submissions (instance_id, created_at DESC)"
+    )
+
+
+MIGRATIONS = ((1, _migration_1_identity), (2, _migration_2_challenge_ownership), (3, _migration_3_progress), (4, _migration_4_practice_instances))
 
 
 def run_migrations() -> None:

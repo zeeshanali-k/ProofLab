@@ -43,6 +43,12 @@ if __package__ in {None, ""}:
         ChallengeSubmitRequest,
         CompletionResult,
         CurrentUserPayload,
+        CurriculumCatalogResponse,
+        CurriculumExperience,
+        CurriculumNodeDetailResponse,
+        CurriculumNodePayload,
+        CurriculumProgressSummary,
+        CurriculumRecommendationPayload,
         DashboardResponse,
         ErrorResponse,
         ExplanationRequest,
@@ -52,6 +58,10 @@ if __package__ in {None, ""}:
         MasteryPayload,
         ProfilePayload,
         ProfileUpdateRequest,
+        PracticeAnswerRequest,
+        PracticeCheckResponse,
+        PracticeInstancePayload,
+        PracticeNextRequest,
         RegisterRequest,
         RevealFinalFormRequest,
         RevealFinalFormResult,
@@ -59,9 +69,12 @@ if __package__ in {None, ""}:
         VerificationResult,
         VerifyRequest,
     )
-    from prooflab_api.database import LearnerProfile, User, get_db, run_migrations, utc_now
+    from prooflab_api.curriculum import CURRICULUM_NODES, get_curriculum_node, missions_for_node
+    from prooflab_api.database import ConceptMastery, LearnerProfile, PracticeInstance, User, get_db, run_migrations, utc_now
+    from prooflab_api.foundations import get_foundation_template
     from prooflab_api.parser import MathSyntaxError
     from prooflab_api.progress import GUIDED_CONCEPTS, ProgressRepository, concept_for_challenge
+    from prooflab_api.practice import PracticeRepository, check_stored_response, public_payload
     from prooflab_api.repositories import ChallengeSubmissionRepository, StoredSubmission
     from prooflab_api.teaching import TeachingProviderError, get_teaching_provider
     from prooflab_api.verifier import assess_completion, canonical_final_latex, verify_transition
@@ -97,6 +110,12 @@ else:
         ChallengeSubmitRequest,
         CompletionResult,
         CurrentUserPayload,
+        CurriculumCatalogResponse,
+        CurriculumExperience,
+        CurriculumNodeDetailResponse,
+        CurriculumNodePayload,
+        CurriculumProgressSummary,
+        CurriculumRecommendationPayload,
         DashboardResponse,
         ErrorResponse,
         ExplanationRequest,
@@ -106,6 +125,10 @@ else:
         MasteryPayload,
         ProfilePayload,
         ProfileUpdateRequest,
+        PracticeAnswerRequest,
+        PracticeCheckResponse,
+        PracticeInstancePayload,
+        PracticeNextRequest,
         RegisterRequest,
         RevealFinalFormRequest,
         RevealFinalFormResult,
@@ -113,9 +136,12 @@ else:
         VerificationResult,
         VerifyRequest,
     )
-    from .database import LearnerProfile, User, get_db, run_migrations, utc_now
+    from .curriculum import CURRICULUM_NODES, get_curriculum_node, missions_for_node
+    from .database import ConceptMastery, LearnerProfile, PracticeInstance, User, get_db, run_migrations, utc_now
+    from .foundations import get_foundation_template
     from .parser import MathSyntaxError
     from .progress import GUIDED_CONCEPTS, ProgressRepository, concept_for_challenge
+    from .practice import PracticeRepository, check_stored_response, public_payload
     from .repositories import ChallengeSubmissionRepository, StoredSubmission
     from .teaching import TeachingProviderError, get_teaching_provider
     from .verifier import assess_completion, canonical_final_latex, verify_transition
@@ -195,6 +221,82 @@ def _submission_record(record: StoredSubmission) -> ChallengeSubmissionRecord:
         submittedLatex=record.submitted_latex,
         status=record.status,
         createdAt=record.created_at,
+    )
+
+
+def _curriculum_node_payload(node) -> CurriculumNodePayload:
+    return CurriculumNodePayload(
+        id=node.id,
+        parentId=node.parent_id,
+        strand=node.strand,
+        title=node.title,
+        summary=node.summary,
+        prerequisites=list(node.prerequisites),
+        recommendedTracks=list(node.recommended_tracks),
+        objectives=list(node.objectives),
+        interactionKinds=list(node.interaction_kinds),
+        visualizerType=node.visualizer_type,
+        conceptIds=list(node.concept_ids),
+        missionIds=list(node.mission_ids),
+        templateIds=list(node.template_ids),
+        leetMathChallengeIds=list(node.leet_math_challenge_ids),
+        masteryThreshold=node.mastery_threshold,
+    )
+
+
+def _practice_payload(instance: PracticeInstance) -> PracticeInstancePayload:
+    template = get_foundation_template(instance.template_id)
+    if template is None:
+        raise HTTPException(status_code=410, detail="This practice template is no longer available.")
+    payload = public_payload(instance)
+    return PracticeInstancePayload(
+        instanceId=instance.id,
+        templateId=instance.template_id,
+        nodeId=instance.node_id,
+        conceptId=instance.concept_id,
+        title=str(payload["title"]),
+        prompt=str(payload["prompt"]),
+        instructions=str(payload["instructions"]),
+        visualizerType=payload["visualizerType"],
+        visualization=dict(payload["visualization"]),
+        status="completed" if instance.status == "completed" else "active",
+        isGuided=template.is_guided,
+    )
+
+
+def _curriculum_recommendations(track: LearnerTrack, mastered_concept_ids: set[str]) -> list[CurriculumRecommendationPayload]:
+    recommendations: list[CurriculumRecommendationPayload] = []
+    for node in CURRICULUM_NODES:
+        if not (node.mission_ids or node.template_ids or node.leet_math_challenge_ids):
+            continue
+        missing_prerequisite = next(
+            (
+                prerequisite_id
+                for prerequisite_id in node.prerequisites
+                if (prerequisite := get_curriculum_node(prerequisite_id))
+                and prerequisite.concept_ids
+                and not set(prerequisite.concept_ids).issubset(mastered_concept_ids)
+            ),
+            None,
+        )
+        reason = (
+            f"Recommended for the {track.value} track; a catch-up topic may make it easier."
+            if missing_prerequisite
+            else f"Available now for the {track.value} track."
+        )
+        recommendations.append(
+            CurriculumRecommendationPayload(nodeId=node.id, reason=reason, catchUpNodeId=missing_prerequisite)
+        )
+    return recommendations[:3]
+
+
+def _curriculum_progress_summary(current_user: CurrentUser, db: Session) -> CurriculumProgressSummary:
+    records = db.scalars(select(ConceptMastery).where(ConceptMastery.user_id == current_user.id)).all()
+    track = LearnerTrack(current_user.profile.active_track)
+    return CurriculumProgressSummary(
+        introducedConceptIds=sorted(record.concept_id for record in records),
+        masteredConceptIds=sorted(record.concept_id for record in records if record.status == "mastered"),
+        recommendedTrack=track,
     )
 
 
@@ -326,6 +428,138 @@ async def introduce_activity(
     ProgressRepository().introduce(db, user_id=current_user.id, concept_id=concept_id)
     db.commit()
     return Response(status_code=204)
+
+
+@app.get("/curriculum", response_model=CurriculumCatalogResponse)
+async def curriculum_catalog(
+    current_user: CurrentUser = Depends(require_current_user),
+    db: Session = Depends(get_db),
+) -> CurriculumCatalogResponse:
+    progress = _curriculum_progress_summary(current_user, db)
+    return CurriculumCatalogResponse(
+        nodes=[_curriculum_node_payload(node) for node in CURRICULUM_NODES],
+        recommendations=_curriculum_recommendations(progress.recommended_track, set(progress.mastered_concept_ids)),
+        progressSummary=progress,
+    )
+
+
+@app.get("/curriculum/{node_id}", response_model=CurriculumNodeDetailResponse)
+async def curriculum_node(
+    node_id: str,
+    _: CurrentUser = Depends(require_current_user),
+) -> CurriculumNodeDetailResponse:
+    node = get_curriculum_node(node_id)
+    if node is None:
+        raise HTTPException(status_code=404, detail="Curriculum node not found.")
+    base = _curriculum_node_payload(node)
+    return CurriculumNodeDetailResponse(
+        **base.model_dump(by_alias=True),
+        missions=[
+            {
+                "id": mission.id,
+                "title": mission.title,
+                "category": mission.category,
+                "mode": mission.mode,
+                "rootKind": mission.root_kind,
+                "prompt": mission.prompt,
+                "goal": mission.goal,
+                "seedSteps": [{"math": math, "kind": kind} for math, kind in mission.seed_steps],
+                "canonicalGoal": mission.canonical_goal,
+                "curriculumNodeId": mission.curriculum_node_id,
+                "allowedExperiences": [CurriculumExperience.GUIDED_PROOFLAB],
+            }
+            for mission in missions_for_node(node.id)
+        ],
+        allowedExperiences=list(node.interaction_kinds),
+    )
+
+
+@app.post("/practice/next", response_model=PracticeInstancePayload)
+async def next_practice(
+    request: PracticeNextRequest,
+    current_user: CurrentUser = Depends(require_current_user),
+    db: Session = Depends(get_db),
+) -> PracticeInstancePayload:
+    template = get_foundation_template(request.template_id)
+    if template is None:
+        raise HTTPException(status_code=404, detail="Practice template not found.")
+    repository = PracticeRepository()
+    active = repository.active_for_template(db, user_id=current_user.id, template_id=template.id)
+    if active is not None and request.restart:
+        repository.abandon(active)
+        active = None
+    instance = active or repository.create(db, user_id=current_user.id, template=template)
+    ProgressRepository().introduce(db, user_id=current_user.id, concept_id=template.concept_id)
+    db.commit()
+    return _practice_payload(instance)
+
+
+@app.get("/practice/{instance_id}", response_model=PracticeInstancePayload)
+async def practice_instance(
+    instance_id: str,
+    current_user: CurrentUser = Depends(require_current_user),
+    db: Session = Depends(get_db),
+) -> PracticeInstancePayload:
+    instance = PracticeRepository().owned_instance(db, user_id=current_user.id, instance_id=instance_id)
+    if instance is None or instance.status == "abandoned":
+        raise HTTPException(status_code=404, detail="Practice instance not found.")
+    return _practice_payload(instance)
+
+
+def _owned_active_practice(db: Session, *, user_id: str, instance_id: str) -> PracticeInstance:
+    instance = PracticeRepository().owned_instance(db, user_id=user_id, instance_id=instance_id)
+    if instance is None or instance.status == "abandoned":
+        raise HTTPException(status_code=404, detail="Practice instance not found.")
+    if instance.status == "completed":
+        raise HTTPException(status_code=409, detail="This practice activity is already complete. Start a fresh one to practise again.")
+    return instance
+
+
+@app.post("/practice/{instance_id}/verify", response_model=PracticeCheckResponse)
+async def verify_practice(
+    instance_id: str,
+    request: PracticeAnswerRequest,
+    current_user: CurrentUser = Depends(require_current_user),
+    db: Session = Depends(get_db),
+) -> PracticeCheckResponse:
+    instance = _owned_active_practice(db, user_id=current_user.id, instance_id=instance_id)
+    accepted, feedback, normalized = check_stored_response(instance, request.response)
+    return PracticeCheckResponse(
+        status="valid" if accepted else "invalid",
+        feedback=feedback,
+        normalizedResponse=normalized,
+        instance=_practice_payload(instance),
+    )
+
+
+@app.post("/practice/{instance_id}/submit", response_model=PracticeCheckResponse)
+async def submit_practice(
+    instance_id: str,
+    request: PracticeAnswerRequest,
+    current_user: CurrentUser = Depends(require_current_user),
+    db: Session = Depends(get_db),
+) -> PracticeCheckResponse:
+    instance = _owned_active_practice(db, user_id=current_user.id, instance_id=instance_id)
+    accepted, feedback, normalized = check_stored_response(instance, request.response)
+    repository = PracticeRepository()
+    repository.record_submission(db, instance=instance, response=request.response, accepted=accepted)
+    progress = ProgressRepository().record_foundation_completion(
+        db,
+        user_id=current_user.id,
+        template_id=instance.template_id,
+        concept_id=instance.concept_id,
+        completed=accepted,
+    )
+    db.commit()
+    return PracticeCheckResponse(
+        status="valid" if accepted else "invalid",
+        feedback=feedback,
+        normalizedResponse=normalized,
+        instance=_practice_payload(instance),
+        earnedXp=progress.earned_xp,
+        totalXp=progress.total_xp,
+        masteryStatus=progress.mastery_status,
+    )
 
 
 @app.get("/challenges", response_model=list[ChallengeCatalogItem])
