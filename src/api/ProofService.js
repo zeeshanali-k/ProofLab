@@ -1,169 +1,8 @@
 // The browser talks directly to the single FastAPI backend. It never receives
-// symbolic-engine or teaching-provider credentials.
+// symbolic-engine, curriculum-template, or teaching-provider credentials.
 export const ENV_MODE = 'Python API';
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_PROOFLAB_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
-
-const PROBLEM_LIBRARY = [
-  {
-    id: 'missing-middle-term',
-    title: 'The missing middle term',
-    category: 'Quadratics',
-    mode: 'algebra',
-    rootKind: 'equation',
-    prompt: '(x + 2)^2 = 25',
-    goal: 'Expand the square without losing a term.',
-    seedSteps: [{ math: 'x^2 + 4 = 25', kind: 'equation' }],
-  },
-  {
-    id: 'linear-balance',
-    title: 'Keep both sides balanced',
-    category: 'Linear equations',
-    mode: 'algebra',
-    rootKind: 'equation',
-    prompt: '3x + 5 = 20',
-    goal: 'Isolate x using the same operation on both sides.',
-    seedSteps: [{ math: '3x = 15', kind: 'equation' }, { math: 'x = 5', kind: 'equation' }],
-  },
-  {
-    id: 'inequality-sign-flip',
-    title: 'Flip the inequality sign',
-    category: 'Inequalities',
-    mode: 'inequality',
-    rootKind: 'inequality',
-    prompt: '-2x + 3 > 7',
-    goal: 'Keep the solution region when you divide by a negative.',
-    canonicalGoal: { kind: 'inequality' },
-    seedSteps: [{ math: '-2x > 4', kind: 'inequality' }, { math: 'x > -2', kind: 'inequality' }],
-  },
-  {
-    id: 'negative-square',
-    title: 'A negative cross term',
-    category: 'Quadratics',
-    mode: 'algebra',
-    rootKind: 'equation',
-    prompt: '(x - 3)^2 = 16',
-    goal: 'Notice what changes when a binomial is squared.',
-    seedSteps: [{ math: 'x^2 + 9 = 16', kind: 'equation' }],
-  },
-  {
-    id: 'quadratic-solution-check',
-    title: 'Test a proposed solution',
-    category: 'Quadratics',
-    mode: 'algebra',
-    rootKind: 'equation',
-    prompt: 'x^2 - 5x + 6 = 0',
-    goal: 'Rearrange, then test a value by substitution.',
-    seedSteps: [{ math: 'x^2 - 5x = -6', kind: 'equation' }, { math: 'x = 2', kind: 'equation' }],
-  },
-  {
-    id: 'factor-then-solve',
-    title: 'Factor, then test a root',
-    category: 'Quadratics',
-    mode: 'algebra',
-    rootKind: 'equation',
-    prompt: 'x^2 - 5x + 6 = 0',
-    goal: 'Factor the quadratic, then test a root from the factors.',
-    seedSteps: [{ math: '(x - 2)(x - 3) = 0', kind: 'equation' }, { math: 'x = 2', kind: 'equation' }],
-  },
-  {
-    id: 'polynomial-derivative',
-    title: 'Differentiate a polynomial',
-    category: 'Calculus',
-    mode: 'derivative',
-    rootKind: 'function',
-    prompt: 'f(x) = x^3 + 2x',
-    goal: 'Use the power rule to find the derivative.',
-    canonicalGoal: { kind: 'derivative', terminalDerivativeOrder: 1 },
-    seedSteps: [{ math: "f'(x) = 3x^2 + 2", kind: 'derivative' }],
-  },
-  {
-    id: 'trig-chain-derivative',
-    title: 'Differentiate a trig chain',
-    category: 'Calculus',
-    mode: 'derivative',
-    rootKind: 'function',
-    prompt: 'f(x) = \\sin(3x^2 + 1)',
-    goal: 'Apply the chain rule to the polynomial inside sine.',
-    canonicalGoal: { kind: 'derivative', terminalDerivativeOrder: 1 },
-    seedSteps: [{ math: "f'(x) = 6x\\cos(3x^2 + 1)", kind: 'derivative' }],
-  },
-  {
-    id: 'product-rule-derivative',
-    title: 'Differentiate a product',
-    category: 'Calculus',
-    mode: 'derivative',
-    rootKind: 'function',
-    prompt: 'f(x) = x^2\\sin(x)',
-    goal: 'Use the product rule to differentiate both factors.',
-    canonicalGoal: { kind: 'derivative', terminalDerivativeOrder: 1 },
-    seedSteps: [{ math: "f'(x) = 2x\\sin(x) + x^2\\cos(x)", kind: 'derivative' }],
-  },
-  {
-    id: 'repeated-derivative',
-    title: 'Differentiate twice',
-    category: 'Calculus',
-    mode: 'derivative',
-    rootKind: 'function',
-    prompt: 'f(x) = x^3 + \\sin(x)',
-    goal: 'Find the second derivative, one derivative at a time.',
-    canonicalGoal: { kind: 'derivative', terminalDerivativeOrder: 2 },
-    seedSteps: [{ math: "f'(x) = 3x^2 + \\cos(x)", kind: 'derivative' }],
-  },
-  {
-    id: 'indefinite-integral',
-    title: 'Integrate polynomial and cosine',
-    category: 'Calculus',
-    mode: 'integral',
-    rootKind: 'expression',
-    prompt: '\\int 3x^2 + \\cos(2x + 1)\\, dx',
-    goal: 'Find any valid antiderivative and include + C.',
-    seedSteps: [],
-  },
-  {
-    id: 'missing-integration-constant',
-    title: 'Do not lose + C',
-    category: 'Calculus',
-    mode: 'integral',
-    rootKind: 'expression',
-    prompt: '\\int x^2\\, dx',
-    goal: 'Check whether an indefinite integral includes the constant of integration.',
-    seedSteps: [{ math: 'F(x) = \\frac{1}{3}x^3', kind: 'antiderivative' }],
-  },
-  {
-    id: 'complex-product',
-    title: 'Multiply complex numbers',
-    category: 'Complex numbers',
-    mode: 'complex-simplify',
-    rootKind: 'expression',
-    prompt: '(2 + 3i)(1 - 2i)',
-    goal: 'Simplify into a + bi form.',
-    canonicalGoal: { kind: 'complex-simplify' },
-    seedSteps: [{ math: '8 + i', kind: 'expression' }],
-  },
-  {
-    id: 'complex-roots',
-    title: 'Find both imaginary roots',
-    category: 'Complex equations',
-    mode: 'complex-solve',
-    rootKind: 'equation',
-    prompt: 'x^2 + 4 = 0',
-    goal: 'Enter every solution in the complex solution set.',
-    canonicalGoal: { kind: 'complex-solve' },
-    seedSteps: [{ math: '\\{2i\\}', kind: 'solution-set' }],
-  },
-  {
-    id: 'complex-complete-roots',
-    title: 'Complete a complex solution set',
-    category: 'Complex equations',
-    mode: 'complex-solve',
-    rootKind: 'equation',
-    prompt: 'x^2 + 9 = 0',
-    goal: 'Include both imaginary roots in the solution set.',
-    canonicalGoal: { kind: 'complex-solve' },
-    seedSteps: [{ math: '\\{3i, -3i\\}', kind: 'solution-set' }],
-  },
-];
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
@@ -228,27 +67,42 @@ const edgeFromResult = (result, previousStep, nextStep) => ({
   },
 });
 
-async function requestJson(path, payload) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(payload),
-  });
+async function request(path, options = {}) {
+  const response = await fetch(`${API_BASE_URL}${path}`, { credentials: 'include', ...options });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body.error || body.detail || 'The ProofLab service is unavailable.');
   return body;
 }
 
-const definitionFor = (id) => PROBLEM_LIBRARY.find((problem) => problem.id === id);
+async function requestJson(path, payload) {
+  return request(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+async function fetchProblemLibrary() {
+  const catalog = await request('/curriculum');
+  const nodeIds = catalog.nodes
+    .filter((node) => node.missionIds.length > 0)
+    .map((node) => node.id);
+  const details = await Promise.all(nodeIds.map((nodeId) => request(`/curriculum/${encodeURIComponent(nodeId)}`)));
+  const missions = details.flatMap((node) => node.missions);
+  if (!missions.length) throw new Error('The curriculum has no Guided ProofLab missions yet.');
+  return clone(missions);
+}
 
 export const ProofService = {
   getProblemLibrary() {
-    return clone(PROBLEM_LIBRARY);
+    return fetchProblemLibrary();
   },
 
   async fetchInitialState() {
-    return this.loadProblem(definitionFor('missing-middle-term'));
+    const problemLibrary = await this.getProblemLibrary();
+    const initialProblem = problemLibrary.find((problem) => problem.id === 'missing-middle-term') ?? problemLibrary[0];
+    const board = await this.loadProblem(initialProblem);
+    return { ...board, problemLibrary };
   },
 
   async loadProblem(definition) {
@@ -315,7 +169,7 @@ export const ProofService = {
     return result.status;
   },
 
-  async revealFinalForm(problem, givenStep) {
+  revealFinalForm(problem, givenStep) {
     return requestJson('/reveal-final-form', {
       mode: problem.mode,
       givenStep: { id: givenStep.id, latex: givenStep.math, kind: givenStep.kind },
@@ -323,7 +177,7 @@ export const ProofService = {
     });
   },
 
-  async explain(previousStep, nextStep, verification, mode) {
+  explain(previousStep, nextStep, verification, mode) {
     return requestJson('/explain', {
       previousStep: previousStep.math,
       nextStep: nextStep.math,

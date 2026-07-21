@@ -101,6 +101,7 @@ function PanelResizeHandle({ side, value, maximum, onPointerDown, onKeyDown }) {
 export default function App() {
   const { user } = useAuth();
   const [data, setData] = useState({ problem: null, steps: [], edges: [] });
+  const [problemLibrary, setProblemLibrary] = useState([]);
   const [selectedEdgeId, setSelectedEdgeId] = useState('e1');
   const [composer, setComposer] = useState(null);
   const [isChecking, setIsChecking] = useState(false);
@@ -124,10 +125,16 @@ export default function App() {
   const workspaceRef = useRef(null);
 
   useEffect(() => {
+    let active = true;
     ProofService.fetchInitialState().then((next) => {
+      if (!active) return;
       setData(next);
+      setProblemLibrary(next.problemLibrary);
       AuthService.introduceActivity({ activityKind: 'guided', activityId: next.problem.id }).catch(() => {});
-    }).catch((error) => setLoadError(error instanceof Error ? error.message : 'ProofLab could not load a problem.'));
+    }).catch((error) => {
+      if (active) setLoadError(error instanceof Error ? error.message : 'ProofLab could not load a problem.');
+    });
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -624,7 +631,7 @@ export default function App() {
           ) : <div className="inspector-empty"><p>Select a transition to inspect its evidence.</p></div>}
         </aside>
       </main>
-      {isProblemPickerOpen && <ProblemPicker problems={ProofService.getProblemLibrary()} isLoading={isLoadingProblem} onClose={() => setIsProblemPickerOpen(false)} onSelect={(problem) => loadProblem(problem)} onCustom={(problem) => loadProblem(problem, true)} />}
+      {isProblemPickerOpen && <ProblemPicker problems={problemLibrary} isLoading={isLoadingProblem || !problemLibrary.length} onClose={() => setIsProblemPickerOpen(false)} onSelect={(problem) => loadProblem(problem)} onCustom={(problem) => loadProblem(problem, true)} />}
       <RoughWorkBoardModal open={isRoughWorkOpen} boardKey={proofBoardKey(user.id, data.problem.id)} title={data.problem.title} onClose={closeRoughWork} sharedTransitionName="rough-work-launcher" />
       <div className="sr-only" aria-live="polite">{announcement}</div>
     </div>

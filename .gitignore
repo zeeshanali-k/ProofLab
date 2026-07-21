@@ -8,6 +8,7 @@ backend/**/__pycache__/
 backend/data/
 test-results/
 output/
+graphify-out/
 
 # Logs
 logs

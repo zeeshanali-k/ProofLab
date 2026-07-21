@@ -10,25 +10,21 @@ from sqlalchemy import distinct, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from .curriculum import concept_for_challenge as curriculum_concept_for_challenge
+from .curriculum import concept_for_guided_mission
 from .database import ActivityAttempt, ConceptMastery, EarnedAchievement, XpLedger, utc_now
 
 
 GUIDED_CONCEPTS = {
-    "missing-middle-term": "algebra.linear-equations",
-    "linear-balance": "algebra.linear-equations",
-    "inequality-sign-flip": "algebra.inequalities",
-    "negative-square": "algebra.linear-equations",
-    "quadratic-solution-check": "algebra.linear-equations",
-    "factor-then-solve": "algebra.linear-equations",
-    "polynomial-derivative": "calculus.derivatives",
-    "trig-chain-derivative": "calculus.derivatives",
-    "product-rule-derivative": "calculus.derivatives",
-    "repeated-derivative": "calculus.derivatives",
-    "indefinite-integral": "calculus.integrals",
-    "missing-integration-constant": "calculus.integrals",
-    "complex-product": "complex-numbers.simplification",
-    "complex-roots": "complex-numbers.solutions",
-    "complex-complete-roots": "complex-numbers.solutions",
+    mission_id: concept
+    for mission_id in (
+        "missing-middle-term", "linear-balance", "inequality-sign-flip", "negative-square",
+        "quadratic-solution-check", "factor-then-solve", "polynomial-derivative",
+        "trig-chain-derivative", "product-rule-derivative", "repeated-derivative",
+        "indefinite-integral", "missing-integration-constant", "complex-product",
+        "complex-roots", "complex-complete-roots",
+    )
+    if (concept := concept_for_guided_mission(mission_id))
 }
 
 KNOWN_CONCEPTS_BY_STRAND = {
@@ -39,18 +35,10 @@ KNOWN_CONCEPTS_BY_STRAND = {
 
 
 def concept_for_challenge(challenge_id: str) -> str:
-    number = int(challenge_id)
-    if number in {1, 2, 6, 7, 8, 9, 10, 11}:
-        return "algebra.linear-equations"
-    if number in {3, 12, 13, 14, 15, 16}:
-        return "algebra.inequalities"
-    if number in {4, 17, 18, 19, 20, 21}:
-        return "calculus.derivatives"
-    if number in {22, 23, 24}:
-        return "calculus.integrals"
-    if number in {5, 30}:
-        return "complex-numbers.solutions"
-    return "complex-numbers.simplification"
+    concept = curriculum_concept_for_challenge(challenge_id)
+    if concept is None:
+        raise ValueError(f"Challenge {challenge_id} is missing a curriculum concept mapping.")
+    return concept
 
 
 @dataclass(frozen=True)

@@ -20,6 +20,7 @@ from .contracts import (
     VisualizationPhase,
     VisualizerType,
 )
+from .curriculum import curriculum_node_for_challenge
 from .parser import MathSyntaxError, X, normalize_latex, parse_equation, parse_inequality, parse_solution_set
 from .verifier import verify_transition
 
@@ -156,6 +157,7 @@ def get_challenge(challenge_id: str) -> ChallengeDefinition | None:
 
 
 def catalog_item(challenge: ChallengeDefinition) -> ChallengeCatalogItem:
+    curriculum_node = curriculum_node_for_challenge(challenge.id)
     return ChallengeCatalogItem(
         id=challenge.id,
         number=challenge.number,
@@ -166,6 +168,8 @@ def catalog_item(challenge: ChallengeDefinition) -> ChallengeCatalogItem:
         answerKind=challenge.answer_kind,
         visualizerType=challenge.visualizer_type,
         simulationPreview=("Number line" if challenge.visualizer_type == VisualizerType.NUMBER_LINE else "Complex plane" if challenge.visualizer_type == VisualizerType.COMPLEX_PLANE else "Neutral workspace"),
+        curriculumNodeId=curriculum_node.id if curriculum_node else None,
+        strand=curriculum_node.strand if curriculum_node else None,
     )
 
 

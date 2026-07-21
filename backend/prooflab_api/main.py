@@ -43,6 +43,12 @@ if __package__ in {None, ""}:
         ChallengeSubmitRequest,
         CompletionResult,
         CurrentUserPayload,
+        CurriculumCatalogResponse,
+        CurriculumExperience,
+        CurriculumNodeDetailResponse,
+        CurriculumNodePayload,
+        CurriculumProgressSummary,
+        CurriculumRecommendationPayload,
         DashboardResponse,
         ErrorResponse,
         ExplanationRequest,
@@ -59,7 +65,8 @@ if __package__ in {None, ""}:
         VerificationResult,
         VerifyRequest,
     )
-    from prooflab_api.database import LearnerProfile, User, get_db, run_migrations, utc_now
+    from prooflab_api.curriculum import CURRICULUM_NODES, get_curriculum_node, missions_for_node
+    from prooflab_api.database import ConceptMastery, LearnerProfile, User, get_db, run_migrations, utc_now
     from prooflab_api.parser import MathSyntaxError
     from prooflab_api.progress import GUIDED_CONCEPTS, ProgressRepository, concept_for_challenge
     from prooflab_api.repositories import ChallengeSubmissionRepository, StoredSubmission
@@ -97,6 +104,12 @@ else:
         ChallengeSubmitRequest,
         CompletionResult,
         CurrentUserPayload,
+        CurriculumCatalogResponse,
+        CurriculumExperience,
+        CurriculumNodeDetailResponse,
+        CurriculumNodePayload,
+        CurriculumProgressSummary,
+        CurriculumRecommendationPayload,
         DashboardResponse,
         ErrorResponse,
         ExplanationRequest,
@@ -113,7 +126,8 @@ else:
         VerificationResult,
         VerifyRequest,
     )
-    from .database import LearnerProfile, User, get_db, run_migrations, utc_now
+    from .curriculum import CURRICULUM_NODES, get_curriculum_node, missions_for_node
+    from .database import ConceptMastery, LearnerProfile, User, get_db, run_migrations, utc_now
     from .parser import MathSyntaxError
     from .progress import GUIDED_CONCEPTS, ProgressRepository, concept_for_challenge
     from .repositories import ChallengeSubmissionRepository, StoredSubmission
@@ -195,6 +209,61 @@ def _submission_record(record: StoredSubmission) -> ChallengeSubmissionRecord:
         submittedLatex=record.submitted_latex,
         status=record.status,
         createdAt=record.created_at,
+    )
+
+
+def _curriculum_node_payload(node) -> CurriculumNodePayload:
+    return CurriculumNodePayload(
+        id=node.id,
+        strand=node.strand,
+        title=node.title,
+        summary=node.summary,
+        prerequisites=list(node.prerequisites),
+        recommendedTracks=list(node.recommended_tracks),
+        objectives=list(node.objectives),
+        interactionKinds=list(node.interaction_kinds),
+        visualizerType=node.visualizer_type,
+        conceptIds=list(node.concept_ids),
+        missionIds=list(node.mission_ids),
+        templateIds=list(node.template_ids),
+        leetMathChallengeIds=list(node.leet_math_challenge_ids),
+        masteryThreshold=node.mastery_threshold,
+    )
+
+
+def _curriculum_recommendations(track: LearnerTrack, mastered_concept_ids: set[str]) -> list[CurriculumRecommendationPayload]:
+    recommendations: list[CurriculumRecommendationPayload] = []
+    for node in CURRICULUM_NODES:
+        if not (node.mission_ids or node.leet_math_challenge_ids):
+            continue
+        missing_prerequisite = next(
+            (
+                prerequisite_id
+                for prerequisite_id in node.prerequisites
+                if (prerequisite := get_curriculum_node(prerequisite_id))
+                and prerequisite.concept_ids
+                and not set(prerequisite.concept_ids).issubset(mastered_concept_ids)
+            ),
+            None,
+        )
+        reason = (
+            f"Recommended for the {track.value} track; a catch-up topic may make it easier."
+            if missing_prerequisite
+            else f"Available now for the {track.value} track."
+        )
+        recommendations.append(
+            CurriculumRecommendationPayload(nodeId=node.id, reason=reason, catchUpNodeId=missing_prerequisite)
+        )
+    return recommendations[:3]
+
+
+def _curriculum_progress_summary(current_user: CurrentUser, db: Session) -> CurriculumProgressSummary:
+    records = db.scalars(select(ConceptMastery).where(ConceptMastery.user_id == current_user.id)).all()
+    track = LearnerTrack(current_user.profile.active_track)
+    return CurriculumProgressSummary(
+        introducedConceptIds=sorted(record.concept_id for record in records),
+        masteredConceptIds=sorted(record.concept_id for record in records if record.status == "mastered"),
+        recommendedTrack=track,
     )
 
 
@@ -326,6 +395,50 @@ async def introduce_activity(
     ProgressRepository().introduce(db, user_id=current_user.id, concept_id=concept_id)
     db.commit()
     return Response(status_code=204)
+
+
+@app.get("/curriculum", response_model=CurriculumCatalogResponse)
+async def curriculum_catalog(
+    current_user: CurrentUser = Depends(require_current_user),
+    db: Session = Depends(get_db),
+) -> CurriculumCatalogResponse:
+    progress = _curriculum_progress_summary(current_user, db)
+    return CurriculumCatalogResponse(
+        nodes=[_curriculum_node_payload(node) for node in CURRICULUM_NODES],
+        recommendations=_curriculum_recommendations(progress.recommended_track, set(progress.mastered_concept_ids)),
+        progressSummary=progress,
+    )
+
+
+@app.get("/curriculum/{node_id}", response_model=CurriculumNodeDetailResponse)
+async def curriculum_node(
+    node_id: str,
+    _: CurrentUser = Depends(require_current_user),
+) -> CurriculumNodeDetailResponse:
+    node = get_curriculum_node(node_id)
+    if node is None:
+        raise HTTPException(status_code=404, detail="Curriculum node not found.")
+    base = _curriculum_node_payload(node)
+    return CurriculumNodeDetailResponse(
+        **base.model_dump(by_alias=True),
+        missions=[
+            {
+                "id": mission.id,
+                "title": mission.title,
+                "category": mission.category,
+                "mode": mission.mode,
+                "rootKind": mission.root_kind,
+                "prompt": mission.prompt,
+                "goal": mission.goal,
+                "seedSteps": [{"math": math, "kind": kind} for math, kind in mission.seed_steps],
+                "canonicalGoal": mission.canonical_goal,
+                "curriculumNodeId": mission.curriculum_node_id,
+                "allowedExperiences": [CurriculumExperience.GUIDED_PROOFLAB],
+            }
+            for mission in missions_for_node(node.id)
+        ],
+        allowedExperiences=list(node.interaction_kinds),
+    )
 
 
 @app.get("/challenges", response_model=list[ChallengeCatalogItem])
