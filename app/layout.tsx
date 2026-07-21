@@ -11,8 +11,8 @@ import { ModuleBackLink } from '../src/components/ModuleBackLink';
 const themeInitializer = `(() => { try { const saved = localStorage.getItem('prooflab:theme'); const theme = saved || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); document.documentElement.dataset.theme = theme; } catch { document.documentElement.dataset.theme = 'light'; } })();`;
 
 export const metadata: Metadata = {
-  title: 'ProofLab',
-  description: 'A visual algebra-reasoning debugger.',
+  title: 'ProofLab | Interactive learning labs',
+  description: 'Interactive Math, Chemistry, Physics, and Biology learning labs.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

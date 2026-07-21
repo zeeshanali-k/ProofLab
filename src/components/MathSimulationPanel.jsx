@@ -34,9 +34,9 @@ function ComplexPlaneSimulation({ points, phase }) {
         <text x="89" y="46">Re</text><text x="53" y="13">Im</text>
         {points.map((point, index) => <g key={`${point.label}-${index}`}>
           <circle className="complex-point" cx={coordinate(point.real)} cy={coordinate(-point.imaginary)} r="4" />
-          <text className="complex-point-label" x={coordinate(point.real) + 4} y={coordinate(-point.imaginary) - 4}>{point.label}</text>
         </g>)}
       </svg>
+      {points.map((point, index) => <MathDisplay key={`${point.label}-${index}`} math={point.label} inline className="complex-point-math-label" style={{ left: `${coordinate(point.real) + 4}%`, top: `${coordinate(-point.imaginary) - 4}%` }} />)}
     </div>
   );
 }

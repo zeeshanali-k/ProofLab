@@ -48,6 +48,19 @@ test.describe('LeetMath challenge arena', () => {
     await expect(page.getByText('accepted', { exact: true })).toBeVisible();
   });
 
+  test('typesets formula-bearing LeetMath guidance and format feedback', async ({ page }) => {
+    await page.goto('/leetmath/022');
+    await expect(page.locator('.challenge-brief li .katex')).toHaveCount(1);
+
+    await setMathField(page, 'LeetMath answer', 'F(x) = 2x^3');
+    await page.getByRole('button', { name: 'Submit answer' }).click();
+
+    const result = page.locator('.submission-result');
+    await expect(result.getByText('Format error', { exact: true })).toBeVisible();
+    await expect(result.locator('.katex')).toHaveCount(1);
+    await expect(result.locator('.katex-html')).toHaveCount(1);
+  });
+
   test('keeps an incomplete complex root set private and restores local draft work', async ({ page }) => {
     await page.goto('/leetmath/005');
     await setMathField(page, 'LeetMath answer', '\\{2i\\}');

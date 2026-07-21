@@ -5,7 +5,6 @@ import { flushSync } from 'react-dom';
 import { ProofService, ENV_MODE } from './api/ProofService';
 import EquationField from './components/EquationField';
 import CanonicalProgress from './components/CanonicalProgress';
-import GuideScreen from './components/GuideScreen';
 import MathDisplay from './components/MathDisplay';
 import InequalityNumberLine from './components/InequalityNumberLine';
 import TeachingContent from './components/TeachingContent';
@@ -21,6 +20,23 @@ const STATUS_COPY = {
   checking: 'Rechecking…',
   inconclusive: 'Needs rechecking',
 };
+
+const DESKTOP_WORKSPACE_BREAKPOINT = 1100;
+const MIN_REASONING_WIDTH = 360;
+const RESIZE_HANDLE_TOTAL_WIDTH = 24;
+const PANEL_LIMITS = {
+  problem: { min: 200, max: 440 },
+  inspector: { min: 280, max: 520 },
+};
+
+const clamp = (value, minimum, maximum) => Math.min(Math.max(value, minimum), maximum);
+
+function clampPanelWidth(side, requestedWidth, panelWidths, workspaceWidth) {
+  const limits = PANEL_LIMITS[side];
+  const otherSide = side === 'problem' ? 'inspector' : 'problem';
+  const maximumForReasoning = workspaceWidth - panelWidths[otherSide] - MIN_REASONING_WIDTH - RESIZE_HANDLE_TOTAL_WIDTH;
+  return clamp(requestedWidth, limits.min, Math.max(limits.min, Math.min(limits.max, maximumForReasoning)));
+}
 
 const defaultClaimKind = (problem) => {
   if (problem.mode === 'inequality') return 'inequality';
@@ -57,6 +73,29 @@ function StatusPill({ status }) {
   );
 }
 
+function PanelResizeHandle({ side, value, maximum, onPointerDown, onKeyDown }) {
+  const problemPanel = side === 'problem';
+  const label = problemPanel ? 'Resize problem panel' : 'Resize evidence inspector';
+  return (
+    <div
+      className={`panel-resize-handle ${side}`}
+      role="separator"
+      tabIndex={0}
+      aria-controls={problemPanel ? 'problem-rail' : 'transition-inspector'}
+      aria-label={label}
+      aria-orientation="vertical"
+      aria-valuemin={PANEL_LIMITS[side].min}
+      aria-valuemax={maximum}
+      aria-valuenow={value}
+      aria-valuetext={`${value} pixels. Use the arrow keys to resize.`}
+      onPointerDown={(event) => onPointerDown(side, event)}
+      onKeyDown={(event) => onKeyDown(side, event)}
+    >
+      <span className="panel-resize-grip" aria-hidden="true" />
+    </div>
+  );
+}
+
 export default function App() {
   const [data, setData] = useState({ problem: null, steps: [], edges: [] });
   const [selectedEdgeId, setSelectedEdgeId] = useState('e1');
@@ -68,37 +107,115 @@ export default function App() {
   const [helpEdgeId, setHelpEdgeId] = useState(null);
   const [isProblemOpen, setIsProblemOpen] = useState(false);
   const [isProblemPickerOpen, setIsProblemPickerOpen] = useState(false);
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isRoughWorkOpen, setIsRoughWorkOpen] = useState(false);
   const [isLoadingProblem, setIsLoadingProblem] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [announcement, setAnnouncement] = useState('');
   const [revealedFinalForm, setRevealedFinalForm] = useState(null);
   const [isRevealingFinalForm, setIsRevealingFinalForm] = useState(false);
+  const [panelWidths, setPanelWidths] = useState({ problem: 240, inspector: 348 });
+  const [activeResize, setActiveResize] = useState(null);
   const helpRequestId = useRef(0);
   const clientIdSequence = useRef(0);
-  const helpButtonRef = useRef(null);
   const roughWorkButtonRef = useRef(null);
+  const workspaceRef = useRef(null);
 
   useEffect(() => {
     ProofService.fetchInitialState().then(setData).catch((error) => setLoadError(error instanceof Error ? error.message : 'ProofLab could not load a problem.'));
   }, []);
+
+  useEffect(() => {
+    const constrainPanels = () => {
+      const workspace = workspaceRef.current;
+      if (!workspace || window.innerWidth < DESKTOP_WORKSPACE_BREAKPOINT) return;
+      const workspaceWidth = workspace.getBoundingClientRect().width;
+      setPanelWidths((current) => {
+        const inspector = clampPanelWidth('inspector', current.inspector, current, workspaceWidth);
+        const withInspector = { ...current, inspector };
+        const problem = clampPanelWidth('problem', current.problem, withInspector, workspaceWidth);
+        if (problem === current.problem && inspector === current.inspector) return current;
+        return { problem, inspector };
+      });
+    };
+
+    window.addEventListener('resize', constrainPanels);
+    return () => window.removeEventListener('resize', constrainPanels);
+  }, []);
+
+  useEffect(() => {
+    if (!activeResize) return undefined;
+
+    const move = (event) => {
+      const workspace = workspaceRef.current;
+      if (!workspace) return;
+      const bounds = workspace.getBoundingClientRect();
+      const requestedWidth = activeResize === 'problem'
+        ? event.clientX - bounds.left
+        : bounds.right - event.clientX;
+      setPanelWidths((current) => ({
+        ...current,
+        [activeResize]: clampPanelWidth(activeResize, requestedWidth, current, bounds.width),
+      }));
+    };
+    const end = () => setActiveResize(null);
+
+    document.body.classList.add('panel-resizing');
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    return () => {
+      document.body.classList.remove('panel-resizing');
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+    };
+  }, [activeResize]);
 
   const selectedEdge = useMemo(
     () => data.edges.find((edge) => edge.id === selectedEdgeId),
     [data.edges, selectedEdgeId],
   );
 
-  const closeGuide = () => {
-    setIsGuideOpen(false);
-    window.requestAnimationFrame(() => helpButtonRef.current?.focus());
-  };
-
   const closeRoughWork = () => {
     const close = () => setIsRoughWorkOpen(false);
     if (typeof document.startViewTransition === 'function') document.startViewTransition(() => flushSync(close));
     else close();
     window.requestAnimationFrame(() => roughWorkButtonRef.current?.focus());
+  };
+
+  const startPanelResize = (side, event) => {
+    if (window.innerWidth < DESKTOP_WORKSPACE_BREAKPOINT) return;
+    event.preventDefault();
+    setActiveResize(side);
+  };
+
+  const adjustPanelWidth = (side, requestedWidth) => {
+    const workspace = workspaceRef.current;
+    if (!workspace || window.innerWidth < DESKTOP_WORKSPACE_BREAKPOINT) return;
+    const workspaceWidth = workspace.getBoundingClientRect().width;
+    setPanelWidths((current) => ({
+      ...current,
+      [side]: clampPanelWidth(side, requestedWidth, current, workspaceWidth),
+    }));
+  };
+
+  const handleResizeKeyDown = (side, event) => {
+    const increasingKey = side === 'problem' ? 'ArrowRight' : 'ArrowLeft';
+    const decreasingKey = side === 'problem' ? 'ArrowLeft' : 'ArrowRight';
+    const step = event.shiftKey ? 32 : 16;
+    if (event.key === increasingKey) {
+      event.preventDefault();
+      adjustPanelWidth(side, panelWidths[side] + step);
+    } else if (event.key === decreasingKey) {
+      event.preventDefault();
+      adjustPanelWidth(side, panelWidths[side] - step);
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      adjustPanelWidth(side, PANEL_LIMITS[side].min);
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      adjustPanelWidth(side, PANEL_LIMITS[side].max);
+    }
   };
 
   const openRoughWork = () => {
@@ -348,9 +465,10 @@ export default function App() {
   const expectedCount = Math.max(data.problem.seedSteps?.length ?? 0, checkedCount);
   const progress = expectedCount ? `${checkedCount} of ${expectedCount} steps checked` : checkedCount ? `${checkedCount} step${checkedCount === 1 ? '' : 's'} checked` : 'Add a step to begin';
   const progressDots = data.edges.length ? data.edges.slice(0, 4).map((edge) => edge.status) : ['pending'];
+  const problemPanelMaximum = PANEL_LIMITS.problem.max;
+  const inspectorPanelMaximum = PANEL_LIMITS.inspector.max;
   return (
     <div className="app-container">
-      {isGuideOpen ? <GuideScreen onClose={closeGuide} /> : <>
       <header className="app-header">
         <div className="header-left">
           <div className="wordmark" aria-label="ProofLab">
@@ -363,13 +481,15 @@ export default function App() {
 			<div className="header-right">
           <span className="save-status"><span className="save-dot" /> Saved locally</span>
           <button className="problem-toggle" onClick={() => setIsProblemOpen((open) => !open)}>Problem</button>
-          <button className="icon-btn" ref={helpButtonRef} onClick={() => setIsGuideOpen(true)} aria-label="Open ProofLab guide" title="Open the ProofLab platform guide.">?</button>
-          <button className="icon-btn" aria-label="More options">•••</button>
         </div>
       </header>
 
-      <main className="workspace">
-        <aside className={`problem-rail ${isProblemOpen ? 'is-open' : ''}`}>
+      <main
+        className="workspace"
+        ref={workspaceRef}
+        style={{ '--problem-panel-width': `${panelWidths.problem}px`, '--inspector-panel-width': `${panelWidths.inspector}px` }}
+      >
+        <aside id="problem-rail" className={`problem-rail ${isProblemOpen ? 'is-open' : ''}`}>
           <div className="rail-eyebrow">CURRENT PROBLEM</div>
           <h1 className="problem-title">{data.problem.title}</h1>
           <div className="prompt-card">
@@ -389,6 +509,14 @@ export default function App() {
             <button className="reset-example" onClick={resetExample} disabled={isLoadingProblem}>Reset {data.problem.isCustom ? 'my problem' : 'example'}</button>
           </div>
         </aside>
+
+        <PanelResizeHandle
+          side="problem"
+          value={panelWidths.problem}
+          maximum={problemPanelMaximum}
+          onPointerDown={startPanelResize}
+          onKeyDown={handleResizeKeyDown}
+        />
 
         <section className="reasoning-path" aria-label="Reasoning path">
           <div className="path-intro"><span>REASONING PATH</span><span>{ENV_MODE}</span></div>
@@ -456,7 +584,15 @@ export default function App() {
           </div>
         </section>
 
-        <aside className={`transition-inspector ${selectedEdge ? 'is-open' : ''}`} aria-label="Transition evidence">
+        <PanelResizeHandle
+          side="inspector"
+          value={panelWidths.inspector}
+          maximum={inspectorPanelMaximum}
+          onPointerDown={startPanelResize}
+          onKeyDown={handleResizeKeyDown}
+        />
+
+        <aside id="transition-inspector" className={`transition-inspector ${selectedEdge ? 'is-open' : ''}`} aria-label="Transition evidence">
           {selectedEdge ? (
             <>
               <div className="inspector-header">
@@ -484,7 +620,6 @@ export default function App() {
       {isProblemPickerOpen && <ProblemPicker problems={ProofService.getProblemLibrary()} isLoading={isLoadingProblem} onClose={() => setIsProblemPickerOpen(false)} onSelect={(problem) => loadProblem(problem)} onCustom={(problem) => loadProblem(problem, true)} />}
       <RoughWorkBoardModal open={isRoughWorkOpen} boardKey={proofBoardKey(data.problem.id)} title={data.problem.title} onClose={closeRoughWork} sharedTransitionName="rough-work-launcher" />
       <div className="sr-only" aria-live="polite">{announcement}</div>
-      </>}
     </div>
   );
 }
@@ -496,10 +631,10 @@ function EvidenceCard({ evidence, rule }) {
   if (evidence.kind === 'evaluation') {
     return (
       <section className="counterexample-card">
-        <h3>Reality check: try {evidence.inputLatex}</h3>
+        <h3>Reality check: try <MathDisplay math={evidence.inputLatex} className="inline-evidence-math" inline /></h3>
         <div className="calc-table">
-          <div className="calc-row"><span className="calc-label">Original</span><MathDisplay math={evidence.previous.leftLatex} className="calc-math" /><span className="calc-result">= {evidence.previous.rightValue}</span></div>
-          <div className="calc-row"><span className="calc-label">Your step</span><MathDisplay math={evidence.next.leftLatex} className="calc-math" /><span className="calc-result">= {evidence.next.rightValue}</span></div>
+          <div className="calc-row"><span className="calc-label">Original</span><MathDisplay math={evidence.previous.leftLatex} className="calc-math" /><span className="calc-result">= <MathDisplay math={evidence.previous.rightValue} className="inline-evidence-math" inline /></span></div>
+          <div className="calc-row"><span className="calc-label">Your step</span><MathDisplay math={evidence.next.leftLatex} className="calc-math" /><span className="calc-result">= <MathDisplay math={evidence.next.rightValue} className="inline-evidence-math" inline /></span></div>
         </div>
         <p className="calc-note">Because the results differ, this transition cannot be verified.</p>
       </section>
@@ -509,10 +644,10 @@ function EvidenceCard({ evidence, rule }) {
     const isIntegral = rule === 'indefinite-integral';
     return (
       <section className="counterexample-card">
-        <h3>{isIntegral ? 'Antiderivative check' : 'Derivative check'}: try {evidence.inputLatex}</h3>
+        <h3>{isIntegral ? 'Antiderivative check' : 'Derivative check'}: try <MathDisplay math={evidence.inputLatex} className="inline-evidence-math" inline /></h3>
         <div className="calc-table">
-          <div className="calc-row"><span className="calc-label">Expected</span><MathDisplay math={evidence.expectedLatex} className="calc-math" /><span className="calc-result">= {evidence.expectedValue}</span></div>
-          <div className="calc-row"><span className="calc-label">{isIntegral ? 'Your result' : 'Your derivative'}</span><MathDisplay math={evidence.submittedLatex} className="calc-math" /><span className="calc-result">= {evidence.submittedValue}</span></div>
+          <div className="calc-row"><span className="calc-label">Expected</span><MathDisplay math={evidence.expectedLatex} className="calc-math" /><span className="calc-result">= <MathDisplay math={evidence.expectedValue} className="inline-evidence-math" inline /></span></div>
+          <div className="calc-row"><span className="calc-label">{isIntegral ? 'Your result' : 'Your derivative'}</span><MathDisplay math={evidence.submittedLatex} className="calc-math" /><span className="calc-result">= <MathDisplay math={evidence.submittedValue} className="inline-evidence-math" inline /></span></div>
         </div>
       </section>
     );
@@ -532,9 +667,9 @@ function EvidenceCard({ evidence, rule }) {
   return (
     <section className="counterexample-card">
       <h3>Check every root</h3>
-      <div className="evidence-line"><span>Expected:</span><MathDisplay math={`\\{${evidence.expectedSolutionsLatex.join(', ') }\\}`} className="inline-evidence-math" /></div>
-      {evidence.missingSolutionsLatex.length > 0 && <div className="evidence-line"><span>Missing:</span><MathDisplay math={evidence.missingSolutionsLatex.join(', ')} className="inline-evidence-math" /></div>}
-      {evidence.unexpectedSolutionsLatex.length > 0 && <div className="evidence-line"><span>Unexpected:</span><MathDisplay math={evidence.unexpectedSolutionsLatex.join(', ')} className="inline-evidence-math" /></div>}
+      <div className="evidence-line"><span>Expected:</span><MathDisplay math={`\\{${evidence.expectedSolutionsLatex.join(', ') }\\}`} className="inline-evidence-math" inline /></div>
+      {evidence.missingSolutionsLatex.length > 0 && <div className="evidence-line"><span>Missing:</span><MathDisplay math={evidence.missingSolutionsLatex.join(', ')} className="inline-evidence-math" inline /></div>}
+      {evidence.unexpectedSolutionsLatex.length > 0 && <div className="evidence-line"><span>Unexpected:</span><MathDisplay math={evidence.unexpectedSolutionsLatex.join(', ')} className="inline-evidence-math" inline /></div>}
     </section>
   );
 }
@@ -554,7 +689,7 @@ function RepairPanel({ content, nextStep, missingTerm, repairLatex, isChecking, 
     <section className="repair-panel">
       <span className="panel-eyebrow">SUGGESTED REPAIR</span>
       <div className="diff-row"><span>Your step</span><MathDisplay math={nextStep?.math || ''} /></div>
-      <div className="diff-row suggested"><span>Suggested</span>{repairLatex ? <MathDisplay math={repairLatex} /> : <span className="repair-unavailable">No repair candidate was returned.</span>}{missingTerm && <em>{missingTerm}</em>}</div>
+      <div className="diff-row suggested"><span>Suggested</span>{repairLatex ? <MathDisplay math={repairLatex} /> : <span className="repair-unavailable">No repair candidate was returned.</span>}{missingTerm && <MathDisplay math={missingTerm} className="repair-missing-term" inline />}</div>
       <TeachingContent content={content?.body || 'This is a draft. ProofLab will check it before updating your work.'} />
       <div className="repair-actions"><button className="btn-secondary" onClick={onKeep} disabled={isChecking}>Keep mine</button><button className="btn-primary" onClick={onApply} disabled={!repairLatex || isChecking}>{isChecking ? 'Checking…' : 'Apply and check'}</button></div>
     </section>

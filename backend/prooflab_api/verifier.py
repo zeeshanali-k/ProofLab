@@ -194,12 +194,12 @@ def verify_algebra(previous_step: ProofStep, next_step: ProofStep) -> Verificati
             return VerificationResult(
                 status=VerificationStatus.VALID,
                 rule="solution-substitution",
-                summary=f"x = {_latex(proposed)} satisfies the previous equation.",
+                summary=f"$x = {_latex(proposed)}$ satisfies the previous equation.",
             )
         return VerificationResult(
             status=VerificationStatus.INVALID,
             rule="solution-substitution",
-            summary=f"x = {_latex(proposed)} does not satisfy the previous equation.",
+            summary=f"$x = {_latex(proposed)}$ does not satisfy the previous equation.",
             evidence=_solution_evidence(previous, proposed),
         )
     previous_residual = sp.expand(previous[0] - previous[1])
@@ -340,7 +340,7 @@ def verify_inequality(previous_step: ProofStep, next_step: ProofStep) -> Verific
         return VerificationResult(
             status=VerificationStatus.VALID,
             rule="inequality-region-preserved",
-            summary=f"Both inequalities describe {_region_latex(previous)}.",
+            summary=f"Both inequalities describe ${_region_latex(previous)}$.",
             evidence=evidence,
         )
     sign_flip = (
@@ -395,7 +395,7 @@ def _derivative_order_guidance(previous_order: int, next_order: int, expression:
     expected_notation = _derivative_notation(previous_order + 1)
     submitted_notation = _derivative_notation(next_order)
     guidance = [
-        f"After {_derivative_notation(previous_order)}, the next derivative must be {expected_notation}, not {submitted_notation}.",
+        f"After ${_derivative_notation(previous_order)}$, the next derivative must be ${expected_notation}$, not ${submitted_notation}$.",
     ]
     if expression.is_Mul:
         guidance.append("Use the product rule: differentiate the factors separately, then combine the resulting terms.")
@@ -458,7 +458,7 @@ def verify_integral(previous_step: ProofStep, next_step: ProofStep) -> Verificat
         return VerificationResult(
             status=VerificationStatus.INVALID,
             rule="indefinite-integral",
-            summary="An indefinite integral needs the constant of integration, + C.",
+            summary="An indefinite integral needs the constant of integration, $+ C$.",
             evidence=_derivative_evidence(integrand, submitted_derivative),
         )
     return VerificationResult(

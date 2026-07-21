@@ -8,6 +8,7 @@ import EquationField from './EquationField';
 import MathDisplay from './MathDisplay';
 import MathSimulationPanel from './MathSimulationPanel';
 import RoughWorkBoardModal from './RoughWorkBoardModal';
+import TeachingContent from './TeachingContent';
 import { WorkspaceTabs } from './WorkspaceNavigation';
 import { leetMathBoardKey } from '../lib/roughWorkStorage';
 
@@ -155,9 +156,9 @@ export default function ChallengeArena({ challengeId }) {
           <h1>{challenge.title}</h1>
           <p>{challenge.statementText}</p>
           <MathDisplay math={challenge.statementLatex} className="challenge-statement-math" />
-          <section><h2>Constraints</h2><ul>{challenge.constraints.map((constraint) => <li key={constraint}>{constraint}</li>)}</ul></section>
+          <section><h2>Constraints</h2><ul>{challenge.constraints.map((constraint) => <li key={constraint}><TeachingContent content={constraint} inline /></li>)}</ul></section>
           <section><h2>Answer shape</h2><p>{challenge.answerKind.replaceAll('-', ' ')}</p></section>
-          <section><h2>Format example</h2><MathDisplay math={challenge.publicExampleLatex} className="example-math" /><p>{challenge.publicExampleText}</p></section>
+          <section><h2>Format example</h2><MathDisplay math={challenge.publicExampleLatex} className="example-math" /><p><TeachingContent content={challenge.publicExampleText} inline /></p></section>
           <section className="submission-history"><h2>Submission history</h2>{submissions.length === 0 ? <p>No submissions in this browser yet.</p> : <ol>{submissions.map((submission) => <li key={submission.id}><MathDisplay math={submission.submittedLatex} className="history-answer" /><span className={`history-status ${submission.status}`}>{submission.status.replaceAll('-', ' ')}</span></li>)}</ol>}</section>
           <p className="contract-note">Your answer is checked symbolically, not against memorized text.</p>
         </aside>
@@ -173,7 +174,7 @@ export default function ChallengeArena({ challengeId }) {
             {scratch.map((value, index) => <div className="scratch-row" key={index}><EquationField value={value} onChange={(nextValue) => updateScratch(index, nextValue)} ariaLabel={`Scratch step ${index + 1}`} /><button type="button" className="icon-btn" onClick={() => removeScratch(index)} aria-label={`Remove scratch step ${index + 1}`}>×</button></div>)}
           </section>
           {error && <p className="arena-error">{error}</p>}
-          {result && <section className={`submission-result ${result.status}`} aria-live="polite"><strong>{result.status === 'accepted' ? 'Mathematical contract satisfied' : result.status === 'incorrect' ? 'Not accepted yet' : result.status === 'format-error' ? 'Format error' : 'Unsupported'}</strong><p>{result.summary}</p>{result.attemptCount > 0 && <small>Attempt {result.attemptCount} recorded in this browser.</small>}{result.status === 'accepted' && result.rule && <small>{result.rule}</small>}</section>}
+          {result && <section className={`submission-result ${result.status}`} aria-live="polite"><strong>{result.status === 'accepted' ? 'Mathematical contract satisfied' : result.status === 'incorrect' ? 'Not accepted yet' : result.status === 'format-error' ? 'Format error' : 'Unsupported'}</strong><p><TeachingContent content={result.summary} inline /></p>{result.attemptCount > 0 && <small>Attempt {result.attemptCount} recorded in this browser.</small>}{result.status === 'accepted' && result.rule && <small>{result.rule}</small>}</section>}
           <div className="challenge-actions"><button type="button" className="btn-secondary" onClick={reset} disabled={isSubmitting}>Reset</button><button className="btn-primary" disabled={isSubmitting || !answer.trim()}>{isSubmitting ? 'Submitting…' : 'Submit answer'}</button></div>
         </form>
         <aside className="challenge-simulator"><MathSimulationPanel visualization={visualization} /></aside>

@@ -46,6 +46,10 @@ export function Navigation() {
 			// Theme switching should still work when storage is unavailable.
 		}
 	};
+
+	const guideHref = pathname === '/guide'
+		? '/guide'
+		: `/guide?from=${encodeURIComponent(pathname)}`;
 	
 	return (
 		<nav className="main-navbar" role="navigation" aria-label="Main navigation">
@@ -76,6 +80,16 @@ export function Navigation() {
 						</Link>
 					))}
 				</div>
+
+				<Link
+					href={guideHref}
+					className={`nav-guide-link ${pathname === '/guide' ? 'active' : ''}`}
+					aria-label="Open the ProofLab platform guide"
+					aria-current={pathname === '/guide' ? 'page' : undefined}
+				>
+					<span className="nav-guide-symbol" aria-hidden="true">?</span>
+					<span className="nav-guide-label">Guide</span>
+				</Link>
 
 				<button
 					type="button"
