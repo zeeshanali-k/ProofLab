@@ -37,6 +37,7 @@ class GuidedMissionDefinition:
 @dataclass(frozen=True)
 class CurriculumNodeDefinition:
     id: str
+    parent_id: str | None
     strand: str
     title: str
     summary: str
@@ -101,9 +102,13 @@ def _node(
     experiences: tuple[CurriculumExperience, ...],
     visualizer: VisualizerType = VisualizerType.NONE,
     concepts: tuple[str, ...] = (),
+    parent_id: str | None = None,
+    templates: tuple[str, ...] = (),
+    mastery_threshold: int = 3,
 ) -> CurriculumNodeDefinition:
     return CurriculumNodeDefinition(
         id=node_id,
+        parent_id=parent_id,
         strand=strand,
         title=title,
         summary=summary,
@@ -114,13 +119,24 @@ def _node(
         visualizer_type=visualizer,
         concept_ids=concepts,
         mission_ids=_MISSION_IDS_BY_NODE.get(node_id, ()),
-        template_ids=(),
+        template_ids=templates,
         leet_math_challenge_ids=_CHALLENGE_IDS_BY_NODE.get(node_id, ()),
+        mastery_threshold=mastery_threshold,
     )
 
 
 CURRICULUM_NODES: tuple[CurriculumNodeDefinition, ...] = (
-    _node("foundations.quantitative-reasoning", "Number & quantitative foundations", "Number sense and quantities", "Build reliable number, ratio, percentage, unit, and estimation habits.", objectives=("Compare quantities", "Reason with ratios and units"), experiences=(CurriculumExperience.VISUAL_MATH_LAB, CurriculumExperience.LEETMATH), visualizer=VisualizerType.NUMBER_LINE, concepts=("foundations.quantitative-reasoning",)),
+    _node("foundations.quantitative-reasoning", "Number & quantitative foundations", "Math foundations", "Build reliable number, ratio, percentage, unit, estimation, and everyday-money habits.", objectives=("Build number sense", "Reason with quantities", "Apply math in everyday contexts"), experiences=(CurriculumExperience.VISUAL_MATH_LAB,), visualizer=VisualizerType.NUMBER_LINE, concepts=("foundations.quantitative-reasoning",)),
+    _node("foundations.counting-place-value", "Number & quantitative foundations", "Counting and place value", "Read, compose, compare, and round whole numbers using place-value structure.", prerequisites=("foundations.quantitative-reasoning",), objectives=("Compose a number", "Read place values"), experiences=(CurriculumExperience.VISUAL_MATH_LAB,), visualizer=VisualizerType.PLACE_VALUE_BLOCKS, concepts=("foundations.counting-place-value",), parent_id="foundations.quantitative-reasoning", templates=("foundation-count-place-visual", "foundation-count-place-practice"), mastery_threshold=2),
+    _node("foundations.integers-operations", "Number & quantitative foundations", "Integers and operations", "Use addition and subtraction on a number line, including negative values.", prerequisites=("foundations.counting-place-value",), objectives=("Locate integers", "Add and subtract signed numbers"), experiences=(CurriculumExperience.VISUAL_MATH_LAB,), visualizer=VisualizerType.NUMBER_LINE, concepts=("foundations.integers-operations",), parent_id="foundations.quantitative-reasoning", templates=("foundation-integers-visual", "foundation-integers-practice"), mastery_threshold=2),
+    _node("foundations.order-factors-multiples", "Number & quantitative foundations", "Order, factors, and multiples", "Evaluate structured arithmetic and reason about common factors and multiples.", prerequisites=("foundations.integers-operations",), objectives=("Use operation order", "Identify common multiples"), experiences=(CurriculumExperience.VISUAL_MATH_LAB,), visualizer=VisualizerType.NUMBER_LINE, concepts=("foundations.order-factors-multiples",), parent_id="foundations.quantitative-reasoning", templates=("foundation-order-factors-visual", "foundation-order-factors-practice"), mastery_threshold=2),
+    _node("foundations.fractions", "Number & quantitative foundations", "Fractions", "See fractions as equal parts and combine compatible quantities.", prerequisites=("foundations.counting-place-value",), objectives=("Compare fractions", "Add fractions"), experiences=(CurriculumExperience.VISUAL_MATH_LAB,), visualizer=VisualizerType.FRACTION_BARS, concepts=("foundations.fractions",), parent_id="foundations.quantitative-reasoning", templates=("foundation-fractions-visual", "foundation-fractions-practice"), mastery_threshold=2),
+    _node("foundations.decimals", "Number & quantitative foundations", "Decimals", "Connect decimal values to tenths, hundredths, and fractional quantities.", prerequisites=("foundations.fractions",), objectives=("Compare decimals", "Subtract decimals"), experiences=(CurriculumExperience.VISUAL_MATH_LAB,), visualizer=VisualizerType.FRACTION_BARS, concepts=("foundations.decimals",), parent_id="foundations.quantitative-reasoning", templates=("foundation-decimals-visual", "foundation-decimals-practice"), mastery_threshold=2),
+    _node("foundations.percentages", "Number & quantitative foundations", "Percentages", "Interpret percent as a part of 100 and calculate everyday portions.", prerequisites=("foundations.decimals",), objectives=("Convert percent", "Find a percent of a quantity"), experiences=(CurriculumExperience.VISUAL_MATH_LAB,), visualizer=VisualizerType.RATIO_TABLE, concepts=("foundations.percentages",), parent_id="foundations.quantitative-reasoning", templates=("foundation-percentages-visual", "foundation-percentages-practice"), mastery_threshold=2),
+    _node("foundations.ratios-rates-proportions", "Number & quantitative foundations", "Ratios, rates, and proportions", "Compare related quantities and scale them proportionally.", prerequisites=("foundations.percentages",), objectives=("Build a ratio table", "Find a unit rate"), experiences=(CurriculumExperience.VISUAL_MATH_LAB,), visualizer=VisualizerType.RATIO_TABLE, concepts=("foundations.ratios-rates-proportions",), parent_id="foundations.quantitative-reasoning", templates=("foundation-ratios-visual", "foundation-ratios-practice"), mastery_threshold=2),
+    _node("foundations.units-measurement", "Number & quantitative foundations", "Units and measurement", "Convert compatible units and make measurements meaningful.", prerequisites=("foundations.ratios-rates-proportions",), objectives=("Convert units", "Choose useful units"), experiences=(CurriculumExperience.VISUAL_MATH_LAB,), visualizer=VisualizerType.RATIO_TABLE, concepts=("foundations.units-measurement",), parent_id="foundations.quantitative-reasoning", templates=("foundation-units-visual", "foundation-units-practice"), mastery_threshold=2),
+    _node("foundations.estimation", "Number & quantitative foundations", "Estimation", "Use sensible rounding to make quick, defensible quantity estimates.", prerequisites=("foundations.decimals",), objectives=("Round intentionally", "Estimate a result"), experiences=(CurriculumExperience.VISUAL_MATH_LAB,), visualizer=VisualizerType.PLACE_VALUE_BLOCKS, concepts=("foundations.estimation",), parent_id="foundations.quantitative-reasoning", templates=("foundation-estimation-visual", "foundation-estimation-practice"), mastery_threshold=2),
+    _node("foundations.financial-arithmetic", "Number & quantitative foundations", "Everyday money math", "Use USD discounts, tax, tips, unit prices, budgets, and simple interest with cents rounding.", prerequisites=("foundations.percentages", "foundations.ratios-rates-proportions"), objectives=("Calculate a total", "Compare money choices"), experiences=(CurriculumExperience.VISUAL_MATH_LAB,), visualizer=VisualizerType.RATIO_TABLE, concepts=("foundations.financial-arithmetic",), parent_id="foundations.quantitative-reasoning", templates=("foundation-finance-visual", "foundation-finance-practice"), mastery_threshold=2),
     _node("functions.representations", "Pre-algebra & functions", "Functions and representations", "Read tables, coordinate planes, patterns, and function transformations.", prerequisites=("foundations.quantitative-reasoning",), objectives=("Interpret a function", "Connect tables, rules, and graphs"), experiences=(CurriculumExperience.VISUAL_MATH_LAB, CurriculumExperience.GUIDED_PROOFLAB), concepts=("functions.representations",)),
     _node("algebra.symbolic-reasoning", "Algebra", "Symbolic equations and quadratics", "Transform expressions and solve bounded linear and quadratic equations.", prerequisites=("foundations.quantitative-reasoning",), objectives=("Preserve equality", "Expand and factor polynomials", "Check solutions"), experiences=GUIDED_AND_LEETMATH, concepts=("algebra.linear-equations",)),
     _node("algebra.inequalities", "Algebra", "Inequalities and solution regions", "Represent a one-variable solution region and preserve it through transformations.", prerequisites=("algebra.symbolic-reasoning",), objectives=("Solve inequalities", "Recognize sign reversals"), experiences=(CurriculumExperience.GUIDED_PROOFLAB, CurriculumExperience.VISUAL_MATH_LAB, CurriculumExperience.LEETMATH), visualizer=VisualizerType.NUMBER_LINE, concepts=("algebra.inequalities",)),
@@ -170,6 +186,19 @@ def concept_for_guided_mission(mission_id: str) -> str | None:
 def concept_for_challenge(challenge_id: str) -> str | None:
     node = curriculum_node_for_challenge(challenge_id)
     return node.concept_ids[0] if node and node.concept_ids else None
+
+
+def mastery_threshold_for_concept(concept_id: str) -> int:
+    """Return authored mastery requirements without changing legacy concepts."""
+    return next(
+        (node.mastery_threshold for node in CURRICULUM_NODES if concept_id in node.concept_ids),
+        3,
+    )
+
+
+def requires_first_try_for_concept(concept_id: str) -> bool:
+    node = next((item for item in CURRICULUM_NODES if concept_id in item.concept_ids), None)
+    return node is None or node.parent_id != "foundations.quantitative-reasoning"
 
 
 def missions_for_node(node_id: str) -> tuple[GuidedMissionDefinition, ...]:

@@ -169,6 +169,9 @@ class VisualizerType(str, Enum):
     NONE = "none"
     NUMBER_LINE = "number-line"
     COMPLEX_PLANE = "complex-plane"
+    PLACE_VALUE_BLOCKS = "place-value-blocks"
+    FRACTION_BARS = "fraction-bars"
+    RATIO_TABLE = "ratio-table"
 
 
 class CurriculumExperience(str, Enum):
@@ -277,6 +280,7 @@ class CurriculumNodePayload(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     id: str
+    parent_id: str | None = Field(default=None, alias="parentId")
     strand: str
     title: str
     summary: str
@@ -290,6 +294,47 @@ class CurriculumNodePayload(BaseModel):
     template_ids: list[str] = Field(alias="templateIds")
     leet_math_challenge_ids: list[str] = Field(alias="leetMathChallengeIds")
     mastery_threshold: int = Field(alias="masteryThreshold", ge=1)
+
+
+class PracticeNextRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    template_id: str = Field(alias="templateId", min_length=1, max_length=128)
+    restart: bool = False
+
+
+class PracticeAnswerRequest(BaseModel):
+    """The learner's public response.  Adapters normalize it on the server."""
+
+    response: str = Field(min_length=1, max_length=256)
+
+
+class PracticeInstancePayload(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    instance_id: str = Field(alias="instanceId")
+    template_id: str = Field(alias="templateId")
+    node_id: str = Field(alias="nodeId")
+    concept_id: str = Field(alias="conceptId")
+    title: str
+    prompt: str
+    instructions: str
+    visualizer_type: VisualizerType = Field(alias="visualizerType")
+    visualization: dict[str, object]
+    status: Literal["active", "completed"]
+    is_guided: bool = Field(alias="isGuided")
+
+
+class PracticeCheckResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    status: Literal["valid", "invalid"]
+    feedback: str
+    normalized_response: str | None = Field(default=None, alias="normalizedResponse")
+    instance: PracticeInstancePayload
+    earned_xp: int = Field(default=0, alias="earnedXp")
+    total_xp: int = Field(default=0, alias="totalXp")
+    mastery_status: str | None = Field(default=None, alias="masteryStatus")
 
 
 class GuidedMissionSeedStep(BaseModel):

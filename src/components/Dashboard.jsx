@@ -16,6 +16,7 @@ const ACHIEVEMENT_LABELS = {
 };
 
 const LABS = [
+  ['Math Foundations', '/math/foundations', 'Visual-first number and quantity practice'],
   ['Math', '/math', 'Guided proof work'],
   ['LeetMath', '/leetmath', 'Deterministic final-answer challenges'],
   ['Chemistry', '/chemistry', 'Interactive chemistry tools'],
